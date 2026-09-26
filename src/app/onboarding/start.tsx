@@ -28,6 +28,8 @@ export default function OnboardingStartScreen() {
               Icon={kimonoGif}
               backgroundDefinition={BrandColors.primary}
               borderColor={BrandColors.secondary}
+              format="rounded"
+              size={92}
             />
           </View>
           <Text style={styles.title}>Caverna JiuJitsu</Text>
