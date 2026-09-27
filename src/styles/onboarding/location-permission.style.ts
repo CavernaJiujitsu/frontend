@@ -8,13 +8,6 @@ export const styles = StyleSheet.create({
     backgroundColor: BrandColors.background,
   },
 
-  content: {
-    flex: 1,
-    paddingHorizontal: 24,
-    paddingVertical: 24,
-    justifyContent: "space-between",
-  },
-
   illustrationContainer: {
     flex: 1,
     justifyContent: "center",
@@ -64,6 +57,7 @@ export const styles = StyleSheet.create({
     width: "100%",
     alignItems: "center",
   },
+
   skipButton: {
     marginTop: 18,
     paddingVertical: 8,

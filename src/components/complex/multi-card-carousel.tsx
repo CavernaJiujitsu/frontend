@@ -12,7 +12,7 @@ export type CardCarousel = {
   subtitle: string;
 };
 
-export type MultiCardCarouselProps<T = void, U = void> = {
+export type MultiCardCarouselProps<U = void> = {
   cards: CardCarousel[];
   secondaryBtn: {
     action: (index: U) => void;
@@ -26,11 +26,11 @@ export type MultiCardCarouselProps<T = void, U = void> = {
 
 const SWIPE_THRESHOLD = 50;
 
-export function MultiCardCarousel<T = void, U = void>({
+export function MultiCardCarousel<U = void>({
   cards,
   primaryBtn,
   secondaryBtn,
-}: MultiCardCarouselProps<T, U>) {
+}: MultiCardCarouselProps<U>) {
   const [activeIndex, setActiveIndex] = useState(0);
   const isLastCard = activeIndex === cards.length - 1;
 
