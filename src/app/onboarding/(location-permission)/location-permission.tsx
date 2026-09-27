@@ -4,10 +4,9 @@ import { styles } from "@/styles/onboarding/location-permission.style";
 import * as Location from "expo-location";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Alert, Image, Pressable, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-
 import { DefaultButton } from "@/components/customized/default-button";
-import { BrandColors } from "@/constants/theme";
+import { BottomTabInset, BrandColors, Spacing } from "@/constants/theme";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 type LocationPermissionScreenProps = {
   onPermissionGranted?: (location: Location.LocationObject) => void;
@@ -50,6 +49,7 @@ function LocationPermissionContent({
 }: LocationPermissionScreenProps) {
   const [isRequestingPermission, setIsRequestingPermission] = useState(false);
   const hasRequestedOnOpen = useRef(false);
+  const safeAreaInsets = useSafeAreaInsets();
 
   const handleRequestLocation = useCallback(async () => {
     if (isRequestingPermission) {
@@ -90,7 +90,7 @@ function LocationPermissionContent({
   }, [handleRequestLocation]);
 
   return (
-    <SafeAreaView style={globalStyles.container}>
+    <SafeAreaView style={globalStyles.screen}>
       <View style={styles.content}>
         <View style={styles.illustrationContainer}>
           <Image
@@ -116,7 +116,7 @@ function LocationPermissionContent({
         </View>
 
         {/* Ação */}
-        <View style={styles.actions}>
+        <View style={[styles.actions, { paddingBottom: safeAreaInsets.bottom + BottomTabInset + Spacing.three }]}>
           <DefaultButton
             label="Permitir localização"
             color={BrandColors.secondary}
