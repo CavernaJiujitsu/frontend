@@ -7,6 +7,7 @@ import expoLogo from "./expo-logo.png";
 import appIcon from "./icon.png";
 import localeIcon from "./locale-icon.png";
 import logoGlow from "./logo-glow.png";
+import mascoteCaverna from "./mascote-caverna.png";
 import onboardingGlobe from "./onboarding-globe.png";
 import onboardingIconCheckin from "./onboarding-icon-checkin.png";
 import reactLogo from "./react-logo.png";
@@ -29,6 +30,7 @@ export {
   kimonoGif,
   localeIcon,
   logoGlow,
+  mascoteCaverna,
   onboardingGlobe,
   onboardingIconCheckin,
   reactLogo,
