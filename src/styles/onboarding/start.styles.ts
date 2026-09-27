@@ -3,10 +3,6 @@ import { StyleSheet } from "react-native";
 import { BrandColors } from "@/constants/theme";
 
 export const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: BrandColors.background,
-  },
   content: {
     flex: 1,
     alignItems: "center",

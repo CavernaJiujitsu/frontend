@@ -19,9 +19,12 @@ import Svg, {
 import { mascoteCaverna } from "@/assets/images";
 import { DefaultButton } from "@/components/customized/default-button";
 import { BrandColors } from "@/constants/theme";
+import { globalStyles } from "@/styles/global.styles";
 import { styles } from "@/styles/onboarding/start.styles";
+import { useRouter } from "expo-router";
 
 export default function OnboardingStartScreen() {
+  const router = useRouter();
   const mascotEntranceStyle = useAnimatedStyle(() => ({
     opacity: withTiming(1, { duration: 260 }),
     transform: [
@@ -82,18 +85,16 @@ export default function OnboardingStartScreen() {
   }));
 
   function handleCreateAccount() {
-    Alert.alert(
-      "Em breve",
-      "O fluxo para criar conta será disponibilizado em breve.",
-    );
+    router.push("/onboarding/welcome");
   }
 
   function handleSignIn() {
     Alert.alert("Em breve", "O fluxo de login será disponibilizado em breve.");
+    router.push("/onboarding/welcome");
   }
 
   return (
-    <SafeAreaView style={styles.screen}>
+    <SafeAreaView style={globalStyles.screen}>
       <View style={styles.content}>
         <View style={styles.message}>
           <Animated.View style={[styles.mascotContainer, mascotEntranceStyle]}>

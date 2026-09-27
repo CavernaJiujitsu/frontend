@@ -4,10 +4,12 @@ import androidIconMonochrome from "./android-icon-monochrome.png";
 import expoBadgeWhite from "./expo-badge-white.png";
 import expoBadge from "./expo-badge.png";
 import expoLogo from "./expo-logo.png";
-import appFavicon from "./favicon.png";
 import appIcon from "./icon.png";
+import localeIcon from "./locale-icon.png";
 import logoGlow from "./logo-glow.png";
 import mascoteCaverna from "./mascote-caverna.png";
+import onboardingGlobe from "./onboarding-globe.png";
+import onboardingIconCheckin from "./onboarding-icon-checkin.png";
 import reactLogo from "./react-logo.png";
 import splashIcon from "./splash-icon.png";
 import kimonoGif from "./start-kimono-cloth.gif";
@@ -19,7 +21,6 @@ export {
   androidIconBackground,
   androidIconForeground,
   androidIconMonochrome,
-  appFavicon,
   appIcon,
   exploreTabIcon,
   expoBadge,
@@ -27,8 +28,11 @@ export {
   expoLogo,
   homeTabIcon,
   kimonoGif,
+  localeIcon,
   logoGlow,
   mascoteCaverna,
+  onboardingGlobe,
+  onboardingIconCheckin,
   reactLogo,
   splashIcon,
   tutorialWeb,
