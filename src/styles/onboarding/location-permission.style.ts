@@ -1,9 +1,11 @@
 import { StyleSheet } from "react-native";
 
+import { BrandColors, Colors } from "@/constants/theme";
+
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#0B0B0F",
+    backgroundColor: BrandColors.background,
   },
 
   content: {
@@ -34,7 +36,7 @@ export const styles = StyleSheet.create({
   },
 
   title: {
-    color: "#FFFFFF",
+    color: BrandColors.onPrimary,
     fontSize: 26,
     fontWeight: "800",
     textAlign: "center",
@@ -42,7 +44,7 @@ export const styles = StyleSheet.create({
   },
 
   description: {
-    color: "#B5B5BD",
+    color: Colors.light.textSecondary,
     fontSize: 15,
     lineHeight: 22,
     textAlign: "center",
@@ -50,7 +52,7 @@ export const styles = StyleSheet.create({
   },
 
   secondaryDescription: {
-    color: "#73737D",
+    color: Colors.light.textSecondary,
     fontSize: 12,
     lineHeight: 18,
     textAlign: "center",
@@ -62,33 +64,6 @@ export const styles = StyleSheet.create({
     width: "100%",
     alignItems: "center",
   },
-
-  primaryButton: {
-    width: "100%",
-    height: 54,
-    borderRadius: 12,
-
-    backgroundColor: "#FF6338",
-
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  primaryButtonPressed: {
-    opacity: 0.8,
-    transform: [{ scale: 0.98 }],
-  },
-
-  primaryButtonDisabled: {
-    opacity: 0.6,
-  },
-
-  primaryButtonText: {
-    color: "#0B0B0F",
-    fontSize: 15,
-    fontWeight: "800",
-  },
-
   skipButton: {
     marginTop: 18,
     paddingVertical: 8,
@@ -96,7 +71,7 @@ export const styles = StyleSheet.create({
   },
 
   skipButtonText: {
-    color: "#777780",
+    color: Colors.light.textSecondary,
     fontSize: 13,
     fontWeight: "500",
     textAlign: "center",

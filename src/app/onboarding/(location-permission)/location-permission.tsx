@@ -3,15 +3,11 @@ import { globalStyles } from "@/styles/global.styles";
 import { styles } from "@/styles/onboarding/location-permission.style";
 import * as Location from "expo-location";
 import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  ActivityIndicator,
-  Alert,
-  Image,
-  Pressable,
-  Text,
-  View,
-} from "react-native";
+import { Alert, Image, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+
+import { DefaultButton } from "@/components/customized/default-button";
+import { BrandColors } from "@/constants/theme";
 
 type LocationPermissionScreenProps = {
   onPermissionGranted?: (location: Location.LocationObject) => void;
@@ -121,21 +117,12 @@ function LocationPermissionContent({
 
         {/* Ação */}
         <View style={styles.actions}>
-          <Pressable
-            style={({ pressed }) => [
-              styles.primaryButton,
-              pressed && styles.primaryButtonPressed,
-              isRequestingPermission && styles.primaryButtonDisabled,
-            ]}
-            onPress={handleRequestLocation}
+          <DefaultButton
+            label="Permitir localização"
+            color={BrandColors.secondary}
+            action={handleRequestLocation}
             disabled={isRequestingPermission}
-          >
-            {isRequestingPermission ? (
-              <ActivityIndicator size="small" color="#0B0B0F" />
-            ) : (
-              <Text style={styles.primaryButtonText}>Permitir localização</Text>
-            )}
-          </Pressable>
+          />
 
           <Pressable
             style={styles.skipButton}
