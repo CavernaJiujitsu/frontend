@@ -1,12 +1,12 @@
 import { locationPermissionImage } from "@/assets/images";
 import { globalStyles } from "@/styles/global.styles";
 import { styles } from "@/styles/onboarding/location-permission.style";
-import * as Location from "expo-location";
-import { useCallback, useEffect, useRef, useState } from "react";
 import { Alert, Image, Pressable, Text, View } from "react-native";
+import * as Location from "expo-location";
 import { DefaultButton } from "@/components/customized/default-button";
 import { BottomTabInset, BrandColors, Spacing } from "@/constants/theme";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import { useLocationPermission } from "@/hooks/use-location-permission";
 
 type LocationPermissionScreenProps = {
   onPermissionGranted?: (location: Location.LocationObject) => void;
@@ -15,23 +15,20 @@ type LocationPermissionScreenProps = {
 };
 
 export default function LocationPermissionScreen() {
-  const handlePermissionGranted = useCallback(
-    (location: Location.LocationObject) => {
-      console.log(location.coords);
-    },
-    [],
-  );
+  const handlePermissionGranted = (location: Location.LocationObject) => {
+    console.log(location.coords);
+  };
 
-  const handlePermissionDenied = useCallback(() => {
+  const handlePermissionDenied = () => {
     Alert.alert(
       "Localização indisponível",
       "Não foi possível acessar sua localização. Você pode tentar novamente ou continuar sem ela.",
     );
-  }, []);
+  };
 
-  const handleSkip = useCallback(() => {
+  const handleSkip = () => {
     Alert.alert("Busca manual", "A busca manual ainda não está disponível.");
-  }, []);
+  };
 
   return (
     <LocationPermissionContent
@@ -47,47 +44,11 @@ function LocationPermissionContent({
   onPermissionDenied,
   onSkip,
 }: LocationPermissionScreenProps) {
-  const [isRequestingPermission, setIsRequestingPermission] = useState(false);
-  const hasRequestedOnOpen = useRef(false);
+  const { isRequestingPermission, handleRequestLocation } = useLocationPermission({
+    onPermissionGranted,
+    onPermissionDenied,
+  });
   const safeAreaInsets = useSafeAreaInsets();
-
-  const handleRequestLocation = useCallback(async () => {
-    if (isRequestingPermission) {
-      return;
-    }
-
-    try {
-      setIsRequestingPermission(true);
-
-      const { status } = await Location.requestForegroundPermissionsAsync();
-
-      if (status !== Location.PermissionStatus.GRANTED) {
-        onPermissionDenied?.();
-        return;
-      }
-
-      const location = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.Balanced,
-      });
-
-      onPermissionGranted?.(location);
-    } catch (error) {
-      console.error("Erro ao solicitar localização:", error);
-
-      onPermissionDenied?.();
-    } finally {
-      setIsRequestingPermission(false);
-    }
-  }, [isRequestingPermission, onPermissionGranted, onPermissionDenied]);
-
-  useEffect(() => {
-    if (hasRequestedOnOpen.current) {
-      return;
-    }
-
-    hasRequestedOnOpen.current = true;
-    void handleRequestLocation();
-  }, [handleRequestLocation]);
 
   return (
     <SafeAreaView style={globalStyles.screen}>
