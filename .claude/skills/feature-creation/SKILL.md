@@ -90,6 +90,7 @@ Keep Expo-provided or starter-template components directly inside `src/component
 
 ## Implementation Rules
 
+- Onboarding screens should decompose into sub-components inside a `(components)` subfolder within the route group. Avoid `<View style={styles.content}>` wrappers — compose directly under `SafeAreaView`. Each sub-component receives props, not hooks.
 - Use Expo Router for navigation; route screens belong in `src/app/`. Keep styles outside `src/app/` in matching files under `src/styles/`. Keep Expo starter components in `src/components/` and app-owned UI in `src/components/customized/`.
 - Reuse existing components and theme tokens before introducing new abstractions or dependencies.
 - Use `SafeAreaView` from `react-native-safe-area-context` for screens that need safe-area handling.
