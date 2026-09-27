@@ -1,5 +1,6 @@
 import { Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
 import * as Location from "expo-location";
 import { useLocationPermission } from "@/hooks/use-location-permission";
 import { globalStyles } from "@/styles/global.styles";
@@ -9,6 +10,8 @@ import { LocationPermissionBody } from "./(components)/location-permission-body"
 import { LocationPermissionIllustration } from "./(components)/location-permission-illustration";
 
 export default function LocationPermissionScreen() {
+  const router = useRouter();
+
   const handlePermissionGranted = (location: Location.LocationObject) => {
     console.log(location.coords);
   };
@@ -21,7 +24,8 @@ export default function LocationPermissionScreen() {
   };
 
   const handleSkip = () => {
-    Alert.alert("Busca manual", "A busca manual ainda não está disponível.");
+    router.push("/");
+    Alert.alert("Funcionalidade em desenvolvimento");
   };
 
   const { isRequestingPermission, handleRequestLocation } = useLocationPermission({
