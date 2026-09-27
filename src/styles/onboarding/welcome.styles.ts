@@ -61,6 +61,7 @@ export const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: 4,
     gap: 10,
+    padding: 50,
   },
   dot: {
     width: 10,

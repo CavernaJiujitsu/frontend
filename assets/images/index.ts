@@ -5,8 +5,10 @@ import expoBadgeWhite from "./expo-badge-white.png";
 import expoBadge from "./expo-badge.png";
 import expoLogo from "./expo-logo.png";
 import appIcon from "./icon.png";
+import localeIcon from "./locale-icon.png";
 import logoGlow from "./logo-glow.png";
 import onboardingGlobe from "./onboarding-globe.png";
+import onboardingIconCheckin from "./onboarding-icon-checkin.png";
 import reactLogo from "./react-logo.png";
 import splashIcon from "./splash-icon.png";
 import kimonoGif from "./start-kimono-cloth.gif";
@@ -25,8 +27,10 @@ export {
   expoLogo,
   homeTabIcon,
   kimonoGif,
+  localeIcon,
   logoGlow,
   onboardingGlobe,
+  onboardingIconCheckin,
   reactLogo,
   splashIcon,
   tutorialWeb,
