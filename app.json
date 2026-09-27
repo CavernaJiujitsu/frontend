@@ -8,7 +8,10 @@
     "scheme": "frontend",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/expo.icon",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Usamos sua localização para encontrar as cavernas (academias) mais próximas de você."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -17,6 +20,7 @@
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
+      "permissions": ["ACCESS_COARSE_LOCATION", "ACCESS_FINE_LOCATION"],
       "predictiveBackGestureEnabled": false
     },
     "web": {
@@ -33,7 +37,13 @@
           "imageWidth": 76
         }
       ],
-      "expo-image"
+      "expo-image",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "O Caverna Jiu-Jitsu usa sua localização para encontrar as cavernas mais próximas de você."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

@@ -38,7 +38,7 @@ export default function OnboardingScreen() {
   ];
 
   const handleNext = () => {
-    router.push("/");
+    router.push("/onboarding/location-permission");
   };
 
   return (

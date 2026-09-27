@@ -6,6 +6,7 @@ import expoBadge from "./expo-badge.png";
 import expoLogo from "./expo-logo.png";
 import appIcon from "./icon.png";
 import localeIcon from "./locale-icon.png";
+import locationPermissionImage from "./location-to-caverna.png";
 import logoGlow from "./logo-glow.png";
 import mascoteCaverna from "./mascote-caverna.png";
 import onboardingGlobe from "./onboarding-globe.png";
@@ -29,6 +30,7 @@ export {
   homeTabIcon,
   kimonoGif,
   localeIcon,
+  locationPermissionImage,
   logoGlow,
   mascoteCaverna,
   onboardingGlobe,
