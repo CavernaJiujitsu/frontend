@@ -58,7 +58,7 @@ export default function BeltInfoScreen() {
 
         setSelectedFile(file);
       }
-    } catch (error) {
+    } catch {
       Alert.alert("Erro", "Não foi possível selecionar o arquivo.");
     }
   };
