@@ -1,8 +1,9 @@
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Alert, FlatList, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useLocalSearchParams, useRouter } from "expo-router";
 
+import { mockDuplicateSubscriptionError } from "@/api/mocks/backend-errors";
 import {
   DEFAULT_SCHEDULE_CAVERNA_ID,
   DEFAULT_SCHEDULE_CAVERNA_TITLE,
@@ -12,10 +13,11 @@ import {
   getScheduleMonths,
   hasAnyClassesInMonth,
 } from "@/api/mocks/schedule";
-import { ClassCard } from "@/components/customized/schedule/class-card";
 import { ClassSkeleton } from "@/components/customized/class-skeleton/class-skeleton";
+import { ClassCard } from "@/components/customized/schedule/class-card";
 import { MonthSelector } from "@/components/customized/schedule/month-selector";
 import { WeekDayList } from "@/components/customized/schedule/week-day-list";
+import { reportError } from "@/store/useErrorStore";
 import { isLoadingKey, useLoadingStore } from "@/store/useLoadingStore";
 import { globalStyles } from "@/styles/global.styles";
 import { scheduleStyles as styles } from "@/styles/onboarding/schedule.styles";
@@ -44,8 +46,7 @@ export default function ScheduleScreen() {
     cavernaId?: string | string[];
     cavernaTitle?: string | string[];
   }>();
-  const cavernaId =
-    firstParam(params.cavernaId) ?? DEFAULT_SCHEDULE_CAVERNA_ID;
+  const cavernaId = firstParam(params.cavernaId) ?? DEFAULT_SCHEDULE_CAVERNA_ID;
   const cavernaTitle =
     firstParam(params.cavernaTitle) ?? DEFAULT_SCHEDULE_CAVERNA_TITLE;
 
@@ -68,9 +69,7 @@ export default function ScheduleScreen() {
     [days, selectedDayId],
   );
   const [classes, setClasses] = useState<ClassItem[]>([]);
-  const isClassesLoading = useLoadingStore(
-    isLoadingKey("schedule-classes"),
-  );
+  const isClassesLoading = useLoadingStore(isLoadingKey("schedule-classes"));
   const classesRequestRef = useRef(0);
 
   useEffect(() => {
@@ -95,10 +94,7 @@ export default function ScheduleScreen() {
     if (hasAnyClasses) return;
     if (alertedCavernaRef.current === cavernaId) return;
     alertedCavernaRef.current = cavernaId;
-    Alert.alert(
-      cavernaTitle,
-      "Essa caverna não possui horários disponíveis",
-    );
+    Alert.alert(cavernaTitle, "Essa caverna não possui horários disponíveis");
   }, [cavernaId, cavernaTitle, hasAnyClasses]);
 
   const handleSelectMonth = (month: ScheduleMonth) => {
@@ -114,11 +110,12 @@ export default function ScheduleScreen() {
     }
   };
 
+  // TODO: trocar o mock por `reportError(e)` no `catch` do POST de inscrição
+  // quando o endpoint real existir. Hoje simula um 409 do contrato v1
+  // para exercitar o ErrorToast (componente + auto-dismiss + botão fechar).
   const handleSelectClass = (classItem: ClassItem) => {
-    Alert.alert(
-      "Inscrição",
-      `Aula ${classItem.startTime}–${classItem.endTime} com ${classItem.professor} selecionada.`,
-    );
+    void classItem;
+    reportError(mockDuplicateSubscriptionError());
   };
 
   return (
