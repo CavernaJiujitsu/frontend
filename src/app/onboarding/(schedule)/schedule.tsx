@@ -6,15 +6,17 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import {
   DEFAULT_SCHEDULE_CAVERNA_ID,
   DEFAULT_SCHEDULE_CAVERNA_TITLE,
+  fetchClassesForDay,
   formatScheduleDate,
-  getClassesForDay,
   getMonthDays,
   getScheduleMonths,
   hasAnyClassesInMonth,
 } from "@/api/mocks/schedule";
 import { ClassCard } from "@/components/customized/schedule/class-card";
+import { ClassSkeleton } from "@/components/customized/class-skeleton/class-skeleton";
 import { MonthSelector } from "@/components/customized/schedule/month-selector";
 import { WeekDayList } from "@/components/customized/schedule/week-day-list";
+import { isLoadingKey, useLoadingStore } from "@/store/useLoadingStore";
 import { globalStyles } from "@/styles/global.styles";
 import { scheduleStyles as styles } from "@/styles/onboarding/schedule.styles";
 import type { ClassItem, ScheduleMonth } from "@/types/schedule";
@@ -65,10 +67,24 @@ export default function ScheduleScreen() {
     () => days.find((day) => day.id === selectedDayId),
     [days, selectedDayId],
   );
-  const classes = useMemo(
-    () => (selectedDay ? getClassesForDay(cavernaId, selectedDay) : []),
-    [cavernaId, selectedDay],
+  const [classes, setClasses] = useState<ClassItem[]>([]);
+  const isClassesLoading = useLoadingStore(
+    isLoadingKey("schedule-classes"),
   );
+  const classesRequestRef = useRef(0);
+
+  useEffect(() => {
+    const requestId = ++classesRequestRef.current;
+    // Sem dia válido não há o que buscar; o id acima invalida respostas antigas.
+    if (!selectedDay) return;
+    const store = useLoadingStore.getState();
+    store.show("schedule-classes");
+    void fetchClassesForDay(cavernaId, selectedDay)
+      .then((result) => {
+        if (classesRequestRef.current === requestId) setClasses(result);
+      })
+      .finally(() => store.hide("schedule-classes"));
+  }, [cavernaId, selectedDay]);
   const hasAnyClasses = useMemo(
     () => hasAnyClassesInMonth(cavernaId, days),
     [cavernaId, days],
@@ -147,24 +163,28 @@ export default function ScheduleScreen() {
           </Text>
         ) : null}
 
-        <FlatList
-          data={classes}
-          keyExtractor={(item) => item.id}
-          showsVerticalScrollIndicator={false}
-          style={styles.list}
-          contentContainerStyle={styles.listContent}
-          renderItem={({ item }) => (
-            <ClassCard classItem={item} onPress={handleSelectClass} />
-          )}
-          ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-              <Text style={styles.emptyTitle}>Nenhuma aula encontrada</Text>
-              <Text style={styles.emptyText}>
-                Não existem aulas disponíveis para este dia nesta caverna.
-              </Text>
-            </View>
-          }
-        />
+        {isClassesLoading ? (
+          <ClassSkeleton />
+        ) : (
+          <FlatList
+            data={classes}
+            keyExtractor={(item) => item.id}
+            showsVerticalScrollIndicator={false}
+            style={styles.list}
+            contentContainerStyle={styles.listContent}
+            renderItem={({ item }) => (
+              <ClassCard classItem={item} onPress={handleSelectClass} />
+            )}
+            ListEmptyComponent={
+              <View style={styles.emptyContainer}>
+                <Text style={styles.emptyTitle}>Nenhuma aula encontrada</Text>
+                <Text style={styles.emptyText}>
+                  Não existem aulas disponíveis para este dia nesta caverna.
+                </Text>
+              </View>
+            }
+          />
+        )}
       </View>
     </SafeAreaView>
   );

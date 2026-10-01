@@ -29,4 +29,9 @@ export const nearbyGymStyles = StyleSheet.create({
     paddingBottom: Spacing.four,
     gap: Spacing.three,
   },
+  loadingWrap: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
 });
