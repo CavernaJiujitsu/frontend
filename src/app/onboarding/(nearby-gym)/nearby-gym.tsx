@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
-import { Alert, FlatList, Text, View } from "react-native";
+import { FlatList, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
 
 import { magnifierCaverna } from "@/assets/images";
 import { nearbyGymMocks } from "@/api/mocks/nearby-gym";
@@ -13,8 +14,8 @@ import { nearbyGymStyles as styles } from "@/styles/onboarding/nearby-gym.styles
 // TODO: substituir o mock pelo service de nearby usando a localização do
 // cliente (useAppStore user.location.coords + basicOperationsService.getPaginated).
 // Contrato do back ainda indefinido. location === null (fluxo "pular") = busca manual.
-// TODO: navegar para o detalhe da caverna no onPress dos cards.
 export default function NearByGym() {
+  const router = useRouter();
   const [search, setSearch] = useState("");
   const location = useAppStore((state) => state.user.location);
   void location;
@@ -57,7 +58,10 @@ export default function NearByGym() {
               tags={item.tags}
               subtitle={item.subtitle}
               onPress={() =>
-                Alert.alert(item.title, "Action do card chamada corretamente.")
+                router.push({
+                  pathname: "/onboarding/schedule",
+                  params: { cavernaId: item.id, cavernaTitle: item.title },
+                })
               }
             />
           )}
