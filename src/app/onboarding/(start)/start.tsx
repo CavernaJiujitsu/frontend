@@ -162,7 +162,7 @@ export default function OnboardingStartScreen() {
           </Animated.Text>
           <Animated.Text style={[styles.description, descriptionEntranceStyle]}>
             O wellhub do jiu-jiteiro. Treine em{"\n"}
-            qualquer academia da rede, com{"\n"}
+            qualquer caverna da rede, com{"\n"}
             graduação justa e reconhecida.
           </Animated.Text>
         </View>

@@ -19,14 +19,14 @@ export default function OnboardingScreen() {
       image: localeIcon,
       title: "Encontre sua caverna",
       subtitle:
-        "Localizamos as academias mais próximas de você, onde quer que esteja.",
+        "Localizamos as cavernas mais próximas de você, onde quer que esteja.",
     },
     {
       id: 2,
       image: onboardingGlobe,
       title: "Faixa justa, em qualquer unidade",
       subtitle:
-        "Sua trilha técnica segue o padrão da CBJJ — treine em academias diferentes sem perder seu progresso.",
+        "Sua trilha técnica segue o padrão da CBJJ — treine em cavernas diferentes sem perder seu progresso.",
     },
     {
       id: 3,

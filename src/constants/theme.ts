@@ -29,6 +29,7 @@ export const BrandColors = {
   primary: "#2A2D37",
   secondary: "#FF6B35",
   border: "#2A2D37",
+  borderSecondary: "#00E5C9",
   onPrimary: "#FFFFFF",
 } as const;
 
@@ -67,6 +68,16 @@ export const Spacing = {
   four: 24,
   five: 32,
   six: 64,
+} as const;
+
+/**
+ * Respiro entre a borda da página e o conteúdo.
+ * Dona do espaço: aplicado apenas na caixa grande do layout (`globalStyles.screen`).
+ * Subcaixas e telas não devem repetir esse espaçamento.
+ */
+export const PageInset = {
+  horizontal: Spacing.four,
+  vertical: Spacing.two,
 } as const;
 
 export const BottomTabInset = Platform.select({ ios: 50, android: 80 }) ?? 0;

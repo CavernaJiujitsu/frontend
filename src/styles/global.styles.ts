@@ -1,16 +1,29 @@
 import { StyleSheet } from "react-native";
 
-import { BrandColors, Colors, Spacing } from "@/constants/theme";
+import {
+  BrandColors,
+  Colors,
+  PageInset,
+  Spacing,
+} from "@/constants/theme";
 
 export const globalStyles = StyleSheet.create({
+  /**
+   * Caixa grande do layout: dona do respiro entre a borda da página e o conteúdo.
+   * Telas e subcaixas não repetem esse espaçamento.
+   */
   screen: {
     flex: 1,
     backgroundColor: BrandColors.background,
+    paddingHorizontal: PageInset.horizontal,
+    paddingVertical: PageInset.vertical,
   },
+  /**
+   * Subcaixa de conteúdo: cuida apenas do conteúdo interno, sem gutter de página.
+   */
   container: {
     flex: 1,
     backgroundColor: BrandColors.background,
-    paddingHorizontal: Spacing.four,
   },
   containerHorizontal: {
     flexDirection: "row",

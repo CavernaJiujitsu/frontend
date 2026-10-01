@@ -1,6 +1,6 @@
 import { StyleSheet } from "react-native";
 
-import { BrandColors, Colors } from "@/constants/theme";
+import { BrandColors, Colors, Spacing } from "@/constants/theme";
 
 export const styles = StyleSheet.create({
   container: {
@@ -22,6 +22,7 @@ export const styles = StyleSheet.create({
     height: "100%",
   },
 
+  // Subcaixa de texto: sem gutter de página (herda o respiro de globalStyles.screen).
   textContainer: {
     alignItems: "center",
     marginTop: 16,
@@ -53,9 +54,11 @@ export const styles = StyleSheet.create({
     marginTop: 10,
   },
 
+  // Subcaixa de ações: apenas o espaçamento interno entre os botões.
   actions: {
     width: "100%",
     alignItems: "center",
+    gap: Spacing.three,
   },
 
   skipButton: {

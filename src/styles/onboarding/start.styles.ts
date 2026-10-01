@@ -1,13 +1,13 @@
 import { StyleSheet } from "react-native";
 
-import { BrandColors } from "@/constants/theme";
+import { BrandColors, Spacing } from "@/constants/theme";
 
 export const styles = StyleSheet.create({
+  // Subcaixa de conteúdo: sem gutter de página (herda o respiro de globalStyles.screen).
   content: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 28,
   },
   message: {
     alignItems: "center",
@@ -17,7 +17,7 @@ export const styles = StyleSheet.create({
     width: "100%",
     maxWidth: 416,
     aspectRatio: 1144 / 1375,
-    marginBottom: 16,
+    marginBottom: Spacing.three,
     opacity: 0,
     transform: [{ scale: 0.88 }],
   },
@@ -51,7 +51,7 @@ export const styles = StyleSheet.create({
     transform: [{ translateY: 14 }],
   },
   description: {
-    marginTop: 16,
+    marginTop: Spacing.three,
     color: BrandColors.onPrimary,
     fontSize: 18,
     lineHeight: 27,
@@ -66,12 +66,11 @@ export const styles = StyleSheet.create({
     opacity: 0,
     transform: [{ translateY: 8 }],
   },
+  // Subcaixa de ações: apenas o espaçamento interno entre os botões.
   actions: {
-    gap: 12,
+    gap: Spacing.three,
     width: "100%",
     maxWidth: 360,
     alignSelf: "center",
-    paddingHorizontal: 24,
-    paddingBottom: 20,
   },
 });
