@@ -8,6 +8,7 @@ import appIcon from "./icon.png";
 import localeIcon from "./locale-icon.png";
 import locationPermissionImage from "./location-to-caverna.png";
 import logoGlow from "./logo-glow.png";
+import magnifierCaverna from "./magnifier-caverna.png";
 import mascoteCaverna from "./mascote-caverna.png";
 import onboardingGlobe from "./onboarding-globe.png";
 import onboardingIconCheckin from "./onboarding-icon-checkin.png";
@@ -32,6 +33,7 @@ export {
   localeIcon,
   locationPermissionImage,
   logoGlow,
+  magnifierCaverna,
   mascoteCaverna,
   onboardingGlobe,
   onboardingIconCheckin,
