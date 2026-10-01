@@ -1,6 +1,9 @@
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useColorScheme } from "react-native";
+import { QueryClientProvider } from "@tanstack/react-query";
+
+import { queryClient } from "@/api/bootstrap/query-client";
 
 import { AnimatedSplashOverlay } from "@/components/animated-icon";
 import { BrandColors } from "@/constants/theme";
@@ -21,8 +24,10 @@ export default function RootLayout() {
         },
       }}
     >
+    <QueryClientProvider client={queryClient}>
       <AnimatedSplashOverlay />
       <Stack screenOptions={{ headerShown: false }} />
+    </QueryClientProvider>
     </ThemeProvider>
   );
 }
