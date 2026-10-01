@@ -1,4 +1,4 @@
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -10,16 +10,33 @@ import { selectBeltStyles as styles } from "@/styles/onboarding/select-belt.styl
 
 type OptionType = "none" | "graduated" | null;
 
+function firstParam(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
 export default function SelectBeltScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams<{
+    cavernaId?: string | string[];
+    cavernaTitle?: string | string[];
+  }>();
+  const cavernaId = firstParam(params.cavernaId);
+  const cavernaTitle = firstParam(params.cavernaTitle);
+  const cavernaParams = { cavernaId, cavernaTitle };
   const [selectedOption, setSelectedOption] =
     useState<OptionType>("graduated");
 
   const handleContinue = () => {
     if (selectedOption === "graduated") {
-      router.push("/onboarding/belt-info");
+      router.push({
+        pathname: "/onboarding/belt-info",
+        params: cavernaParams,
+      });
     } else {
-      router.replace("/");
+      router.push({
+        pathname: "/onboarding/schedule",
+        params: cavernaParams,
+      });
     }
   };
 

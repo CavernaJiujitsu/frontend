@@ -77,7 +77,7 @@ export default function NearByGym() {
               subtitle={item.subtitle}
               onPress={() =>
                 router.push({
-                  pathname: "/onboarding/schedule",
+                  pathname: "/onboarding/select-belt",
                   params: { cavernaId: item.id, cavernaTitle: item.title },
                 })
               }

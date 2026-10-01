@@ -1,4 +1,4 @@
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import { Alert, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -14,11 +14,23 @@ import { BrandColors } from "@/constants/theme";
 import { globalStyles } from "@/styles/global.styles";
 import { beltInfoStyles as styles } from "@/styles/onboarding/belt-info.styles";
 
+function firstParam(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
 // TODO: substituir o mock por `GET /belts` + `POST /certificates/upload`
 // quando o contrato do back estiver definido. Fluxo mantido navegável.
 // Rota: /onboarding/belt-info (grupo `belt-info` segue o padrão das demais telas).
 export default function BeltInfoScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams<{
+    cavernaId?: string | string[];
+    cavernaTitle?: string | string[];
+  }>();
+  const cavernaParams = {
+    cavernaId: firstParam(params.cavernaId),
+    cavernaTitle: firstParam(params.cavernaTitle),
+  };
   const [selectedBelt, setSelectedBelt] = useState<string>("blue");
   const [selectedFile, setSelectedFile] = useState<CertificateMock | null>(
     null,
@@ -38,7 +50,10 @@ export default function BeltInfoScreen() {
       setIsLoading(false);
       setIsSuccess(true);
       setTimeout(() => {
-        router.replace("/");
+        router.push({
+          pathname: "/onboarding/schedule",
+          params: cavernaParams,
+        });
       }, 1500);
     } catch {
       setIsLoading(false);
