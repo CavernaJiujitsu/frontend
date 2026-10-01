@@ -10,6 +10,22 @@ export const scheduleStyles = StyleSheet.create({
   pageGap: {
     gap: Spacing.three,
   },
+  backButton: {
+    width: 44,
+    height: 44,
+    marginLeft: -Spacing.two,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  backButtonPressed: {
+    opacity: 0.7,
+  },
+  backChevron: {
+    fontSize: 28,
+    fontWeight: "800",
+    lineHeight: 30,
+    color: Colors.light.text,
+  },
   header: {
     gap: Spacing.one,
   },

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Alert, FlatList, Text, View } from "react-native";
+import { Alert, FlatList, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 
 import {
   DEFAULT_SCHEDULE_CAVERNA_ID,
@@ -37,6 +37,7 @@ function defaultDayId(year: number, monthIndex: number) {
 // TODO: substituir o mock pelo service de aulas (GET /classes?cavernaId=&date=)
 // quando o contrato do back estiver definido. Componentes já recebem props.
 export default function ScheduleScreen() {
+  const router = useRouter();
   const params = useLocalSearchParams<{
     cavernaId?: string | string[];
     cavernaTitle?: string | string[];
@@ -89,6 +90,14 @@ export default function ScheduleScreen() {
     setSelectedDayId(defaultDayId(year, month.index));
   };
 
+  const handleGoBack = () => {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace("/onboarding/nearby-gym");
+    }
+  };
+
   const handleSelectClass = (classItem: ClassItem) => {
     Alert.alert(
       "Inscrição",
@@ -99,6 +108,18 @@ export default function ScheduleScreen() {
   return (
     <SafeAreaView style={globalStyles.screen}>
       <View style={[globalStyles.container, styles.pageGap]}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Voltar para escolha de caverna"
+          onPress={handleGoBack}
+          style={({ pressed }) => [
+            styles.backButton,
+            pressed && styles.backButtonPressed,
+          ]}
+        >
+          <Text style={styles.backChevron}>‹</Text>
+        </Pressable>
+
         <View style={styles.header}>
           <Text style={styles.title} accessibilityRole="header">
             Escolha o dia e horário
