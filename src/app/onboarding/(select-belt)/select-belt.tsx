@@ -1,0 +1,96 @@
+import { useRouter } from "expo-router";
+import { useState } from "react";
+import { Text, TouchableOpacity, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+
+import { DefaultButton } from "@/components/customized/default-button";
+import { BrandColors } from "@/constants/theme";
+import { globalStyles } from "@/styles/global.styles";
+import { selectBeltStyles as styles } from "@/styles/onboarding/select-belt.styles";
+
+type OptionType = "none" | "graduated" | null;
+
+export default function SelectBeltScreen() {
+  const router = useRouter();
+  const [selectedOption, setSelectedOption] =
+    useState<OptionType>("graduated");
+
+  const handleContinue = () => {
+    if (selectedOption === "graduated") {
+      router.push("/onboarding/belt-info");
+    } else {
+      router.replace("/");
+    }
+  };
+
+  return (
+    <SafeAreaView style={globalStyles.screen}>
+      <View style={[globalStyles.container, styles.pageGap]}>
+        <View style={[globalStyles.flex, styles.content]}>
+          <View style={styles.header}>
+            <Text style={styles.title} accessibilityRole="header">
+              Qual sua faixa atual?
+            </Text>
+            <Text style={styles.subtitle}>
+              Isso define por onde sua trilha começa
+            </Text>
+          </View>
+
+          <TouchableOpacity
+            accessibilityRole="button"
+            activeOpacity={0.8}
+            onPress={() => setSelectedOption("none")}
+            style={[
+              styles.optionCard,
+              selectedOption === "none" && styles.selectedOptionCard,
+            ]}
+          >
+            <View style={styles.optionHeader}>
+              <Text style={styles.optionTitle}>Não tenho graduação</Text>
+              {selectedOption === "none" && (
+                <View style={styles.selectedBadge}>
+                  <Text style={styles.selectedBadgeText}>Selecionado</Text>
+                </View>
+              )}
+            </View>
+            <Text style={styles.optionDescription}>
+              Vou começar pela aula de validação e receber minha primeira faixa
+              lá.
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            accessibilityRole="button"
+            activeOpacity={0.8}
+            onPress={() => setSelectedOption("graduated")}
+            style={[
+              styles.optionCard,
+              selectedOption === "graduated" && styles.selectedOptionCard,
+            ]}
+          >
+            <View style={styles.optionHeader}>
+              <Text style={styles.optionTitle}>Sou graduado</Text>
+              {selectedOption === "graduated" && (
+                <View style={styles.selectedBadge}>
+                  <Text style={styles.selectedBadgeText}>Selecionado</Text>
+                </View>
+              )}
+            </View>
+            <Text style={styles.optionDescription}>
+              Vou informar minha faixa e enviar meu certificado para validação.
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.actions}>
+          <DefaultButton
+            label="Continuar"
+            color={BrandColors.secondary}
+            action={handleContinue}
+            disabled={!selectedOption}
+          />
+        </View>
+      </View>
+    </SafeAreaView>
+  );
+}
