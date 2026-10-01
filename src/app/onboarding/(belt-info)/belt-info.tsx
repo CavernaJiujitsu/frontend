@@ -13,6 +13,7 @@ import { CertificatePicker } from "@/components/customized/document-picker/docum
 import { BrandColors } from "@/constants/theme";
 import { globalStyles } from "@/styles/global.styles";
 import { beltInfoStyles as styles } from "@/styles/onboarding/belt-info.styles";
+import { beltInfoSchema } from "@/utils/belt-info-validation";
 
 function firstParam(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
@@ -31,7 +32,8 @@ export default function BeltInfoScreen() {
     cavernaId: firstParam(params.cavernaId),
     cavernaTitle: firstParam(params.cavernaTitle),
   };
-  const [selectedBelt, setSelectedBelt] = useState<string>("blue");
+  const [selectedBelt, setSelectedBelt] = useState<string>("");
+  const [beltError, setBeltError] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<CertificateMock | null>(
     null,
   );
@@ -39,10 +41,13 @@ export default function BeltInfoScreen() {
   const [isSuccess, setIsSuccess] = useState<boolean>(false);
 
   const handleContinue = async () => {
-    if (!selectedBelt) {
-      Alert.alert("Atenção", "Selecione uma faixa para continuar.");
+    const validation = beltInfoSchema.safeParse({ belt: selectedBelt });
+    if (!validation.success) {
+      setBeltError(validation.error.issues[0]?.message ?? "Selecione uma faixa válida.");
       return;
     }
+
+    setBeltError(null);
 
     setIsLoading(true);
     try {
@@ -88,9 +93,13 @@ export default function BeltInfoScreen() {
               return (
                 <TouchableOpacity
                   key={belt.id}
-                  accessibilityRole="button"
+                  accessibilityRole="radio"
+                  accessibilityState={{ checked: isSelected, disabled: isLoading || isSuccess }}
                   activeOpacity={0.8}
-                  onPress={() => setSelectedBelt(belt.id)}
+                  onPress={() => {
+                    setSelectedBelt(belt.id);
+                    setBeltError(null);
+                  }}
                   disabled={isLoading || isSuccess}
                   style={[
                     styles.beltChip,
@@ -109,6 +118,12 @@ export default function BeltInfoScreen() {
               );
             })}
           </View>
+
+          {beltError && (
+            <Text style={styles.errorText} accessibilityLiveRegion="polite">
+              {beltError}
+            </Text>
+          )}
 
           <CertificatePicker
             value={selectedFile}
@@ -135,7 +150,7 @@ export default function BeltInfoScreen() {
               isSuccess ? BrandColors.borderSecondary : BrandColors.secondary
             }
             action={handleContinue}
-            disabled={!selectedBelt || isLoading || isSuccess}
+            disabled={isLoading || isSuccess}
           />
         </View>
       </View>

@@ -71,6 +71,10 @@ export const beltInfoStyles = StyleSheet.create({
     fontWeight: "700",
     color: Colors.light.text,
   },
+  errorText: {
+    fontSize: 13,
+    color: BrandColors.secondary,
+  },
   infoText: {
     fontSize: 12,
     color: Colors.light.textSecondary,
