@@ -6,6 +6,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "@/api/bootstrap/query-client";
 
 import { AnimatedSplashOverlay } from "@/components/animated-icon";
+import { ErrorToast } from "@/components/customized/error-toast/error-toast";
 import { BrandColors } from "@/constants/theme";
 
 SplashScreen.preventAutoHideAsync();
@@ -27,6 +28,7 @@ export default function RootLayout() {
     <QueryClientProvider client={queryClient}>
       <AnimatedSplashOverlay />
       <Stack screenOptions={{ headerShown: false }} />
+      <ErrorToast />
     </QueryClientProvider>
     </ThemeProvider>
   );
