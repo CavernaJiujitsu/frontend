@@ -1,6 +1,6 @@
-import { Image, View } from "react-native";
 import { locationPermissionImage } from "@/assets/images";
 import { styles } from "@/styles/onboarding/location-permission.style";
+import { Image, View } from "react-native";
 
 export function LocationPermissionIllustration() {
   return (

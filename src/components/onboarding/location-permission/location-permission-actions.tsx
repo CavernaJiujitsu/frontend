@@ -1,8 +1,7 @@
 import { DefaultButton } from "@/components/customized/default-button";
-import { BottomTabInset, BrandColors, Spacing } from "@/constants/theme";
+import { BrandColors } from "@/constants/theme";
 import { styles } from "@/styles/onboarding/location-permission.style";
 import { Pressable, Text, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type LocationPermissionActionsProps = {
   isRequestingPermission: boolean;
@@ -15,17 +14,10 @@ export function LocationPermissionActions({
   handleRequestLocation,
   onSkip,
 }: LocationPermissionActionsProps) {
-  const safeAreaInsets = useSafeAreaInsets();
-
+  // Subcaixa: cuida apenas do espaçamento interno entre as ações.
+  // O respiro até a borda da página é responsabilidade de globalStyles.screen.
   return (
-    <View
-      style={[
-        styles.actions,
-        {
-          paddingBottom: safeAreaInsets.bottom + BottomTabInset + Spacing.three,
-        },
-      ]}
-    >
+    <View style={styles.actions}>
       <DefaultButton
         label="Permitir localização"
         color={BrandColors.secondary}

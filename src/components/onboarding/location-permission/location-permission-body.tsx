@@ -1,5 +1,5 @@
-import { Text, View } from "react-native";
 import { styles } from "@/styles/onboarding/location-permission.style";
+import { Text, View } from "react-native";
 
 export function LocationPermissionBody() {
   return (
@@ -7,8 +7,8 @@ export function LocationPermissionBody() {
       <Text style={styles.title}>Encontre sua Caverna</Text>
 
       <Text style={styles.description}>
-        Permita que o Caverna Jiu-Jitsu acesse sua localização para
-        encontrarmos as cavernas mais próximas de você.
+        Permita que o Caverna Jiu-Jitsu acesse sua localização para encontrarmos
+        as cavernas mais próximas de você.
       </Text>
 
       <Text style={styles.secondaryDescription}>
