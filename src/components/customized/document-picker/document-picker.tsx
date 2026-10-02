@@ -2,11 +2,9 @@ import * as DocumentPicker from "expo-document-picker";
 import { Alert, Text, TouchableOpacity, View } from "react-native";
 import { useCallback } from "react";
 
-import {
-  MAX_CERTIFICATE_SIZE_BYTES,
-  type CertificateMock,
-} from "@/api/mocks/belts";
+import { type CertificateMock } from "@/api/mocks/belts";
 import { documentPickerStyles as styles } from "@/components/customized/document-picker/styles/document-picker.styles";
+import { validateCertificateFile } from "@/utils/certificate-validation";
 
 type CertificatePickerProps = {
   value: CertificateMock | null;
@@ -37,18 +35,21 @@ export function CertificatePicker({
       }
 
       const asset = result.assets[0];
-      if (asset.size && asset.size > MAX_CERTIFICATE_SIZE_BYTES) {
-        Alert.alert(
-          "Arquivo muito grande",
-          "O tamanho máximo permitido para o certificado é de 5MB.",
-        );
+      const size = asset.size ?? asset.file?.size;
+      const validationError = validateCertificateFile({
+        name: asset.name,
+        size,
+        mimeType: asset.mimeType,
+      });
+      if (validationError) {
+        Alert.alert(validationError.title, validationError.message);
         return;
       }
 
       onChange({
         name: asset.name,
         uri: asset.uri,
-        size: asset.size,
+        size,
         mimeType: asset.mimeType ?? undefined,
       });
     } catch {
