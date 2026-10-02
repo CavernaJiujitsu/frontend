@@ -22,10 +22,17 @@ export default function NearByGym() {
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [gyms, setGyms] = useState<NearbyGymMock[]>([]);
+  const [hasLoaded, setHasLoaded] = useState(false);
   const isLoading = useLoadingStore(isLoadingKey("nearby-gyms"));
   const requestRef = useRef(0);
   const location = useAppStore((state) => state.user.location);
   void location;
+
+  const handleSearchChange = (value: string) => {
+    requestRef.current += 1;
+    setSearch(value);
+    setHasLoaded(false);
+  };
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -34,9 +41,14 @@ export default function NearByGym() {
       store.show("nearby-gyms");
       void fetchNearbyGyms(search)
         .then((result) => {
-          if (requestRef.current === requestId) setGyms(result);
+          if (requestRef.current === requestId) {
+            setGyms(result);
+            setHasLoaded(true);
+          }
         })
-        .finally(() => store.hide("nearby-gyms"));
+        .finally(() => {
+          if (requestRef.current === requestId) store.hide("nearby-gyms");
+        });
     }, SEARCH_DEBOUNCE_MS);
     return () => clearTimeout(timer);
   }, [search]);
@@ -53,14 +65,14 @@ export default function NearByGym() {
 
         <SearchInput
           value={search}
-          onChangeText={setSearch}
+          onChangeText={handleSearchChange}
           placeholder="Buscar caverna..."
           icon={magnifierCaverna}
           width="full"
-          onClear={() => setSearch("")}
+          onClear={() => handleSearchChange("")}
         />
 
-        {isLoading ? (
+        {isLoading || !hasLoaded ? (
           <View style={styles.loadingWrap}>
             <LoadingSpinner label="Buscando cavernas…" />
           </View>
@@ -68,22 +80,37 @@ export default function NearByGym() {
           <FlatList
             data={gyms}
             keyExtractor={(gym) => gym.id}
-            contentContainerStyle={styles.listContent}
+            contentContainerStyle={[
+              styles.listContent,
+              gyms.length === 0 && styles.emptyListContent,
+            ]}
             renderItem={({ item }) => (
-            <CardComponent
-              image={item.image}
-              title={item.title}
-              tags={item.tags}
-              subtitle={item.subtitle}
-              onPress={() =>
-                router.push({
-                  pathname: "/onboarding/select-belt",
-                  params: { cavernaId: item.id, cavernaTitle: item.title },
-                })
-              }
-            />
-          )}
-        />
+              <CardComponent
+                image={item.image}
+                title={item.title}
+                tags={item.tags}
+                subtitle={item.subtitle}
+                onPress={() =>
+                  router.push({
+                    pathname: "/onboarding/select-belt",
+                    params: { cavernaId: item.id, cavernaTitle: item.title },
+                  })
+                }
+              />
+            )}
+            ListEmptyComponent={
+              <View style={styles.emptyContainer}>
+                <Text style={styles.emptyTitle} accessibilityRole="header">
+                  Nenhuma academia encontrada
+                </Text>
+                <Text style={styles.emptyText}>
+                  {search.trim()
+                    ? "Tente buscar por outro nome."
+                    : "Não há academias disponíveis no momento."}
+                </Text>
+              </View>
+            }
+          />
         )}
       </View>
     </SafeAreaView>

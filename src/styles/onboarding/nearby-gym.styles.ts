@@ -29,6 +29,25 @@ export const nearbyGymStyles = StyleSheet.create({
     paddingBottom: Spacing.four,
     gap: Spacing.three,
   },
+  emptyListContent: {
+    flexGrow: 1,
+    justifyContent: "center",
+  },
+  emptyContainer: {
+    alignItems: "center",
+    gap: Spacing.two,
+  },
+  emptyTitle: {
+    color: Colors.light.text,
+    fontSize: 18,
+    fontWeight: "700",
+    textAlign: "center",
+  },
+  emptyText: {
+    color: Colors.light.textSecondary,
+    fontSize: 14,
+    textAlign: "center",
+  },
   loadingWrap: {
     flex: 1,
     alignItems: "center",
