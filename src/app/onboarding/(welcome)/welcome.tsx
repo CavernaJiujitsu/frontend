@@ -38,7 +38,7 @@ export default function OnboardingScreen() {
   ];
 
   const handleNext = () => {
-    router.push("/onboarding/location-permission");
+    router.push("/onboarding/create-account");
   };
 
   return (

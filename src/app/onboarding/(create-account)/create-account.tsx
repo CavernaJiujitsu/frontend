@@ -1,0 +1,229 @@
+import { useRouter } from "expo-router";
+import { useState } from "react";
+import {
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+
+import { DefaultButton } from "@/components/customized/default-button";
+import { BrandColors, Colors } from "@/constants/theme";
+import { useAppStore } from "@/store/useAppStore";
+import { globalStyles } from "@/styles/global.styles";
+import { styles } from "@/styles/onboarding/create-account.styles";
+
+export type CriarContaPayload = {
+  nome: string;
+  email: string;
+  senha: string;
+};
+
+type FieldErrors = Partial<Record<"nome" | "email" | "senha", string>>;
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const SENHA_REGEX = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
+
+function validate(nome: string, email: string, senha: string): FieldErrors {
+  const errors: FieldErrors = {};
+
+  if (!nome.trim()) {
+    errors.nome = "Informe seu nome completo.";
+  }
+
+  if (!email.trim()) {
+    errors.email = "Informe seu e-mail.";
+  } else if (!EMAIL_REGEX.test(email.trim())) {
+    errors.email = "E-mail inválido.";
+  }
+
+  if (!senha) {
+    errors.senha = "Informe uma senha.";
+  } else if (!SENHA_REGEX.test(senha)) {
+    errors.senha = "Mínimo de 8 caracteres, com letras e números.";
+  }
+
+  return errors;
+}
+
+export default function CreateAccountScreen() {
+  const router = useRouter();
+  const setProfile = useAppStore((state) => state.setProfile);
+
+  const [nome, setNome] = useState("");
+  const [email, setEmail] = useState("");
+  const [senha, setSenha] = useState("");
+  const [showSenha, setShowSenha] = useState(false);
+  const [errors, setErrors] = useState<FieldErrors>({});
+  const [loading, setLoading] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
+  const handleSubmit = () => {
+    const fieldErrors = validate(nome, email, senha);
+    setErrors(fieldErrors);
+    setSubmitError(null);
+
+    if (Object.keys(fieldErrors).length > 0) return;
+
+    setLoading(true);
+    try {
+      setProfile({ nome: nome.trim(), email: email.trim() });
+      router.replace("/onboarding/location-permission");
+    } catch (err) {
+      setSubmitError(
+        err instanceof Error
+          ? err.message
+          : "Não foi possível criar sua conta. Tente novamente.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoToLogin = () => {
+    router.replace("/onboarding/start");
+  };
+
+  return (
+    <SafeAreaView style={globalStyles.screen}>
+      <KeyboardAvoidingView
+        style={globalStyles.flex}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
+        <ScrollView
+          contentContainerStyle={styles.content}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.header}>
+            <Text style={styles.title} accessibilityRole="header">
+              Criar conta
+            </Text>
+            <Text style={styles.subtitle}>
+              Vamos começar sua jornada na Caverna
+            </Text>
+          </View>
+
+          <Field
+            label="NOME COMPLETO"
+            placeholder="Seu nome"
+            value={nome}
+            onChangeText={setNome}
+            error={errors.nome}
+            autoCapitalize="words"
+          />
+
+          <Field
+            label="E-MAIL"
+            placeholder="seuemail@exemplo.com"
+            value={email}
+            onChangeText={setEmail}
+            error={errors.email}
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
+
+          <Field
+            label="SENHA"
+            placeholder="••••••••"
+            value={senha}
+            onChangeText={setSenha}
+            error={errors.senha}
+            secureTextEntry={!showSenha}
+            rightAction={
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={showSenha ? "Ocultar senha" : "Mostrar senha"}
+                onPress={() => setShowSenha((v) => !v)}
+                hitSlop={10}
+              >
+                <Text style={styles.eyeToggle}>
+                  {showSenha ? "Ocultar" : "Mostrar"}
+                </Text>
+              </Pressable>
+            }
+          />
+
+          {!errors.senha && (
+            <Text style={styles.hint}>
+              Mínimo de 8 caracteres, com letras e números.
+            </Text>
+          )}
+
+          {submitError && (
+            <Text style={styles.submitError}>{submitError}</Text>
+          )}
+
+          <View style={styles.actions}>
+            <DefaultButton
+              label={loading ? "Criando conta..." : "Criar conta"}
+              color={BrandColors.secondary}
+              action={handleSubmit}
+              disabled={loading}
+            />
+
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Já tem conta? Entrar"
+              onPress={handleGoToLogin}
+              disabled={loading}
+              style={styles.loginPressable}
+            >
+              <Text style={styles.loginText}>
+                Já tem conta? <Text style={styles.loginLink}>Entrar</Text>
+              </Text>
+            </Pressable>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
+  );
+}
+
+type FieldProps = {
+  label: string;
+  placeholder: string;
+  value: string;
+  onChangeText: (text: string) => void;
+  error?: string;
+  secureTextEntry?: boolean;
+  keyboardType?: "default" | "email-address";
+  autoCapitalize?: "none" | "words" | "sentences" | "characters";
+  rightAction?: React.ReactNode;
+};
+
+function Field({
+  label,
+  placeholder,
+  value,
+  onChangeText,
+  error,
+  secureTextEntry,
+  keyboardType = "default",
+  autoCapitalize = "sentences",
+  rightAction,
+}: FieldProps) {
+  return (
+    <View style={styles.fieldGroup}>
+      <Text style={styles.fieldLabel}>{label}</Text>
+      <View style={[styles.inputWrap, error && styles.inputWrapError]}>
+        <TextInput
+          style={styles.input}
+          placeholder={placeholder}
+          placeholderTextColor={Colors.light.textSecondary}
+          value={value}
+          onChangeText={onChangeText}
+          secureTextEntry={secureTextEntry}
+          keyboardType={keyboardType}
+          autoCapitalize={autoCapitalize}
+        />
+        {rightAction}
+      </View>
+      {error && <Text style={styles.fieldError}>{error}</Text>}
+    </View>
+  );
+}
