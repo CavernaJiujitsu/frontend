@@ -2,14 +2,6 @@ import { StyleSheet } from "react-native";
 
 import { BrandColors, Colors, Spacing } from "@/constants/theme";
 
-/**
- * Estilo específico do CardComponent.
- *
- * Regra híbrida: o componente compõe `globalStyles.card` (fundo/borda/raio)
- * + `globalStyles.row/flex` (layout genérico) com estes deltas locais.
- * Nenhum hex aqui — tudo vem de `@/constants/theme`.
- * Novas classes globais (cardTitle/chip/variantes) ficam pendentes por decisão.
- */
 export const cardComponentStyles = StyleSheet.create({
   cardLayout: {
     flexDirection: "row",

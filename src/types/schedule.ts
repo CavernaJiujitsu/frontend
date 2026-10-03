@@ -7,7 +7,6 @@ export type ClassTag = {
 
 export type ClassItem = {
   id: string;
-  /** ISO yyyy-mm-dd do dia da aula. */
   dateId: string;
   startTime: string;
   endTime: string;
@@ -15,12 +14,10 @@ export type ClassItem = {
   enrolled: number;
   capacity: number;
   tags: ClassTag[];
-  /** Aluno já inscrito nesta aula. */
   isEnrolled?: boolean;
 };
 
 export type ScheduleDay = {
-  /** ISO yyyy-mm-dd. */
   id: string;
   weekday: string;
   day: string;

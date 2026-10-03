@@ -41,13 +41,7 @@ function internalCodeForStatus(status?: number, fallback?: string): string {
   return "UNKNOWN";
 }
 
-/**
- * Normaliza qualquer erro lançado (axios, fetch, Error, string) para `AppError`.
- * Aceita o contrato v1, formatos legados `{ message/error/code }` e falhas
- * de rede/timeout sem resposta — nunca lança.
- */
 export function normalizeApiError(error: unknown): AppError {
-  // Sem resposta: timeout ou rede desligada.
   if (isAxiosError(error)) {
     const status = error.response?.status;
     const axiosCode = error.code;
@@ -73,7 +67,6 @@ export function normalizeApiError(error: unknown): AppError {
 
     const data = error.response.data;
 
-    // 1. Contrato v1.
     const parsed = BackendErrorSchema.safeParse(data);
     if (parsed.success) {
       const { errorType, errorDescription } = parsed.data;
@@ -90,7 +83,6 @@ export function normalizeApiError(error: unknown): AppError {
       };
     }
 
-    // 2. Formatos legados: { message | error | msg } + { code }.
     if (isRecord(data)) {
       const fallbackMessage = readString(
         data.message,

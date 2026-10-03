@@ -2,10 +2,6 @@ import { StyleSheet } from "react-native";
 
 import { Colors, Spacing } from "@/constants/theme";
 
-/**
- * Deltas específicos da tela nearby-gym.
- * Base vem de `globalStyles.screen/container`. Nenhum hex aqui.
- */
 export const nearbyGymStyles = StyleSheet.create({
   pageGap: {
     gap: Spacing.three,

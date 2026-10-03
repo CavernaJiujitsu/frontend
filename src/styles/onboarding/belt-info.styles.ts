@@ -2,10 +2,6 @@ import { StyleSheet } from "react-native";
 
 import { BrandColors, Colors, Spacing } from "@/constants/theme";
 
-/**
- * Deltas específicos da tela belt-info.
- * Base vem de `globalStyles.screen/container`. Nenhum hex aqui.
- */
 export const beltInfoStyles = StyleSheet.create({
   pageGap: {
     gap: Spacing.three,

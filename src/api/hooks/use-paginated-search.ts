@@ -6,18 +6,11 @@ import { getPaginated } from "@/api/services/basic-operations.service";
 export type UsePaginatedSearchOptions = {
   page?: number;
   limit?: number;
-  /** Minimum trimmed characters before the GET fires. Defaults to 2. */
   minLength?: number;
-  /** Debounce delay in ms. Defaults to 400. */
   debounceMs?: number;
-  /** Extra gate on top of minLength. Defaults to true. */
   enabled?: boolean;
 };
 
-/**
- * Debounced GET paginated search for a given route.
- * The TextInput stays dumb; the screen owns `search` state and calls this hook.
- */
 export function usePaginatedSearch<T>(
   route: string,
   search: string,

@@ -7,11 +7,6 @@ function param(params: AppError["params"], key: string): string | undefined {
   return typeof value === "string" ? value : undefined;
 }
 
-/**
- * Dicionário pt-BR indexado por `internalCode` — fonte da verdade do texto
- * exibido no popup. O `message` em inglês vindo do back é só fallback/log,
- * nunca exibido diretamente quando há tradução aqui.
- */
 const INTERNAL_CODE_MESSAGES: Record<
   string,
   (error: AppError) => string | undefined
@@ -55,7 +50,6 @@ const ERROR_TYPE_FALLBACK: Record<string, string> = {
   SERVER_ERROR: "Algo deu errado. Tente novamente em instantes.",
 };
 
-/** Resolve o texto pt-BR para um `AppError` normalizado. Nunca retorna inglês do back. */
 export function getErrorMessage(error: AppError): string {
   const byCode = INTERNAL_CODE_MESSAGES[error.internalCode]?.(error);
   if (byCode) return byCode;

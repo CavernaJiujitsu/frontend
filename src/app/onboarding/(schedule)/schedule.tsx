@@ -38,8 +38,6 @@ function defaultDayId(year: number, monthIndex: number) {
   return `${year}-${month}-10`;
 }
 
-// TODO: substituir o mock pelo service de aulas (GET /classes?cavernaId=&date=)
-// quando o contrato do back estiver definido. Componentes já recebem props.
 export default function ScheduleScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{
@@ -74,7 +72,6 @@ export default function ScheduleScreen() {
 
   useEffect(() => {
     const requestId = ++classesRequestRef.current;
-    // Sem dia válido não há o que buscar; o id acima invalida respostas antigas.
     if (!selectedDay) return;
     const store = useLoadingStore.getState();
     store.show("schedule-classes");
@@ -110,9 +107,6 @@ export default function ScheduleScreen() {
     }
   };
 
-  // TODO: trocar o mock por `reportError(e)` no `catch` do POST de inscrição
-  // quando o endpoint real existir. Hoje simula um 409 do contrato v1
-  // para exercitar o ErrorToast (componente + auto-dismiss + botão fechar).
   const handleSelectClass = (classItem: ClassItem) => {
     void classItem;
     reportError(mockDuplicateSubscriptionError());

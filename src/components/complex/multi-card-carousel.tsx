@@ -1,5 +1,4 @@
-/* eslint-disable react-hooks/refs */
-import React, { useRef, useState } from "react";
+import React, { useState } from "react";
 import { Image, PanResponder, Pressable, Text, View } from "react-native";
 
 import { globalStyles } from "@/styles/global.styles";
@@ -34,7 +33,7 @@ export function MultiCardCarousel<U = void>({
   const [activeIndex, setActiveIndex] = useState(0);
   const isLastCard = activeIndex === cards.length - 1;
 
-  const panResponder = useRef(
+  const [panResponder] = useState(() =>
     PanResponder.create({
       onMoveShouldSetPanResponder: (_, gesture) => Math.abs(gesture.dx) > 20,
       onPanResponderRelease: (_, gesture) => {
@@ -45,7 +44,7 @@ export function MultiCardCarousel<U = void>({
         }
       },
     }),
-  ).current;
+  );
 
   return (
     <View style={globalStyles.container}>

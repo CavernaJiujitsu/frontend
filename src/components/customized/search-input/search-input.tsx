@@ -6,18 +6,12 @@ import { Colors } from "@/constants/theme";
 import { globalStyles } from "@/styles/global.styles";
 import { searchInputStyles as styles } from "./styles/search-input.styles";
 
-/**
- * Largura definida pela página que implementa o input.
- * Número = porcentagem (10–100). Variantes: "full" = 100%, "half" = 50%.
- */
 export type SearchInputWidth = number | "full" | "half";
 
 export type SearchInputProps = {
   value: string;
   onChangeText: (text: string) => void;
-  /** Placeholder/texto de ajuda exibido quando vazio. */
   placeholder?: string;
-  /** Ícone à esquerda (require local), mesmo padrão do IconDisplayer. */
   icon: ImageSourcePropType;
   width?: SearchInputWidth;
   onClear?: () => void;

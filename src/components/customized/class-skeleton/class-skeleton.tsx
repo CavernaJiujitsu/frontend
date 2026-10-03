@@ -9,11 +9,6 @@ import {
 
 const PAW_THUMB = 44;
 
-/**
- * Placeholder da lista de aulas enquanto a requisição roda (imagem 2 de
- * referência): linhas de barras + patinha estática, com brilho varrendo.
- * Burro — visibilidade via `useLoadingStore("schedule-classes")`.
- */
 export function ClassSkeleton({ rows = SKELETON_ROWS }: { rows?: number }) {
   const { width: windowWidth } = useWindowDimensions();
   const [sweep] = useState(() => new Animated.Value(0));

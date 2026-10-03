@@ -2,15 +2,7 @@ import { StyleSheet } from "react-native";
 
 import { BrandColors, Colors, Spacing } from "@/constants/theme";
 
-/**
- * Deltas específicos do WeekDayList.
- * Nenhum hex aqui — tudo vem de `@/constants/theme`.
- */
 export const weekDayListStyles = StyleSheet.create({
-  /**
-   * Altura travada na altura da célula: sem ela o FlatList horizontal
-   * estica e ocupa o espaço livre entre os dias e a lista de aulas.
-   */
   list: {
     height: 62,
     flexGrow: 0,

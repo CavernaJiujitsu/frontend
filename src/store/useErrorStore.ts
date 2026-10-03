@@ -4,9 +4,7 @@ import { DEFAULT_ERROR_DURATION_MS, getErrorMessage } from "@/constants/error-me
 import { normalizeApiError } from "@/utils/normalize-api-error";
 
 export type ErrorToastOptions = {
-  /** Tempo visível em ms. Padrão: 5000. */
   durationMs?: number;
-  /** Código estável do backend — permite popup customizável por tipo. */
   internalCode?: string;
 };
 
@@ -27,11 +25,6 @@ function clearDismissTimer() {
   }
 }
 
-/**
- * Gerenciador global do popup de erro. As telas capturam o erro lançado,
- * normalizam com `normalizeApiError` + `getErrorMessage` e chamam `show`.
- * O componente `ErrorToast` (montado no `_layout`) apenas observa `visible`.
- */
 export const useErrorStore = create<ErrorState>((set) => ({
   visible: false,
   message: null,
@@ -57,7 +50,6 @@ export const useErrorStore = create<ErrorState>((set) => ({
   },
 }));
 
-/** Atalho para telas: normaliza, traduz e exibe em uma chamada. */
 export function reportError(error: unknown, durationMs?: number): void {
   const normalized = normalizeApiError(error);
   useErrorStore.getState().show(getErrorMessage(normalized), {

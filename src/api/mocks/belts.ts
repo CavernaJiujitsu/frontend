@@ -1,18 +1,10 @@
-/**
- * Mock de UI das telas de faixa (select-belt / belt-info).
- * Espelha as opções exibidas nos chips/cards de faixa e o upload de certificado.
- * Será substituído pelo service real (`GET /belts` + `POST /certificates/upload`)
- * no futuro. Por enquanto mantém o fluxo navegável sem backend.
- */
 export type BeltMock = {
   id: string;
   name: string;
 };
 
-/** Tamanho máximo aceito para o certificado (5MB). */
 export const MAX_CERTIFICATE_SIZE_BYTES = 5 * 1024 * 1024;
 
-/** Latência simulada do upload do certificado. */
 export const CERTIFICATE_UPLOAD_DELAY_MS = 1_200;
 
 function wait(ms: number) {
@@ -37,10 +29,6 @@ export type CertificateMock = {
   mimeType?: string;
 };
 
-/**
- * Upload async com latência — espelha o futuro `POST /certificates/upload`.
- * Mantido como mock até o contrato do back estar definido.
- */
 export async function uploadCertificateMock(
   beltId: string,
   file: CertificateMock | null,

@@ -12,11 +12,6 @@ function toAxiosError(status: number, body: BackendError): AxiosError {
   );
 }
 
-/**
- * Simuladores de erro no formato do contrato v1 — temporários, só para
- * exercitar o `ErrorToast` (componente + auto-dismiss + botão fechar)
- * enquanto o backend real não existe.
- */
 export function mockDuplicateSubscriptionError(): AxiosError {
   return toAxiosError(409, {
     errorType: "DUPLICATE_RESOURCE",

@@ -1,12 +1,3 @@
-/**
- * Mock de UI da tela de escolha de aula (schedule).
- * Espelha as props de MonthSelector, WeekDayList e ClassCard.
- * Será substituído por `GET /classes?cavernaId=&date=` no futuro.
- *
- * As sementes são por dia do mês ("08", "10") para que qualquer mês
- * selecionado gere os 28/30/31 dias dinamicamente com aulas de exemplo.
- */
-
 import type { ClassItem, ScheduleDay, ScheduleMonth } from "@/types/schedule";
 
 export const DEFAULT_SCHEDULE_CAVERNA_ID = "caverna-mooca";
@@ -107,17 +98,12 @@ export function formatScheduleDate(date: Date) {
   return `${weekday}, ${date.getDate()} de ${month}`;
 }
 
-/** Latência simulada da busca de aulas (request pesada por caverna/dia). */
 export const SCHEDULE_CLASSES_DELAY_MS = 800;
 
 function wait(ms: number) {
   return new Promise<void>((resolve) => setTimeout(resolve, ms));
 }
 
-/**
- * Aulas de um dia para uma caverna.
- * A caverna vazia nunca tem horários (cenário do popup pending).
- */
 export function getClassesForDay(
   cavernaId: string,
   day: ScheduleDay,
@@ -131,10 +117,6 @@ export function getClassesForDay(
   }));
 }
 
-/**
- * Busca async com latência — espelha o futuro `GET /classes?cavernaId=&date=`.
- * A tela aciona `useLoadingStore.show("schedule-classes")` antes e `hide` no `finally`.
- */
 export async function fetchClassesForDay(
   cavernaId: string,
   day: ScheduleDay,
@@ -143,7 +125,6 @@ export async function fetchClassesForDay(
   return getClassesForDay(cavernaId, day);
 }
 
-/** A caverna possui ao menos um horário no mês? */
 export function hasAnyClassesInMonth(
   cavernaId: string,
   days: ScheduleDay[],

@@ -2,10 +2,6 @@ import { StyleSheet } from "react-native";
 
 import { BrandColors, Colors, Spacing } from "@/constants/theme";
 
-/**
- * Deltas específicos do MonthSelector (dropdown).
- * Base de superfície vem de `globalStyles`; nenhum hex aqui.
- */
 export const monthSelectorStyles = StyleSheet.create({
   trigger: {
     flexDirection: "row",

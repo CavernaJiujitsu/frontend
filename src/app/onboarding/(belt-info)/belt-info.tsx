@@ -18,9 +18,6 @@ function firstParam(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
 }
 
-// TODO: substituir o mock por `GET /belts` + `POST /certificates/upload`
-// quando o contrato do back estiver definido. Fluxo mantido navegável.
-// Rota: /onboarding/belt-info (grupo `belt-info` segue o padrão das demais telas).
 export default function BeltInfoScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{

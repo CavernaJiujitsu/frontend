@@ -2,10 +2,6 @@ import { StyleSheet } from "react-native";
 
 import { BrandColors, Colors, Spacing } from "@/constants/theme";
 
-/**
- * Deltas específicos do DocumentPicker.
- * Base vem de `globalStyles.card/input`. Nenhum hex aqui.
- */
 export const documentPickerStyles = StyleSheet.create({
   card: {
     width: "100%",

@@ -2,11 +2,6 @@ import { StyleSheet } from "react-native";
 
 import { Colors, Spacing } from "@/constants/theme";
 
-/**
- * Deltas específicos do SearchInput.
- * O componente compõe `globalStyles.input` (fundo/borda/raio/padding)
- * com este layout local. Nenhum hex aqui.
- */
 export const searchInputStyles = StyleSheet.create({
   searchLayout: {
     flexDirection: "row",

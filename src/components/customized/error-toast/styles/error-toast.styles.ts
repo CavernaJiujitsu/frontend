@@ -2,10 +2,6 @@ import { StyleSheet } from "react-native";
 
 import { BrandColors, Colors, Spacing } from "@/constants/theme";
 
-/**
- * Deltas do ErrorToast. Base de respiro continua no layout
- * (`globalStyles.screen`); aqui só composição interna do popup.
- */
 export const errorToastStyles = StyleSheet.create({
   wrapper: {
     position: "absolute",

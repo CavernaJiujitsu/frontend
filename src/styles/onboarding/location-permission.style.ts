@@ -22,7 +22,6 @@ export const styles = StyleSheet.create({
     height: "100%",
   },
 
-  // Subcaixa de texto: sem gutter de página (herda o respiro de globalStyles.screen).
   textContainer: {
     alignItems: "center",
     marginTop: 16,
@@ -54,7 +53,6 @@ export const styles = StyleSheet.create({
     marginTop: 10,
   },
 
-  // Subcaixa de ações: apenas o espaçamento interno entre os botões.
   actions: {
     width: "100%",
     alignItems: "center",

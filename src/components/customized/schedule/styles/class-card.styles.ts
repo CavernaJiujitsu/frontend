@@ -2,11 +2,6 @@ import { StyleSheet } from "react-native";
 
 import { BrandColors, Colors, Spacing } from "@/constants/theme";
 
-/**
- * Deltas específicos do ClassCard.
- * Compõe `globalStyles.card` (fundo/borda/raio) com este layout local.
- * Nenhum hex aqui — tudo vem de `@/constants/theme`.
- */
 export const classCardStyles = StyleSheet.create({
   cardLayout: {
     flexDirection: "column",
@@ -78,11 +73,6 @@ export const classCardStyles = StyleSheet.create({
     fontSize: 11,
     color: Colors.light.textSecondary,
   },
-  /**
-   * Desvio documentado do DefaultButton (minHeight 56, radius 8):
-   * ação secundária densa dentro de lista. Mantém alvo de toque
-   * mínimo acessível (minHeight 44) e tokens da marca.
-   */
   enrollButton: {
     minWidth: 104,
     minHeight: 44,

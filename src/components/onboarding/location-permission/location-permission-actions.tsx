@@ -14,8 +14,6 @@ export function LocationPermissionActions({
   handleRequestLocation,
   onSkip,
 }: LocationPermissionActionsProps) {
-  // Subcaixa: cuida apenas do espaçamento interno entre as ações.
-  // O respiro até a borda da página é responsabilidade de globalStyles.screen.
   return (
     <View style={styles.actions}>
       <DefaultButton

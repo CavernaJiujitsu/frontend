@@ -3,7 +3,6 @@ import { StyleSheet } from "react-native";
 import { BrandColors, Spacing } from "@/constants/theme";
 
 export const styles = StyleSheet.create({
-  // Subcaixa de conteúdo: sem gutter de página (herda o respiro de globalStyles.screen).
   content: {
     flex: 1,
     alignItems: "center",
@@ -66,7 +65,6 @@ export const styles = StyleSheet.create({
     opacity: 0,
     transform: [{ translateY: 8 }],
   },
-  // Subcaixa de ações: apenas o espaçamento interno entre os botões.
   actions: {
     gap: Spacing.three,
     width: "100%",

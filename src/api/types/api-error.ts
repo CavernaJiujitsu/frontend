@@ -1,10 +1,5 @@
 import { z } from "zod";
 
-/**
- * Contrato de erro v1 — o backend é dono e versiona `internalCode`
- * como breaking change. Todo 4xx/5xx retorna esse body, sem wrapper `{ data }`.
- */
-
 export const ErrorTypeSchema = z.enum([
   "VALIDATION",
   "DUPLICATE_RESOURCE",
@@ -58,11 +53,6 @@ export const BackendErrorSchema = z.object({
 
 export type BackendError = z.infer<typeof BackendErrorSchema>;
 
-/**
- * Erro normalizado e agnóstico usado pelo front.
- * `status` vem do protocolo HTTP (axios); o resto vem do body quando
- * ele respeita o contrato — com fallback para formatos legados.
- */
 export type AppError = {
   status?: number;
   errorType: string;
@@ -75,7 +65,6 @@ export type AppError = {
   fallbackMessage?: string;
 };
 
-/** Códigos iniciais congelados com o backend. Cobrem ~90% dos casos. */
 export const KNOWN_INTERNAL_CODES = [
   "VALIDATION_FAILED",
   "RESOURCE_NOT_FOUND",

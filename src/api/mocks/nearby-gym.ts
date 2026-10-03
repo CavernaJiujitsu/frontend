@@ -1,9 +1,3 @@
-/**
- * Mock de UI da tela de cavernas próximas.
- * Espelha as props do CardComponent (menos `onPress`).
- * Será substituído pelo service de nearby (geolocalização +
- * basicOperationsService.getPaginated) no futuro.
- */
 export type NearbyGymMock = {
   id: string;
   image: string;
@@ -12,7 +6,6 @@ export type NearbyGymMock = {
   subtitle: string;
 };
 
-/** Latência simulada da busca de cavernas (request pesada de nearby). */
 export const NEARBY_GYMS_DELAY_MS = 1_200;
 
 function wait(ms: number) {
@@ -57,10 +50,6 @@ export const nearbyGymMocks: NearbyGymMock[] = [
   },
 ];
 
-/**
- * Busca async com latência — espelha o futuro `GET /gyms/nearby`.
- * A tela aciona `useLoadingStore.show("nearby-gyms")` antes e `hide` no `finally`.
- */
 export async function fetchNearbyGyms(search: string): Promise<NearbyGymMock[]> {
   await wait(NEARBY_GYMS_DELAY_MS);
   const term = search.trim().toLowerCase();

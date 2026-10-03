@@ -4,11 +4,6 @@ import { Animated, Pressable, Text, View } from "react-native";
 import { useErrorStore } from "@/store/useErrorStore";
 import { errorToastStyles as styles } from "./styles/error-toast.styles";
 
-/**
- * Popup global de erro. Montado uma vez no `_layout`, acima do `Stack`.
- * Invisível até `useErrorStore.show()` ser chamado pela tela que capturou
- * o erro — some sozinho após o `durationMs` (padrão 5s) ou no X.
- */
 export function ErrorToast() {
   const visible = useErrorStore((state) => state.visible);
   const message = useErrorStore((state) => state.message);

@@ -15,9 +15,6 @@ import { nearbyGymStyles as styles } from "@/styles/onboarding/nearby-gym.styles
 
 const SEARCH_DEBOUNCE_MS = 350;
 
-// TODO: substituir o mock pelo service de nearby usando a localização do
-// cliente (useAppStore user.location.coords + basicOperationsService.getPaginated).
-// Contrato do back ainda indefinido. location === null (fluxo "pular") = busca manual.
 export default function NearByGym() {
   const router = useRouter();
   const [search, setSearch] = useState("");

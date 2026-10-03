@@ -8,18 +8,12 @@ import {
 } from "./styles/loading-spinner.styles";
 
 type LoadingSpinnerProps = {
-  /** Texto de apoio abaixo do selo. Ex.: "Buscando cavernas…". */
   label?: string;
-  /** Lado do quadrado do selo em px. A pata ocupa ~58% do anel. */
   size?: number;
 };
 
 const FULL_TURN = "360deg";
 
-/**
- * Selo de loading da marca: pata fixa ao centro, anel girando ao redor.
- * Burro — a tela dona da requisição controla visibilidade via `useLoadingStore`.
- */
 export function LoadingSpinner({
   label,
   size = DEFAULT_SPINNER_SIZE,
