@@ -1,16 +1,20 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Alert, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import type { CertificateMock } from "@/api/mocks/belts";
 import {
-  beltMocks,
-  uploadCertificateMock,
-  type CertificateMock,
-} from "@/api/mocks/belts";
+  declareBeltValidation,
+} from "@/api/services/belt-validations.service";
+import { listBelts, type Belt } from "@/api/services/belts.service";
+import { uploadCertificate } from "@/api/services/certificates.service";
+import { backendMessage } from "@/api/utils/backend-message";
 import { DefaultButton } from "@/components/customized/default-button";
 import { CertificatePicker } from "@/components/customized/document-picker/document-picker";
+import { toAbsoluteUrl } from "@/constants/api";
 import { BrandColors } from "@/constants/theme";
+import { useAppStore } from "@/store/useAppStore";
 import { globalStyles } from "@/styles/global.styles";
 import { beltInfoStyles as styles } from "@/styles/onboarding/belt-info.styles";
 
@@ -28,22 +32,67 @@ export default function BeltInfoScreen() {
     cavernaId: firstParam(params.cavernaId),
     cavernaTitle: firstParam(params.cavernaTitle),
   };
-  const [selectedBelt, setSelectedBelt] = useState<string>("blue");
+  const practitionerId = useAppStore((state) => state.user.practitionerId);
+  const setBeltValidationId = useAppStore(
+    (state) => state.setBeltValidationId,
+  );
+  const [belts, setBelts] = useState<Belt[]>([]);
+  const [selectedBelt, setSelectedBelt] = useState<string>("");
   const [selectedFile, setSelectedFile] = useState<CertificateMock | null>(
     null,
   );
+  const [isLoadingBelts, setIsLoadingBelts] = useState<boolean>(true);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isSuccess, setIsSuccess] = useState<boolean>(false);
+
+  useEffect(() => {
+    let active = true;
+    listBelts()
+      .then((result) => {
+        if (!active) return;
+        setBelts(result);
+        setSelectedBelt(
+          result.find((belt) => belt.name === "Azul")?.id ?? result[0]?.id ?? "",
+        );
+      })
+      .catch((err: unknown) => {
+        Alert.alert(
+          "Erro",
+          backendMessage(err, "Não foi possível carregar as faixas."),
+        );
+      })
+      .finally(() => {
+        if (active) setIsLoadingBelts(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const handleContinue = async () => {
     if (!selectedBelt) {
       Alert.alert("Atenção", "Selecione uma faixa para continuar.");
       return;
     }
+    if (!practitionerId) {
+      Alert.alert(
+        "Atenção",
+        "Sua conta não foi criada. Volte e crie sua conta novamente.",
+      );
+      return;
+    }
 
     setIsLoading(true);
     try {
-      await uploadCertificateMock(selectedBelt, selectedFile);
+      const uploaded = selectedFile
+        ? await uploadCertificate(selectedFile)
+        : undefined;
+      const validation = await declareBeltValidation({
+        practitionerId,
+        targetBeltId: selectedBelt,
+        ...(uploaded ? { certificateUrl: toAbsoluteUrl(uploaded.url) } : {}),
+      });
+      setBeltValidationId(validation.id);
       setIsLoading(false);
       setIsSuccess(true);
       setTimeout(() => {
@@ -52,11 +101,16 @@ export default function BeltInfoScreen() {
           params: cavernaParams,
         });
       }, 1500);
-    } catch {
+    } catch (err: unknown) {
       setIsLoading(false);
-      Alert.alert("Erro", "Não foi possível salvar os dados. Tente novamente.");
+      Alert.alert(
+        "Erro",
+        backendMessage(err, "Não foi possível salvar os dados. Tente novamente."),
+      );
     }
   };
+
+  const isBusy = isLoading || isSuccess;
 
   return (
     <SafeAreaView style={globalStyles.screen}>
@@ -80,7 +134,7 @@ export default function BeltInfoScreen() {
           </View>
 
           <View style={styles.beltsGrid}>
-            {beltMocks.map((belt) => {
+            {belts.map((belt) => {
               const isSelected = selectedBelt === belt.id;
               return (
                 <TouchableOpacity
@@ -88,7 +142,7 @@ export default function BeltInfoScreen() {
                   accessibilityRole="button"
                   activeOpacity={0.8}
                   onPress={() => setSelectedBelt(belt.id)}
-                  disabled={isLoading || isSuccess}
+                  disabled={isLoadingBelts || isBusy}
                   style={[
                     styles.beltChip,
                     isSelected && styles.selectedBeltChip,
@@ -110,7 +164,7 @@ export default function BeltInfoScreen() {
           <CertificatePicker
             value={selectedFile}
             onChange={setSelectedFile}
-            disabled={isLoading || isSuccess}
+            disabled={isLoadingBelts || isBusy}
           />
 
           <Text style={styles.infoText}>
@@ -132,7 +186,7 @@ export default function BeltInfoScreen() {
               isSuccess ? BrandColors.borderSecondary : BrandColors.secondary
             }
             action={handleContinue}
-            disabled={!selectedBelt || isLoading || isSuccess}
+            disabled={!selectedBelt || isLoadingBelts || isBusy}
           />
         </View>
       </View>

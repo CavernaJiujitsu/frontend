@@ -13,6 +13,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { DefaultButton } from "@/components/customized/default-button";
 import { BrandColors, Colors } from "@/constants/theme";
+import { createPractitioner } from "@/api/services/practitioners.service";
+import { backendMessage } from "@/api/utils/backend-message";
 import { useAppStore } from "@/store/useAppStore";
 import { globalStyles } from "@/styles/global.styles";
 import { styles } from "@/styles/onboarding/create-account.styles";
@@ -53,6 +55,7 @@ function validate(nome: string, email: string, senha: string): FieldErrors {
 export default function CreateAccountScreen() {
   const router = useRouter();
   const setProfile = useAppStore((state) => state.setProfile);
+  const setPractitionerId = useAppStore((state) => state.setPractitionerId);
 
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
@@ -62,7 +65,7 @@ export default function CreateAccountScreen() {
   const [loading, setLoading] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const fieldErrors = validate(nome, email, senha);
     setErrors(fieldErrors);
     setSubmitError(null);
@@ -71,13 +74,15 @@ export default function CreateAccountScreen() {
 
     setLoading(true);
     try {
+      const practitioner = await createPractitioner({
+        user: { name: nome.trim(), email: email.trim(), password: senha },
+      });
       setProfile({ nome: nome.trim(), email: email.trim() });
+      setPractitionerId(practitioner.id);
       router.replace("/onboarding/location-permission");
     } catch (err) {
       setSubmitError(
-        err instanceof Error
-          ? err.message
-          : "Não foi possível criar sua conta. Tente novamente.",
+        backendMessage(err, "Não foi possível criar sua conta. Tente novamente."),
       );
     } finally {
       setLoading(false);

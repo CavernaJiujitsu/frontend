@@ -1,10 +1,13 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
-import { Text, TouchableOpacity, View } from "react-native";
+import { Alert, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { DefaultButton } from "@/components/customized/default-button";
 import { BrandColors } from "@/constants/theme";
+import { declareBeltValidation } from "@/api/services/belt-validations.service";
+import { backendMessage } from "@/api/utils/backend-message";
+import { useAppStore } from "@/store/useAppStore";
 import { globalStyles } from "@/styles/global.styles";
 import { selectBeltStyles as styles } from "@/styles/onboarding/select-belt.styles";
 
@@ -25,18 +28,46 @@ export default function SelectBeltScreen() {
   const cavernaParams = { cavernaId, cavernaTitle };
   const [selectedOption, setSelectedOption] =
     useState<OptionType>("graduated");
+  const [isLoading, setIsLoading] = useState(false);
+  const practitionerId = useAppStore((state) => state.user.practitionerId);
+  const setBeltValidationId = useAppStore(
+    (state) => state.setBeltValidationId,
+  );
 
-  const handleContinue = () => {
+  const goToSchedule = () => {
+    router.push({
+      pathname: "/onboarding/schedule",
+      params: cavernaParams,
+    });
+  };
+
+  const handleContinue = async () => {
     if (selectedOption === "graduated") {
       router.push({
         pathname: "/onboarding/belt-info",
         params: cavernaParams,
       });
-    } else {
-      router.push({
-        pathname: "/onboarding/schedule",
-        params: cavernaParams,
-      });
+      return;
+    }
+    if (!practitionerId) {
+      Alert.alert(
+        "Atenção",
+        "Sua conta não foi criada. Volte e crie sua conta novamente.",
+      );
+      return;
+    }
+    setIsLoading(true);
+    try {
+      const validation = await declareBeltValidation({ practitionerId });
+      setBeltValidationId(validation.id);
+      goToSchedule();
+    } catch (err: unknown) {
+      Alert.alert(
+        "Erro",
+        backendMessage(err, "Não foi possível salvar os dados. Tente novamente."),
+      );
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -101,10 +132,10 @@ export default function SelectBeltScreen() {
 
         <View style={styles.actions}>
           <DefaultButton
-            label="Continuar"
+            label={isLoading ? "Salvando..." : "Continuar"}
             color={BrandColors.secondary}
             action={handleContinue}
-            disabled={!selectedOption}
+            disabled={!selectedOption || isLoading}
           />
         </View>
       </View>
