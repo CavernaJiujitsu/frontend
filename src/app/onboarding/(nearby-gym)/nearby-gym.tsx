@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from "react";
-import { FlatList, Text, View } from "react-native";
+import { Alert, FlatList, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 
 import { magnifierCaverna } from "@/assets/images";
-import { fetchNearbyGyms, type NearbyGymMock } from "@/api/mocks/nearby-gym";
+import type { NearbyGymMock } from "@/api/mocks/nearby-gym";
+import { listCaves, type Cave } from "@/api/services/caves.service";
+import { backendMessage } from "@/api/utils/backend-message";
 import CardComponent from "@/components/complex/card-component";
 import { LoadingSpinner } from "@/components/customized/loading-spinner/loading-spinner";
 import { SearchInput } from "@/components/customized/search-input/search-input";
@@ -12,8 +14,41 @@ import { useAppStore } from "@/store/useAppStore";
 import { isLoadingKey, useLoadingStore } from "@/store/useLoadingStore";
 import { globalStyles } from "@/styles/global.styles";
 import { nearbyGymStyles as styles } from "@/styles/onboarding/nearby-gym.styles";
+import { formatDistanceKm, haversineKm } from "@/utils/distance";
 
 const SEARCH_DEBOUNCE_MS = 350;
+
+type UserLocation = { latitude: number; longitude: number } | null;
+
+function toGymCard(cave: Cave, location: UserLocation): NearbyGymMock {
+  const units = cave.units ?? [];
+  let nearest = units[0];
+  let nearestKm: number | null = null;
+  if (location) {
+    for (const unit of units) {
+      const km = haversineKm(location, {
+        latitude: Number(unit.latitude),
+        longitude: Number(unit.longitude),
+      });
+      if (nearestKm === null || km < nearestKm) {
+        nearestKm = km;
+        nearest = unit;
+      }
+    }
+  }
+  const where = nearest?.neighborhood ?? nearest?.name ?? "";
+  const subtitle =
+    nearestKm !== null
+      ? `${formatDistanceKm(nearestKm)}${where ? ` • ${where}` : ""}`
+      : (where ?? cave.name);
+  return {
+    id: cave.id,
+    image: `https://picsum.photos/seed/${cave.id}/200/200`,
+    title: cave.name,
+    tags: units.length > 1 ? [`${units.length} unidades`] : [],
+    subtitle,
+  };
+}
 
 export default function NearByGym() {
   const router = useRouter();
@@ -21,17 +56,32 @@ export default function NearByGym() {
   const [gyms, setGyms] = useState<NearbyGymMock[]>([]);
   const isLoading = useLoadingStore(isLoadingKey("nearby-gyms"));
   const requestRef = useRef(0);
-  const location = useAppStore((state) => state.user.location);
-  void location;
 
   useEffect(() => {
     const timer = setTimeout(() => {
       const requestId = ++requestRef.current;
+      const location = useAppStore.getState().user.location;
+      const userLocation: UserLocation = location
+        ? {
+            latitude: location.coords.latitude,
+            longitude: location.coords.longitude,
+          }
+        : null;
       const store = useLoadingStore.getState();
       store.show("nearby-gyms");
-      void fetchNearbyGyms(search)
-        .then((result) => {
-          if (requestRef.current === requestId) setGyms(result);
+      void listCaves(search)
+        .then((caves) => {
+          if (requestRef.current === requestId) {
+            setGyms(caves.map((cave) => toGymCard(cave, userLocation)));
+          }
+        })
+        .catch((err: unknown) => {
+          if (requestRef.current === requestId) {
+            Alert.alert(
+              "Erro",
+              backendMessage(err, "Não foi possível buscar cavernas."),
+            );
+          }
         })
         .finally(() => store.hide("nearby-gyms"));
     }, SEARCH_DEBOUNCE_MS);

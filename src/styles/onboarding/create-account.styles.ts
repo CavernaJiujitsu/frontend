@@ -2,8 +2,6 @@ import { StyleSheet } from "react-native";
 
 import { BrandColors, Colors, Spacing } from "@/constants/theme";
 
-const danger = "#FF6B6B";
-
 export const styles = StyleSheet.create({
   content: {
     flex: 1,
@@ -22,41 +20,6 @@ export const styles = StyleSheet.create({
     fontSize: 13,
     color: Colors.light.textSecondary,
   },
-  fieldGroup: {
-    marginBottom: Spacing.three,
-  },
-  fieldLabel: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: Colors.light.textSecondary,
-    marginBottom: Spacing.two,
-    letterSpacing: 0.5,
-  },
-  inputWrap: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    backgroundColor: Colors.light.backgroundElement,
-    borderRadius: 8,
-    borderWidth: 1.5,
-    borderColor: BrandColors.border,
-    paddingHorizontal: Spacing.three,
-    minHeight: 56,
-  },
-  inputWrapError: {
-    borderColor: danger,
-  },
-  input: {
-    flex: 1,
-    fontSize: 14,
-    color: Colors.light.text,
-    paddingVertical: Spacing.two,
-  },
-  fieldError: {
-    fontSize: 11,
-    color: danger,
-    marginTop: Spacing.one,
-  },
   eyeToggle: {
     fontSize: 12,
     fontWeight: "700",
@@ -71,7 +34,7 @@ export const styles = StyleSheet.create({
   },
   submitError: {
     fontSize: 12,
-    color: danger,
+    color: BrandColors.danger,
     marginBottom: Spacing.two,
     textAlign: "center",
   },

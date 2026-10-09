@@ -6,13 +6,13 @@ import {
   Pressable,
   ScrollView,
   Text,
-  TextInput,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { DefaultButton } from "@/components/customized/default-button";
-import { BrandColors, Colors } from "@/constants/theme";
+import { FormField } from "@/components/customized/form-field/form-field";
+import { BrandColors } from "@/constants/theme";
 import { createPractitioner } from "@/api/services/practitioners.service";
 import { backendMessage } from "@/api/utils/backend-message";
 import { useAppStore } from "@/store/useAppStore";
@@ -113,7 +113,7 @@ export default function CreateAccountScreen() {
             </Text>
           </View>
 
-          <Field
+          <FormField
             label="NOME COMPLETO"
             placeholder="Seu nome"
             value={nome}
@@ -122,7 +122,7 @@ export default function CreateAccountScreen() {
             autoCapitalize="words"
           />
 
-          <Field
+          <FormField
             label="E-MAIL"
             placeholder="seuemail@exemplo.com"
             value={email}
@@ -132,7 +132,7 @@ export default function CreateAccountScreen() {
             autoCapitalize="none"
           />
 
-          <Field
+          <FormField
             label="SENHA"
             placeholder="••••••••"
             value={senha}
@@ -186,49 +186,5 @@ export default function CreateAccountScreen() {
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
-  );
-}
-
-type FieldProps = {
-  label: string;
-  placeholder: string;
-  value: string;
-  onChangeText: (text: string) => void;
-  error?: string;
-  secureTextEntry?: boolean;
-  keyboardType?: "default" | "email-address";
-  autoCapitalize?: "none" | "words" | "sentences" | "characters";
-  rightAction?: React.ReactNode;
-};
-
-function Field({
-  label,
-  placeholder,
-  value,
-  onChangeText,
-  error,
-  secureTextEntry,
-  keyboardType = "default",
-  autoCapitalize = "sentences",
-  rightAction,
-}: FieldProps) {
-  return (
-    <View style={styles.fieldGroup}>
-      <Text style={styles.fieldLabel}>{label}</Text>
-      <View style={[styles.inputWrap, error && styles.inputWrapError]}>
-        <TextInput
-          style={styles.input}
-          placeholder={placeholder}
-          placeholderTextColor={Colors.light.textSecondary}
-          value={value}
-          onChangeText={onChangeText}
-          secureTextEntry={secureTextEntry}
-          keyboardType={keyboardType}
-          autoCapitalize={autoCapitalize}
-        />
-        {rightAction}
-      </View>
-      {error && <Text style={styles.fieldError}>{error}</Text>}
-    </View>
   );
 }

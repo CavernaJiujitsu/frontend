@@ -26,6 +26,7 @@ export const BrandColors = {
   border: "#2A2D37",
   borderSecondary: "#00E5C9",
   onPrimary: "#FFFFFF",
+  danger: "#FF6B6B",
 } as const;
 
 export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
