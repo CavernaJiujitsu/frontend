@@ -18,6 +18,13 @@ export type Cave = {
   units: CaveUnit[];
 };
 
+export async function getCave(id: string): Promise<Cave> {
+  const { data } = await apiClient.get<ApiEnvelope<Cave>>(
+    `${routes.caves}/${id}`,
+  );
+  return unwrap(data);
+}
+
 export async function listCaves(search?: string): Promise<Cave[]> {
   const { data } = await apiClient.get<ApiEnvelope<PaginatedResponse<Cave>>>(
     routes.caves,

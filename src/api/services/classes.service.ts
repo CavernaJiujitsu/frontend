@@ -1,6 +1,7 @@
 import { apiClient } from "@/api/bootstrap/axios-bootstrap";
 import { routes } from "@/api/endpoints/routes";
 import { unwrap, type ApiEnvelope } from "@/api/types/envelope";
+import type { PaginatedResponse } from "@/api/types/pagination";
 
 export type ClassEnrollment = {
   id: string;
@@ -10,6 +11,46 @@ export type ClassEnrollment = {
 export type EnrollClassPayload = {
   practitionerId: string;
 };
+
+export type ClassBeltItem = {
+  belt?: { id: string; name: string };
+};
+
+export type BackendClass = {
+  id: string;
+  startsAt: string;
+  endsAt: string;
+  capacity: number;
+  type?: string;
+  teacher?: { id: string; user?: { name?: string }; name?: string };
+  belts?: { belt?: { id: string; name: string } }[];
+};
+
+export type ListClassesParams = {
+  academyUnitId?: string;
+  type?: string;
+  page?: number;
+  limit?: number;
+};
+
+export async function listClasses(
+  params: ListClassesParams = {},
+): Promise<BackendClass[]> {
+  const { data } = await apiClient.get<ApiEnvelope<PaginatedResponse<BackendClass>>>(
+    routes.classes,
+    {
+      params: {
+        page: params.page ?? 1,
+        limit: params.limit ?? 100,
+        ...(params.academyUnitId
+          ? { academyUnitId: params.academyUnitId }
+          : {}),
+        ...(params.type ? { type: params.type } : {}),
+      },
+    },
+  );
+  return unwrap(data).data;
+}
 
 export async function enrollClass(
   classId: string,

@@ -4,15 +4,17 @@ import { Alert, FlatList, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import {
-  DEFAULT_SCHEDULE_CAVERNA_ID,
-  DEFAULT_SCHEDULE_CAVERNA_TITLE,
-  fetchClassesForDay,
   formatScheduleDate,
   getMonthDays,
   getScheduleMonths,
-  hasAnyClassesInMonth,
 } from "@/api/mocks/schedule";
-import { enrollClass } from "@/api/services/classes.service";
+import { getCave } from "@/api/services/caves.service";
+import {
+  listClasses,
+  enrollClass,
+  type BackendClass,
+} from "@/api/services/classes.service";
+import { backendMessage } from "@/api/utils/backend-message";
 import { ClassSkeleton } from "@/components/customized/class-skeleton/class-skeleton";
 import { ClassCard } from "@/components/customized/schedule/class-card";
 import { MonthSelector } from "@/components/customized/schedule/month-selector";
@@ -23,6 +25,9 @@ import { isLoadingKey, useLoadingStore } from "@/store/useLoadingStore";
 import { globalStyles } from "@/styles/global.styles";
 import { scheduleStyles as styles } from "@/styles/onboarding/schedule.styles";
 import type { ClassItem, ScheduleMonth } from "@/types/schedule";
+
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function firstParam(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
@@ -39,15 +44,49 @@ function defaultDayId(year: number, monthIndex: number) {
   return `${year}-${month}-10`;
 }
 
+function toDateId(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function toTime(date: Date) {
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  return `${hours}:${minutes}`;
+}
+
+function toClassItem(cls: BackendClass): ClassItem {
+  const startsAt = new Date(cls.startsAt);
+  const endsAt = new Date(cls.endsAt);
+  const belts = (cls.belts ?? [])
+    .map((item) => item?.belt?.name)
+    .filter((name): name is string => typeof name === "string" && name.length > 0);
+  return {
+    id: cls.id,
+    dateId: toDateId(startsAt),
+    startTime: toTime(startsAt),
+    endTime: toTime(endsAt),
+    professor: cls.teacher?.user?.name ?? cls.teacher?.name ?? "Professor",
+    enrolled: 0,
+    capacity: cls.capacity,
+    tags:
+      belts.length > 0
+        ? belts.map((label) => ({ label }))
+        : [{ label: "Todos" }],
+  };
+}
+
 export default function ScheduleScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{
     cavernaId?: string | string[];
     cavernaTitle?: string | string[];
   }>();
-  const cavernaId = firstParam(params.cavernaId) ?? DEFAULT_SCHEDULE_CAVERNA_ID;
-  const cavernaTitle =
-    firstParam(params.cavernaTitle) ?? DEFAULT_SCHEDULE_CAVERNA_TITLE;
+  const cavernaId = firstParam(params.cavernaId);
+  const cavernaTitle = firstParam(params.cavernaTitle) ?? "Sua caverna";
+  const isCavernaIdValid = cavernaId !== undefined && UUID_RE.test(cavernaId);
 
   const today = useMemo(() => new Date(), []);
   const [year] = useState(today.getFullYear());
@@ -67,35 +106,76 @@ export default function ScheduleScreen() {
     () => days.find((day) => day.id === selectedDayId),
     [days, selectedDayId],
   );
-  const [classes, setClasses] = useState<ClassItem[]>([]);
+  const [allClasses, setAllClasses] = useState<ClassItem[]>([]);
   const practitionerId = useAppStore((state) => state.user.practitionerId);
   const enrollingRef = useRef(false);
   const isClassesLoading = useLoadingStore(isLoadingKey("schedule-classes"));
   const classesRequestRef = useRef(0);
 
   useEffect(() => {
+    if (!cavernaId || !isCavernaIdValid) {
+      Alert.alert(
+        "Atenção",
+        "Escolha uma caverna válida para ver os horários.",
+        [
+          {
+            text: "OK",
+            onPress: () => router.replace("/onboarding/nearby-gym"),
+          },
+        ],
+      );
+      return;
+    }
     const requestId = ++classesRequestRef.current;
-    if (!selectedDay) return;
     const store = useLoadingStore.getState();
     store.show("schedule-classes");
-    void fetchClassesForDay(cavernaId, selectedDay)
-      .then((result) => {
-        if (classesRequestRef.current === requestId) setClasses(result);
-      })
-      .finally(() => store.hide("schedule-classes"));
-  }, [cavernaId, selectedDay]);
-  const hasAnyClasses = useMemo(
-    () => hasAnyClassesInMonth(cavernaId, days),
-    [cavernaId, days],
-  );
+    void (async () => {
+      try {
+        const cave = await getCave(cavernaId);
+        const units = cave.units ?? [];
+        if (units.length === 0) {
+          if (classesRequestRef.current === requestId) setAllClasses([]);
+          return;
+        }
+        const results = await Promise.all(
+          units.map((unit) => listClasses({ academyUnitId: unit.id })),
+        );
+        if (classesRequestRef.current === requestId) {
+          setAllClasses(results.flat().map(toClassItem));
+        }
+      } catch (err: unknown) {
+        if (classesRequestRef.current === requestId) {
+          setAllClasses([]);
+          Alert.alert(
+            "Erro",
+            backendMessage(err, "Não foi possível carregar as aulas."),
+          );
+        }
+      } finally {
+        store.hide("schedule-classes");
+      }
+    })();
+  }, [cavernaId, isCavernaIdValid, router]);
+
+  const classes = useMemo(() => {
+    if (!selectedDay) return [];
+    return allClasses.filter((classItem) => classItem.dateId === selectedDay.id);
+  }, [allClasses, selectedDay]);
+
+  const hasAnyClasses = useMemo(() => {
+    if (allClasses.length === 0) return false;
+    const dayIds = new Set(days.map((day) => day.id));
+    return allClasses.some((classItem) => dayIds.has(classItem.dateId));
+  }, [allClasses, days]);
 
   const alertedCavernaRef = useRef<string | null>(null);
   useEffect(() => {
-    if (hasAnyClasses) return;
+    if (!cavernaId || !isCavernaIdValid) return;
+    if (isClassesLoading || hasAnyClasses) return;
     if (alertedCavernaRef.current === cavernaId) return;
     alertedCavernaRef.current = cavernaId;
     Alert.alert(cavernaTitle, "Essa caverna não possui horários disponíveis");
-  }, [cavernaId, cavernaTitle, hasAnyClasses]);
+  }, [cavernaId, cavernaTitle, hasAnyClasses, isCavernaIdValid, isClassesLoading]);
 
   const handleSelectMonth = (month: ScheduleMonth) => {
     setSelectedMonthIndex(month.index);
