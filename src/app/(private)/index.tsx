@@ -5,7 +5,7 @@ import { useRouter } from "expo-router";
 import { inicioMock } from "@/api/mocks/inicio";
 import { globalStyles } from "@/styles/global.styles";
 import { inicioStyles as styles } from "@/styles/private/inicio.styles";
-import { InicioScreen } from "./(components)/inicio-screen";
+import { InicioScreen } from "@/components/customized/inicio/inicio-screen";
 
 export default function Inicio() {
   const router = useRouter();

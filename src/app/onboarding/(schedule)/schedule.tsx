@@ -3,7 +3,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Alert, FlatList, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { mockDuplicateSubscriptionError } from "@/api/mocks/backend-errors";
 import {
   DEFAULT_SCHEDULE_CAVERNA_ID,
   DEFAULT_SCHEDULE_CAVERNA_TITLE,
@@ -13,10 +12,12 @@ import {
   getScheduleMonths,
   hasAnyClassesInMonth,
 } from "@/api/mocks/schedule";
+import { enrollClass } from "@/api/services/classes.service";
 import { ClassSkeleton } from "@/components/customized/class-skeleton/class-skeleton";
 import { ClassCard } from "@/components/customized/schedule/class-card";
 import { MonthSelector } from "@/components/customized/schedule/month-selector";
 import { WeekDayList } from "@/components/customized/schedule/week-day-list";
+import { useAppStore } from "@/store/useAppStore";
 import { reportError } from "@/store/useErrorStore";
 import { isLoadingKey, useLoadingStore } from "@/store/useLoadingStore";
 import { globalStyles } from "@/styles/global.styles";
@@ -67,6 +68,8 @@ export default function ScheduleScreen() {
     [days, selectedDayId],
   );
   const [classes, setClasses] = useState<ClassItem[]>([]);
+  const practitionerId = useAppStore((state) => state.user.practitionerId);
+  const enrollingRef = useRef(false);
   const isClassesLoading = useLoadingStore(isLoadingKey("schedule-classes"));
   const classesRequestRef = useRef(0);
 
@@ -107,9 +110,24 @@ export default function ScheduleScreen() {
     }
   };
 
-  const handleSelectClass = (classItem: ClassItem) => {
-    void classItem;
-    reportError(mockDuplicateSubscriptionError());
+  const handleSelectClass = async (classItem: ClassItem) => {
+    if (enrollingRef.current) return;
+    if (!practitionerId) {
+      Alert.alert(
+        "Atenção",
+        "Sua conta não foi criada. Volte e crie sua conta novamente.",
+      );
+      return;
+    }
+    enrollingRef.current = true;
+    try {
+      await enrollClass(classItem.id, { practitionerId });
+      router.replace("/(private)");
+    } catch (err: unknown) {
+      reportError(err);
+    } finally {
+      enrollingRef.current = false;
+    }
   };
 
   return (

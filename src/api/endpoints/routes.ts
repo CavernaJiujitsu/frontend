@@ -6,4 +6,5 @@ export const routes = {
   certificatesUpload: `${API_PREFIX}/certificates/upload`,
   beltValidations: `${API_PREFIX}/belt-validations`,
   caves: `${API_PREFIX}/caves`,
+  classes: `${API_PREFIX}/classes`,
 } as const;
