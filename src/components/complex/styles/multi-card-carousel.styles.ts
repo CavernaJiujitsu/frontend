@@ -1,6 +1,6 @@
 import { StyleSheet } from "react-native";
 
-import { BrandColors } from "@/constants/theme";
+import { BrandColors, Colors } from "@/constants/theme";
 
 export const styles = StyleSheet.create({
   content: {
@@ -11,7 +11,7 @@ export const styles = StyleSheet.create({
   card: {
     width: "100%",
     height: 350,
-    backgroundColor: "#1E2837",
+    backgroundColor: Colors.light.backgroundElement,
     borderRadius: 24,
     alignItems: "center",
     justifyContent: "center",
@@ -24,14 +24,14 @@ export const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: "700",
-    color: "#F3F4F6",
+    color: Colors.light.text,
     textAlign: "center",
     lineHeight: 34,
     marginBottom: 12,
   },
   description: {
     fontSize: 15,
-    color: "#9CA3AF",
+    color: Colors.light.textSecondary,
     textAlign: "center",
     lineHeight: 22,
     marginBottom: 16,
@@ -48,7 +48,7 @@ export const styles = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 999,
-    backgroundColor: "#3A404A",
+    backgroundColor: Colors.light.backgroundSelected,
   },
   dotActive: {
     backgroundColor: BrandColors.secondary,
@@ -62,7 +62,7 @@ export const styles = StyleSheet.create({
   },
   skipText: {
     fontSize: 18,
-    color: "#F3F4F6",
+    color: Colors.light.text,
     fontWeight: "700",
     textAlign: "center",
   },
@@ -76,7 +76,7 @@ export const styles = StyleSheet.create({
     justifyContent: "center",
   },
   nextButtonText: {
-    color: "#FFFFFF",
+    color: BrandColors.onPrimary,
     fontSize: 18,
     fontWeight: "700",
   },

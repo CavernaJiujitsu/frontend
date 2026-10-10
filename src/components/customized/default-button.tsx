@@ -14,7 +14,7 @@ export function DefaultButton({
   label,
   color,
   action,
-  textColor = "#FFFFFF",
+  textColor = BrandColors.onPrimary,
   disabled = false,
 }: DefaultButtonProps) {
   return (

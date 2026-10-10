@@ -16,7 +16,7 @@ export const inicioStyles = StyleSheet.create({
     marginBottom: Spacing.two,
   },
   greeting: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: "800",
     color: Colors.light.text,
     textAlign: "left",

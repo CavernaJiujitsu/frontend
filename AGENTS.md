@@ -28,6 +28,10 @@ Run lint and typecheck before declaring any task done.
 - Use **Expo Router** for all navigation. Routes live in `src/app/` — every file there is a screen, `_layout.tsx` files define navigators. Keep non-route code (components, hooks, utils) outside `src/app/`.
 - Import `Link`, `router`, and `useLocalSearchParams` from `expo-router`.
 - Docs: https://docs.expo.dev/router/introduction.md
+- Private area menu: custom `BottomNavbar` (`src/components/bottom-navbar/`) with
+  `ScreenLayout` (`src/components/screen-layout/`), one real route per tab
+  (`/inicio`, `/trilha`, `/cavernas`, `/perfil`). Tab switch: always
+  `router.replace`, never `push`. Full standard: `docs/bottom-menu/prd.md`.
 
 ## Building with EAS
 
@@ -35,6 +39,14 @@ Use EAS to build, sign, and submit the app in the cloud (`eas build`, `eas submi
 Docs: https://docs.expo.dev/eas/index.md
 
 ## Rules
+
+- Backend is the source of truth for the API contract (route names, query params,
+  body, enums, error codes). Before creating or changing anything in
+  `src/api/services/`, read the matching DTO + controller in
+  `backend/src/<resource>/` and mirror the exact names (e.g. `caveUnitId`, never
+  `academyUnitId`). On any mismatch, fix the frontend — never add compat aliases
+  to the backend without explicit approval. Full standard: `docs/api-contract/prd.md`.
+  Error format: `docs/backend-error-contract.md`.
 
 - If `ios/` and `android/` directories do not exist, they are generated (Continuous Native Generation). Never create or edit them by hand — configure native behavior in `app.json` and config plugins.
 - Expo Go only includes its bundled native modules. After adding a library with native code, the app needs a development build: `npx expo run:ios|android` locally, or `eas build --profile development`.

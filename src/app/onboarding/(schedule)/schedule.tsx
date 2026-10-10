@@ -108,7 +108,7 @@ export default function ScheduleScreen() {
   );
   const [allClasses, setAllClasses] = useState<ClassItem[]>([]);
   const practitionerId = useAppStore((state) => state.user.practitionerId);
-  const enrollingRef = useRef(false);
+  const [enrollingId, setEnrollingId] = useState<string | null>(null);
   const isClassesLoading = useLoadingStore(isLoadingKey("schedule-classes"));
   const classesRequestRef = useRef(0);
 
@@ -138,7 +138,7 @@ export default function ScheduleScreen() {
           return;
         }
         const results = await Promise.all(
-          units.map((unit) => listClasses({ academyUnitId: unit.id })),
+          units.map((unit) => listClasses({ caveUnitId: unit.id })),
         );
         if (classesRequestRef.current === requestId) {
           setAllClasses(results.flat().map(toClassItem));
@@ -191,7 +191,7 @@ export default function ScheduleScreen() {
   };
 
   const handleSelectClass = async (classItem: ClassItem) => {
-    if (enrollingRef.current) return;
+    if (enrollingId !== null) return;
     if (!practitionerId) {
       Alert.alert(
         "Atenção",
@@ -199,14 +199,14 @@ export default function ScheduleScreen() {
       );
       return;
     }
-    enrollingRef.current = true;
+    setEnrollingId(classItem.id);
     try {
       await enrollClass(classItem.id, { practitionerId });
-      router.replace("/(private)");
+      router.replace("/inicio");
     } catch (err: unknown) {
       reportError(err);
     } finally {
-      enrollingRef.current = false;
+      setEnrollingId(null);
     }
   };
 
@@ -262,7 +262,11 @@ export default function ScheduleScreen() {
             style={styles.list}
             contentContainerStyle={styles.listContent}
             renderItem={({ item }) => (
-              <ClassCard classItem={item} onPress={handleSelectClass} />
+              <ClassCard
+                classItem={item}
+                onPress={handleSelectClass}
+                loading={enrollingId === item.id}
+              />
             )}
             ListEmptyComponent={
               <View style={styles.emptyContainer}>

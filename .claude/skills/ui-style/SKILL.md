@@ -48,7 +48,7 @@ Use the shared tokens from `@/constants/theme`; do not introduce one-off brand h
 
 - List/search screens open with a page header above the content: title `24/800` in `Colors.light.text`, subtitle `14` in `Colors.light.textSecondary`, both `textAlign: "left"`.
 - Mark the title with `accessibilityRole="header"` and keep `lineHeight: 20` on the subtitle.
-- Style the header locally in the screen's `src/styles/<group>/<screen>.styles.ts` (`header`, `title`, `subtitle` with `gap: Spacing.one`). Do not reuse `globalStyles.title`/`globalStyles.subtitle` — they are centered and the global `title` color is not readable on the dark background.
+- Style the header locally in the screen's `src/styles/<group>/<screen>.styles.ts` (`header`, `title`, `subtitle` with `gap: Spacing.one`). Do not reuse `globalStyles.title`/`globalStyles.subtitle` — they are centered and the global `title` color is not readable on the dark background. Exception: the `(private)` tab screens share the header pattern from `src/styles/private/inicio.styles.ts` (`header`, `greeting 24/800`, `greetingSub`) so the four tabs look identical.
 - Keep the header fixed above the `FlatList`/`ScrollView` so the page title and any search input stay visible while the list scrolls.
 - Buttons and inputs use `caverna`/brand wording in copy (e.g. search placeholder `Buscar caverna...`).
 
@@ -56,13 +56,17 @@ Use the shared tokens from `@/constants/theme`; do not introduce one-off brand h
 
 The big box owns the space; the inner boxes own their content.
 
-- The outer box is the layout (`globalStyles.screen`, wrapped in `SafeAreaView`). It owns the breathing room between the page edge and the content.
+- The outer box is the layout: `ScreenLayout` (`src/components/screen-layout/`,
+  a `SafeAreaView` whose content composes `globalStyles.screen`). It owns the
+  breathing room between the page edge and the content. Screens must not wrap
+  themselves in another `SafeAreaView` or re-apply page padding.
 - Inner boxes (screens, sub-components, `globalStyles.container`) only handle their own internal content and gaps.
 - If a screen has to think about "where I am placed", the responsibility is on the wrong layer — fix the layout box, not the screen.
-- `PageInset` from `@/constants/theme` is the single source of that breathing room: `horizontal` 24, `vertical` 8. It is applied only in `globalStyles.screen`.
-- Never repeat page-level `paddingHorizontal`/`paddingVertical`/`paddingBottom` inside screens or sub-components. Use `gap`, `marginBottom`, `maxWidth` and `alignSelf` for internal composition instead.
+- `PageInset` from `@/constants/theme` is the single source of that breathing room: `horizontal` 24, `vertical` 8. It is applied only in `globalStyles.screen` (consumed by `ScreenLayout`).
+- Never repeat page-level `paddingHorizontal`/`paddingVertical` inside screens or sub-components. Use `gap`, `marginBottom`, `maxWidth` and `alignSelf` for internal composition instead.
+- Exception: `paddingBottom` is allowed **only** on a scrollable `contentContainerStyle` (e.g. `FlatList` `listContent`), and only as clearance under floating overlays (`CheckinFab`) or the bottom nav — never as page breathing room.
 - `SafeAreaView` from `react-native-safe-area-context` handles device insets; do not recompute `insets.bottom` manually in a sub-component.
-- Persistent bottom UI (tab bar, `BottomTabInset`) belongs to the layout box, not to the screen's action block.
+- Persistent bottom UI (`BottomNavbar`, `src/components/bottom-navbar/`) belongs to the layout box, not to the screen's action block. `ScreenLayout` yields the bottom safe edge when `bottomNav` is present (`edges={["top"]}`), so the navbar itself applies `useSafeAreaInsets().bottom` — that is the one sanctioned manual inset. Overlays above the navbar (e.g. `CheckinFab` in `(private)/_layout.tsx`) offset with `insets.bottom + BOTTOM_NAVBAR_BASE_HEIGHT + 16`.
 
 ## Layout
 

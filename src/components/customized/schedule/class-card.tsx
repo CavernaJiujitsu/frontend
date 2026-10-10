@@ -7,15 +7,27 @@ import { classCardStyles as styles } from "./styles/class-card.styles";
 export type ClassCardProps = {
   classItem: ClassItem;
   onPress: (classItem: ClassItem) => void;
+  loading?: boolean;
   testID?: string;
 };
 
-export function ClassCard({ classItem, onPress, testID }: ClassCardProps) {
+export function ClassCard({
+  classItem,
+  onPress,
+  loading = false,
+  testID,
+}: ClassCardProps) {
   const { startTime, endTime, professor, enrolled, capacity, tags } = classItem;
   const isEnrolled = classItem.isEnrolled === true;
   const isFull = enrolled >= capacity;
-  const isDisabled = isFull || isEnrolled;
-  const actionLabel = isEnrolled ? "Inscrito" : isFull ? "Lotado" : "Inscrever";
+  const isDisabled = isFull || isEnrolled || loading;
+  const actionLabel = loading
+    ? "Inscrevendo…"
+    : isEnrolled
+      ? "Inscrito"
+      : isFull
+        ? "Lotado"
+        : "Inscrever";
 
   return (
     <View
@@ -65,7 +77,7 @@ export function ClassCard({ classItem, onPress, testID }: ClassCardProps) {
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={`${actionLabel} na aula das ${startTime} com ${professor}`}
-          accessibilityState={{ disabled: isDisabled }}
+          accessibilityState={{ disabled: isDisabled, busy: loading }}
           disabled={isDisabled}
           onPress={() => onPress(classItem)}
           style={({ pressed }) => [

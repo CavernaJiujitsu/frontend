@@ -27,7 +27,7 @@ export type BackendClass = {
 };
 
 export type ListClassesParams = {
-  academyUnitId?: string;
+  caveUnitId?: string;
   type?: string;
   page?: number;
   limit?: number;
@@ -42,8 +42,8 @@ export async function listClasses(
       params: {
         page: params.page ?? 1,
         limit: params.limit ?? 100,
-        ...(params.academyUnitId
-          ? { academyUnitId: params.academyUnitId }
+        ...(params.caveUnitId
+          ? { caveUnitId: params.caveUnitId }
           : {}),
         ...(params.type ? { type: params.type } : {}),
       },

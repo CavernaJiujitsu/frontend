@@ -1,12 +1,13 @@
 import { Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 
+import { BottomNavbar } from "@/components/bottom-navbar/bottom-navbar";
+import { ScreenLayout } from "@/components/screen-layout/screen-layout";
 import { globalStyles } from "@/styles/global.styles";
 import { inicioStyles as styles } from "@/styles/private/inicio.styles";
 
 export default function Perfil() {
   return (
-    <SafeAreaView style={globalStyles.screen}>
+    <ScreenLayout bottomNav={<BottomNavbar />}>
       <View style={[globalStyles.container, styles.content]}>
         <View style={styles.header}>
           <Text style={styles.greeting} accessibilityRole="header">
@@ -16,6 +17,6 @@ export default function Perfil() {
         </View>
         <Text style={styles.emptyText}>Em breve: dados do praticante.</Text>
       </View>
-    </SafeAreaView>
+    </ScreenLayout>
   );
 }
