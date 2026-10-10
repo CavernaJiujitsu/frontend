@@ -15,8 +15,6 @@ Como o backend usa `ValidationPipe({ whitelist: true, forbidNonWhitelisted: true
 
 ```json
 {
-  "success": false,
-  "statusCode": 400,
   "message": "property academyUnitId should not exist",
   "path": "/api/v1/classes?page=1&limit=100&academyUnitId=..."
 }
