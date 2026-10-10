@@ -73,6 +73,8 @@ Casos já mapeados (não reintroduzir o nome antigo):
   `forbidNonWhitelisted` — campo desconhecido quebra com `400`.
 - Nunca propor alias no backend (`academyUnitId?` opcional, `@Transform`, etc.)
   como "compatibilidade" sem aprovação explícita. O padrão é corrigir o front.
+- Nunca escrever comentários de código em PT — comentários sempre em inglês
+  (textos de UI e mensagens de erro continuam em PT).
 
 ### 4.3 Correção aplicada (incidente `academyUnitId`)
 

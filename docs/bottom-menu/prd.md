@@ -70,6 +70,7 @@ não pelo navigator.
   entrada em `ITEMS` no `BottomNavbar` + linha na tabela de rotas deste PRD.
 - Troca de aba: sempre `router.replace`, nunca `router.push`.
 - Estilo do menu: só tokens de `@/constants/theme`; nenhum hex local.
+- Comentários no código: sempre em inglês (textos de UI e mensagens de erro continuam em PT).
 
 ## 6. Critérios de aceite
 

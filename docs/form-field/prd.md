@@ -77,3 +77,8 @@ Local: `src/components/customized/form-field/styles/form-field.styles.ts`
 - Criados: `form-field.tsx`, `styles/form-field.styles.ts`.
 - Alterados: `src/constants/theme.ts`, `src/app/onboarding/(create-account)/create-account.tsx`, `src/styles/onboarding/create-account.styles.ts`.
 - Doc: este PRD.
+
+## 7. Regras para agentes
+
+- Comentários no código: sempre em inglês (textos de UI e mensagens de erro continuam em PT).
+- Estilo: só tokens de `@/constants/theme`; nenhum hex local fora do tema.
