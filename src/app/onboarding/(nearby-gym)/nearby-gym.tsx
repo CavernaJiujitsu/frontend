@@ -69,10 +69,15 @@ export default function NearByGym() {
         : null;
       const store = useLoadingStore.getState();
       store.show("nearby-gyms");
-      void listCaves(search)
-        .then((caves) => {
+
+      void listCaves(
+        search,
+        userLocation?.latitude,
+        userLocation?.longitude,
+      )
+        .then((caves: Cave[]) => {
           if (requestRef.current === requestId) {
-            setGyms(caves.map((cave) => toGymCard(cave, userLocation)));
+            setGyms(caves.map((cave: Cave) => toGymCard(cave, userLocation)));
           }
         })
         .catch((err: unknown) => {
@@ -117,20 +122,27 @@ export default function NearByGym() {
             keyExtractor={(gym) => gym.id}
             contentContainerStyle={styles.listContent}
             renderItem={({ item }) => (
-            <CardComponent
-              image={item.image}
-              title={item.title}
-              tags={item.tags}
-              subtitle={item.subtitle}
-              onPress={() =>
-                router.push({
-                  pathname: "/onboarding/select-belt",
-                  params: { cavernaId: item.id, cavernaTitle: item.title },
-                })
-              }
-            />
-          )}
-        />
+              <CardComponent
+                image={item.image}
+                title={item.title}
+                tags={item.tags}
+                subtitle={item.subtitle}
+                onPress={() =>
+                  router.push({
+                    pathname: "/onboarding/select-belt",
+                    params: { cavernaId: item.id, cavernaTitle: item.title },
+                  })
+                }
+              />
+            )}
+            ListEmptyComponent={
+              <View style={{ alignItems: 'center', marginTop: 40 }}>
+                <Text style={{ color: '#aaa', fontSize: 16 }}>
+                  Nenhuma caverna encontrada.
+                </Text>
+              </View>
+            }
+          />
         )}
       </View>
     </SafeAreaView>
