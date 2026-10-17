@@ -1,4 +1,4 @@
-import { Alert, Image, View } from "react-native";
+import { Image, View } from "react-native";
 import Animated, {
   useAnimatedStyle,
   withDelay,
@@ -89,8 +89,7 @@ export default function OnboardingStartScreen() {
   }
 
   function handleSignIn() {
-    Alert.alert("Em breve", "O fluxo de login será disponibilizado em breve.");
-    router.push("/onboarding/welcome");
+    router.push("/onboarding/login");
   }
 
   return (
