@@ -1,7 +1,12 @@
-import Constants from "expo-constants";
+const apiUrl = process.env.EXPO_PUBLIC_API_URL;
 
-export const API_URL: string =
-  Constants.expoConfig?.extra?.API_URL ?? "http://localhost:3000";
+if (!apiUrl) {
+  throw new Error(
+    "EXPO_PUBLIC_API_URL não definida. Copie o .env.example para .env.",
+  );
+}
+
+export const API_URL: string = apiUrl;
 
 export function toAbsoluteUrl(url: string): string {
   if (/^https?:\/\//.test(url)) return url;

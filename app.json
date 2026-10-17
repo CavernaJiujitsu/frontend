@@ -48,10 +48,6 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    },
-    "extra": {
-      "NODE_ENV": "development",
-      "API_URL": "http://localhost:4000"
     }
   }
 }
