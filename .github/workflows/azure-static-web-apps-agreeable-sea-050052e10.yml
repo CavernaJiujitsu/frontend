@@ -29,6 +29,11 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      - name: Validate environment variables
+        run: test -n "$EXPO_PUBLIC_API_URL"
+        env:
+          EXPO_PUBLIC_API_URL: ${{ vars.EXPO_PUBLIC_API_URL }}
+
       - name: Build Expo Web
         run: bun run expo export --platform web
         env:
@@ -36,6 +41,9 @@ jobs:
 
       - name: Verify build output
         run: test -f dist/index.html
+
+      - name: Copy SWA config into build output
+        run: cp staticwebapp.config.json dist/
 
       - name: Get GitHub ID Token
         id: idtoken
