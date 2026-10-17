@@ -1,54 +1,37 @@
 ---
 name: feature-implementation
-description: "Interview the developer about a ticket, requirements, and language, then implement the feature, review the UI with ui-style, and verify the whole feature with tests."
-argument-hint: "Optional ticket title or short feature request"
-user-invocable: true
+description: Prepara e executa a implementação de uma feature/tela já planejada no app Expo — mapeia o que já existe no código (rotas, componentes, serviços, estilos, tokens), o que reutilizar e como evitar duplicidade, monta o blueprint (arquivos, componentes, contrato de API consumido, estados), coleta aprovação e então implementa seguindo as convenções, registrando decisões e desvios em `.docs/<slug>/implement.md`. Use quando existir `plan.md` aprovado e o usuário disser 'implementar', 'codar', 'fazer o blueprint' ou 'implement the feature'; é a segunda etapa do fluxo do trello-ticket. NÃO use para planejar requisitos, testar ou revisar.
+metadata:
+  short-description: Blueprint de reuso + implementação
 ---
 
-# Feature Implementation
+# Feature Implementation (blueprint + código)
 
-Use for implementing a feature from a ticket or product request. This is a gated workflow: collect and confirm requirements before editing files.
+Pré-requisito: `.docs/<slug>/plan.md` aprovado. Sem plano, rode antes a skill `$feature-plan`.
 
-## Mandatory Interview Gate
+## Etapa 1 — Blueprint (antes de qualquer código)
 
-Use the interactive `AskUserQuestion` tool before doing implementation work. In VS Code, use the available `vscode_askQuestions` equivalent if the exact `AskUserQuestion` tool is unavailable. Ask one focused question at a time when the next answer depends on the prior one. Each blocking question must have explicit options and an `Other` choice that accepts a free-form developer response. Do not infer the user's answer, skip the gate, start implementation while answers are pending, or continue past an unanswered blocking question.
+1. **Inventário do que existe**: percorra o que a feature toca — rotas (`src/app/`), componentes (`src/components/customized/` app-owned, `complex/`, `screen-layout/`, `bottom-navbar/`), hooks (`src/hooks/`, `src/api/hooks/`), serviços/endpoints (`src/api/services/`, `src/api/endpoints/routes.ts`), tipos (`src/types/`, `src/api/types/`), mocks (`src/api/mocks/`), estilos (`src/styles/<grupo>/`) e tokens (`src/constants/theme.ts`). Liste o que já resolve parte do problema.
+2. **Reuso e análise crítica**: para cada peça (tela/rota, componente, estado, fetch, validação, estilo), procure onde algo equivalente vive hoje. Regra dura — **nada de lógica duplicada**: se já existe, reuse (ex.: `DefaultButton`, `ScreenLayout`, `SearchInput`, hooks de fetch/paginação); se quase existe, avalie extrair para `customized/`/`hooks/`. Avalie alternativas de desenho e registre por que a escolhida venceu.
+3. **Confirme o contrato com o backend**: antes de mexer em `src/api/services/`, leia o DTO + controller em `../backend/src/<recurso>/` e espelhe os nomes exatos (query, body, enums, erros — ex.: `caveUnitId`, nunca `academyUnitId`). Divergência se corrige no front (padrão em `docs/api-contract/prd.md`).
+4. **Escreva `.docs/<slug>/blueprint.md`**: tabela de inventário (peça → onde → uso no plano), alternativas avaliadas (com porquês), desenho final (arquivos novos/alterados com o papel de cada um, rota e navegação, componentes e props, estados loading/empty/error/success, contrato de API consumido, mocks de UI em `src/api/mocks/<contexto>.ts` quando o real ainda não existir), duplicidades evitadas e riscos/limites.
+5. **Mostre o blueprint e aguarde aprovação.** Não implemente antes do ok.
 
-### 1. Language First
+## Etapa 2 — Implementação
 
-The very first question must ask which language to use for the interview, implementation guide, and user-facing deliverables:
+Siga o `AGENTS.md` ao pé da letra. Pontos que mais erram:
 
-- Portuguese
-- English
-- Other (developer specifies)
+- Expo muda a cada SDK: antes de usar API de Expo/EAS/React Native, busque a doc da versão do `package.json` (`https://docs.expo.dev/versions/v57.0.0/`) — nunca responda de memória.
+- Rotas: cada arquivo em `src/app/` é uma tela; `_layout.tsx` define navegador; código que não é rota fica fora de `src/app/`. Troca de aba no menu privado: `router.replace`, nunca `push`.
+- UI: siga a skill `$ui-style` — tokens de `@/constants/theme` (nada de hex solto), `DefaultButton`, `ScreenLayout` (o layout externo cuida do inset; a tela não reaplica padding de página), vocabulário "caverna".
+- Dependência nova? **Sempre** `bunx expo install <pacote>` (resolve a versão compatível com o SDK). Prefira módulos Expo. Lib com código nativo ⇒ precisa de development build (avise o usuário).
+- Nunca edite `ios/`/`android/` à mão (são gerados — CNG); configure nativo via `app.json`/config plugins.
+- Comentários em inglês; strings de UI/erro em PT-BR; imports com o alias `@/`.
+- Erros da API: siga o contrato de erro (`docs/backend-error-contract.md`).
+- Mudou um padrão do projeto? Atualize o PRD correspondente em `docs/<área>/prd.md`.
 
-Wait for the developer to choose before asking the remaining questions. Use their selected language consistently. Code identifiers and established repository conventions remain as required by the codebase.
+Rode `bun run lint && bunx tsc --noEmit` ao fim de cada bloco relevante e conserte antes de seguir (`bunx expo-doctor` se mexeu em dependências/app config).
 
-### 2. Ticket and Scope
+## Encerramento
 
-Ask for each item below unless it was explicitly supplied in the request or earlier answer. Offer useful choices plus `Other` on every blocking question:
-
-- Ticket title and, if available, ID or link.
-- What needs to be built or changed? Ask for the expected user-visible behavior and affected routes/components.
-- Why is the change needed? Ask for the user problem or product outcome.
-- Functional requirements: required flows, actions, data, validation, permissions, navigation, and persistence.
-- Non-functional requirements and constraints: platforms, responsiveness/accessibility, performance, compatibility, dependencies, and security where relevant.
-- Acceptance criteria: observable pass conditions, edge cases, empty/loading/error states, and exclusions.
-- Existing API/data contracts or design references, if relevant.
-
-Use `Other` to let the developer supply requirements not covered by the offered choices. Ask concise follow-ups wherever an answer is ambiguous, contradictory, or not verifiable. Summarize the ticket, why, scope, requirements, constraints, and acceptance criteria in the selected language; ask the developer to confirm or correct this summary. Do not edit files until confirmed.
-
-## Implementation Workflow
-
-1. Read the repository's `AGENTS.md`, relevant route/components, `package.json`, and the existing `.claude/skills/feature-creation/SKILL.md` (or the matching skill path for the active host). Respect its Expo, routing, component ownership, styles, theme, and validation conventions. Keep app-owned components under `src/components/customized/`, Expo starter components under `src/components/`, and screen styles in matching files under `src/styles/`.
-2. Trace the nearest code path that implements the requested behavior. State the local implementation approach and the acceptance criteria it will satisfy, then make focused changes only.
-3. Implement all confirmed requirements and needed states. Do not add features or dependencies outside the confirmed scope. Ask another blocking question if implementation uncovers a product decision that cannot be resolved from the ticket or code.
-4. Before finalizing UI work, explicitly load and apply `/ui-style`. Review the changed screen/component against the project's brand tokens, interaction conventions, safe areas, responsive layout, text fit, and accessibility. Correct violations within the feature scope.
-5. After implementation and UI review, explicitly load and run `/tests` against the entire implemented feature and confirmed acceptance criteria. Add/execute appropriate focused tests and checks, repair in-scope failures, and rerun them. Do not treat lint/typecheck alone as proof of feature behavior.
-6. Report the ticket title, what and why, implemented files, acceptance criteria verified, exact automated/manual test outcomes, and unresolved questions or untested areas in the selected language. Do not report unrun checks as passed.
-
-## Hard Stops
-
-- No implementation before the language selection, required ticket details, and confirmation gate are complete.
-- No silently choosing among conflicting product requirements; ask through the blocking question tool with `Other` available.
-- No skipping the `/ui-style` review for UI changes or the `/tests` workflow after implementation.
-- If a required tool or environment is unavailable, report the limitation and perform the strongest honest alternative; never imply the blocked step ran.
+Grave `.docs/<slug>/implement.md`: commits da branch, o que foi feito por área (com arquivos), decisões/desvios do blueprint (e por quê), mudanças incidentais, validação executada e pendências. Depois aponte para a skill `$feature-teste` — "pronto" só existe com `test.md`.

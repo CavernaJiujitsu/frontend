@@ -1,5 +1,11 @@
 This is an Expo/React Native mobile application. Prioritize mobile-first patterns, performance, and cross-platform compatibility.
 
+## SDD workflow (skills + `.docs/`)
+
+- Skills live in `.agents/skills/` (canonical) and are mirrored in `.codex/skills/` and `.claude/skills/`. Flow: `feature-plan` → `feature-implementation` → `feature-teste`; `feature-review` and `pr-create` on demand; `trello-ticket` runs the whole flow for a board card; `ui-style` defines the visual language. Keep the mirrors in sync when editing a skill.
+- Every demand stores its artifacts in `.docs/<slug>/` (`plan.md`, `blueprint.md`, `implement.md`, `test.md`, `review.md`) — conventions in [`.docs/README.md`](./.docs/README.md).
+- Rules: never start coding without an approved `plan.md`; never call something done without `test.md`.
+
 ## Expo has changed — do not trust your training data
 
 Expo ships breaking changes every SDK release. APIs you remember are likely renamed, moved, or removed. Before writing any code that touches an Expo, EAS, or React Native API:
