@@ -123,6 +123,21 @@ export const inicioStyles = StyleSheet.create({
     lineHeight: 19,
     color: Colors.light.textSecondary,
   },
+  feedbackCard: {
+    alignItems: "flex-start",
+    gap: Spacing.two,
+  },
+  retryButton: {
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.two,
+    borderRadius: 16,
+    backgroundColor: BrandColors.secondary,
+  },
+  retryButtonText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: BrandColors.background,
+  },
   nearbyHeader: {
     flexDirection: "row",
     alignItems: "center",
