@@ -18,6 +18,7 @@ import { BrandColors } from "@/constants/theme";
 import { useAppStore } from "@/store/useAppStore";
 import { globalStyles } from "@/styles/global.styles";
 import { styles } from "@/styles/onboarding/create-account.styles";
+import { normalizeCoordinates } from "@/utils/location";
 
 export type CriarContaPayload = {
   nome: string;
@@ -56,6 +57,7 @@ export default function CreateAccountScreen() {
   const router = useRouter();
   const setProfile = useAppStore((state) => state.setProfile);
   const setPractitionerId = useAppStore((state) => state.setPractitionerId);
+  const location = useAppStore((state) => state.user.location);
 
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
@@ -74,8 +76,13 @@ export default function CreateAccountScreen() {
 
     setLoading(true);
     try {
+      const coordinates = normalizeCoordinates(
+        location?.coords.latitude,
+        location?.coords.longitude,
+      );
       const practitioner = await createPractitioner({
         user: { name: nome.trim(), email: email.trim(), password: senha },
+        ...(coordinates ? { coordinates } : {}),
       });
       setProfile({ nome: nome.trim(), email: email.trim() });
       setPractitionerId(practitioner.id);

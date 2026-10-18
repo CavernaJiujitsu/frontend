@@ -5,28 +5,32 @@ import { Pressable, Text, View } from "react-native";
 
 type LocationPermissionActionsProps = {
   isRequestingPermission: boolean;
+  isSavingLocation: boolean;
   handleRequestLocation: () => void;
   onSkip?: () => void;
 };
 
 export function LocationPermissionActions({
   isRequestingPermission,
+  isSavingLocation,
   handleRequestLocation,
   onSkip,
 }: LocationPermissionActionsProps) {
+  const isBusy = isRequestingPermission || isSavingLocation;
+
   return (
     <View style={styles.actions}>
       <DefaultButton
-        label="Permitir localização"
+        label={isSavingLocation ? "Salvando localização..." : "Permitir localização"}
         color={BrandColors.secondary}
         action={handleRequestLocation}
-        disabled={isRequestingPermission}
+        disabled={isBusy}
       />
 
       <Pressable
         style={styles.skipButton}
         onPress={onSkip}
-        disabled={isRequestingPermission}
+        disabled={isBusy}
       >
         <Text style={styles.skipButtonText}>
           Agora não, prefiro buscar manualmente
