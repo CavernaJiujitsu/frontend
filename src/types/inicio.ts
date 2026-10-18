@@ -27,7 +27,6 @@ export type InicioNearby = {
     name: string;
     neighborhood: string;
     distanceKm: number;
-    isOpen: boolean;
   };
 };
 

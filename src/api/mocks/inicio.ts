@@ -29,7 +29,6 @@ export const inicioMock: InicioData = {
       name: "Caverna BJJ - Matriz",
       neighborhood: "Vila Mariana",
       distanceKm: 1.2,
-      isOpen: true,
     },
   },
 };
