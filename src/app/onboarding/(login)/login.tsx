@@ -13,11 +13,14 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import Svg, { Path } from "react-native-svg";
 
+import { login } from "@/api/services/auth.service";
 import { localeIcon } from "@/assets/images";
 import { DefaultButton } from "@/components/customized/default-button";
 import { FormField } from "@/components/customized/form-field/form-field";
 import { BrandColors, Colors } from "@/constants/theme";
-import { useErrorStore } from "@/store/useErrorStore";
+import { reportError, useErrorStore } from "@/store/useErrorStore";
+import { useAppStore } from "@/store/useAppStore";
+import { useSessionStore } from "@/store/useSessionStore";
 import { globalStyles } from "@/styles/global.styles";
 import { styles } from "@/styles/onboarding/login.styles";
 
@@ -27,7 +30,6 @@ type LoginForm = {
 };
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const SUBMISSION_FEEDBACK_DELAY_MS = 350;
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -41,13 +43,23 @@ export default function LoginScreen() {
     reValidateMode: "onChange",
   });
 
-  const handleLogin = async () => {
-    await new Promise<void>((resolve) => {
-      setTimeout(resolve, SUBMISSION_FEEDBACK_DELAY_MS);
-    });
-    useErrorStore.getState().show(
-      "A autenticação será conectada em uma tarefa separada.",
-    );
+  const handleLogin = async ({ email, senha }: LoginForm) => {
+    try {
+      const { accessToken, tokenType, expiresIn, practitionerId } = await login({
+        email: email.trim(),
+        password: senha,
+      });
+
+      useSessionStore.getState().setSession({
+        accessToken,
+        tokenType,
+        expiresIn,
+      });
+      useAppStore.getState().setPractitionerId(practitionerId);
+      router.replace("/inicio");
+    } catch (error) {
+      reportError(error);
+    }
   };
 
   const handleForgotPassword = () => {
@@ -97,6 +109,7 @@ export default function LoginScreen() {
                 <FormField
                   accessibilityLabel="E-mail"
                   autoCapitalize="none"
+                  editable={!isSubmitting}
                   error={error?.message}
                   keyboardType="email-address"
                   label="E-MAIL"
@@ -115,6 +128,7 @@ export default function LoginScreen() {
                 <FormField
                   accessibilityLabel="Senha"
                   autoCapitalize="none"
+                  editable={!isSubmitting}
                   error={error?.message}
                   label="SENHA"
                   onChangeText={onChange}

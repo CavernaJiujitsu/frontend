@@ -90,7 +90,7 @@ export default function CreateAccountScreen() {
   };
 
   const handleGoToLogin = () => {
-    router.replace("/onboarding/start");
+    router.replace("/onboarding/login");
   };
 
   return (

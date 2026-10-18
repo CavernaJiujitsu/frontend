@@ -9,4 +9,5 @@ export const routes = {
   classes: `${API_PREFIX}/classes`,
   practitionerHome: (practitionerId: string) =>
     `${API_PREFIX}/practitioners/${practitionerId}/home`,
+  authLogin: `${API_PREFIX}/auth/login`,
 } as const;
