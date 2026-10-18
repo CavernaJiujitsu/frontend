@@ -14,32 +14,17 @@ import { useAppStore } from "@/store/useAppStore";
 import { isLoadingKey, useLoadingStore } from "@/store/useLoadingStore";
 import { globalStyles } from "@/styles/global.styles";
 import { nearbyGymStyles as styles } from "@/styles/onboarding/nearby-gym.styles";
-import { formatDistanceKm, haversineKm } from "@/utils/distance";
+import { formatDistanceKm } from "@/utils/distance";
 
 const SEARCH_DEBOUNCE_MS = 350;
 
-type UserLocation = { latitude: number; longitude: number } | null;
-
-function toGymCard(cave: Cave, location: UserLocation): NearbyGymMock {
+function toGymCard(cave: Cave): NearbyGymMock {
   const units = cave.units ?? [];
-  let nearest = units[0];
-  let nearestKm: number | null = null;
-  if (location) {
-    for (const unit of units) {
-      const km = haversineKm(location, {
-        latitude: Number(unit.latitude),
-        longitude: Number(unit.longitude),
-      });
-      if (nearestKm === null || km < nearestKm) {
-        nearestKm = km;
-        nearest = unit;
-      }
-    }
-  }
+  const nearest = units[0];
   const where = nearest?.neighborhood ?? nearest?.name ?? "";
   const subtitle =
-    nearestKm !== null
-      ? `${formatDistanceKm(nearestKm)}${where ? ` • ${where}` : ""}`
+    cave.distanceKm !== undefined
+      ? `${formatDistanceKm(cave.distanceKm)}${where ? ` • ${where}` : ""}`
       : (where ?? cave.name);
   return {
     id: cave.id,
@@ -61,7 +46,7 @@ export default function NearByGym() {
     const timer = setTimeout(() => {
       const requestId = ++requestRef.current;
       const location = useAppStore.getState().user.location;
-      const userLocation: UserLocation = location
+      const userLocation = location
         ? {
             latitude: location.coords.latitude,
             longitude: location.coords.longitude,
@@ -77,7 +62,7 @@ export default function NearByGym() {
       )
         .then((caves: Cave[]) => {
           if (requestRef.current === requestId) {
-            setGyms(caves.map((cave: Cave) => toGymCard(cave, userLocation)));
+            setGyms(caves.map((cave: Cave) => toGymCard(cave)));
           }
         })
         .catch((err: unknown) => {
