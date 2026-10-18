@@ -123,7 +123,9 @@ export default function LoginScreen() {
             <Controller
               control={control}
               name="senha"
-              rules={{ validate: (value) => value || "Informe sua senha." }}
+              rules={{
+                validate: (value) => (value ? true : "Informe sua senha."),
+              }}
               render={({ field: { onChange, value }, fieldState: { error } }) => (
                 <FormField
                   accessibilityLabel="Senha"
