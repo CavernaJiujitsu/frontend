@@ -5,6 +5,7 @@
 | Commit | Conteúdo |
 | --- | --- |
 | `8b1282c` | `feat: integra tela de login com a API de autenticação` — código (service, store, interceptor, tela, ajustes) |
+| `732ef3f` | `fix: corrige validação de senha que impedia o submit do login` — achado do `$feature-teste` (ver `test.md`) |
 
 Branch: `feat/78-integracao-login-api`, criada a partir da `dev` (`347a477`). Ainda não pushada.
 
@@ -46,10 +47,15 @@ Branch: `feat/78-integracao-login-api`, criada a partir da `dev` (`347a477`). Ai
 | --- | --- |
 | `bun run lint` | exit 0, sem avisos |
 | `bunx tsc --noEmit` | exit 0, sem erros |
+| `bunx expo-doctor` | 20/21 ok — falha pré-existente de duplicata de `expo-constants` no `node_modules` (não relacionada) |
 
-Validação de fluxo (app rodando, chamadas reais, 401/429/rede) fica na etapa `$feature-teste` — ainda sem `test.md`.
+Validação de fluxo completa em `test.md` (curl + automação CDP no Chrome): cenários 1–4 do harness 20/20, 429 4/4, navegações 6/6.
+
+## Correção pós-teste (`$feature-teste`)
+
+- `src/app/onboarding/(login)/login.tsx`: regra de validação da senha era `validate: (value) => value || "Informe sua senha."` — o react-hook-form lê qualquer string retornada como **mensagem de erro**, então a senha preenchida marcava o campo como inválido (e exibia a própria senha como erro), impedindo o submit válido. Corrigido para `validate: (value) => (value ? true : "Informe sua senha.")`. Bug **pré-existente do #77**, exposto ao conectar o backend; evidências no `test.md`.
 
 ## Pendências
 
-- Rodar a skill `$feature-teste`: exercitar o fluxo na web com o backend local, conferir Network (single request, header `Authorization`), 401/403/429/rede e registrar `.docs/78/test.md`.
-- Push da branch e PR ficam para o fluxo `pr-create` (após review/teste).
+- Validação manual final do solicitante (combinada na tarefa) — servidores local deixados rodando.
+- Push da branch e PR ficam para o fluxo `pr-create` (após review/teste); `$feature-review` ainda não rodou.
