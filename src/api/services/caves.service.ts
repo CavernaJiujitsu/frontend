@@ -16,6 +16,7 @@ export type Cave = {
   id: string;
   name: string;
   units: CaveUnit[];
+  distanceKm?: number;
 };
 
 export async function getCave(id: string): Promise<Cave> {
