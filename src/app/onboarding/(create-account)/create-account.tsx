@@ -10,11 +10,11 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { createPractitioner } from "@/api/services/practitioners.service";
+import { backendMessage } from "@/api/utils/backend-message";
 import { DefaultButton } from "@/components/customized/default-button";
 import { FormField } from "@/components/customized/form-field/form-field";
 import { BrandColors } from "@/constants/theme";
-import { createPractitioner } from "@/api/services/practitioners.service";
-import { backendMessage } from "@/api/utils/backend-message";
 import { useAppStore } from "@/store/useAppStore";
 import { globalStyles } from "@/styles/global.styles";
 import { styles } from "@/styles/onboarding/create-account.styles";
@@ -82,7 +82,10 @@ export default function CreateAccountScreen() {
       router.replace("/onboarding/location-permission");
     } catch (err) {
       setSubmitError(
-        backendMessage(err, "Não foi possível criar sua conta. Tente novamente."),
+        backendMessage(
+          err,
+          "Não foi possível criar sua conta. Tente novamente.",
+        ),
       );
     } finally {
       setLoading(false);
@@ -142,7 +145,9 @@ export default function CreateAccountScreen() {
             rightAction={
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel={showSenha ? "Ocultar senha" : "Mostrar senha"}
+                accessibilityLabel={
+                  showSenha ? "Ocultar senha" : "Mostrar senha"
+                }
                 onPress={() => setShowSenha((v) => !v)}
                 hitSlop={10}
               >
@@ -159,9 +164,7 @@ export default function CreateAccountScreen() {
             </Text>
           )}
 
-          {submitError && (
-            <Text style={styles.submitError}>{submitError}</Text>
-          )}
+          {submitError && <Text style={styles.submitError}>{submitError}</Text>}
 
           <View style={styles.actions}>
             <DefaultButton
