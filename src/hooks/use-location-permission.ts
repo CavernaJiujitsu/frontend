@@ -1,7 +1,9 @@
 import * as Location from "expo-location";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-type OnPermissionGranted = (location: Location.LocationObject) => void;
+type OnPermissionGranted = (
+  location: Location.LocationObject,
+) => void | Promise<void>;
 type OnPermissionDenied = () => void;
 
 export function useLocationPermission({
@@ -33,7 +35,7 @@ export function useLocationPermission({
         accuracy: Location.Accuracy.Balanced,
       });
 
-      onPermissionGranted?.(location);
+      await onPermissionGranted?.(location);
     } catch (error) {
       console.error("Erro ao solicitar localização:", error);
 
