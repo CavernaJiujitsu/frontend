@@ -157,12 +157,14 @@ export default function Cavernas() {
                   ? { latitude: latitude as number, longitude: longitude as number }
                   : undefined,
               );
+              const distanceTag =
+                distanceKm !== undefined ? formatDistanceKm(distanceKm) : "— km";
               return (
                 <CardComponent
                   image={caveImage}
                   title={item.name}
                   tags={[
-                    ...(distanceKm !== undefined ? [formatDistanceKm(distanceKm)] : []),
+                    distanceTag,
                     ...(activeFilter === "openNow" ? ["Aberta agora"] : []),
                     ...(activeFilter === "classesToday" ? ["Aulas hoje"] : []),
                   ]}
