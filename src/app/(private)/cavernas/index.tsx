@@ -14,7 +14,7 @@ import { LoadingSpinner } from "@/components/customized/loading-spinner/loading-
 import { useReportQueryError } from "@/hooks/use-report-query-error";
 import { globalStyles } from "@/styles/global.styles";
 import { inicioStyles as styles } from "@/styles/private/inicio.styles";
-import { formatDistanceKm } from "@/utils/distance";
+import { formatDistanceKm, haversineKm } from "@/utils/distance";
 
 type CaveFilter = "nearest" | "openNow" | "classesToday";
 
@@ -23,6 +23,22 @@ const filters: { key: CaveFilter; label: string }[] = [
   { key: "openNow", label: "Abertas agora" },
   { key: "classesToday", label: "Aulas hoje" },
 ];
+
+function getCaveDistanceKm(
+  cave: Cave,
+  origin?: { latitude: number; longitude: number },
+): number | undefined {
+  if (cave.distanceKm !== undefined) return cave.distanceKm;
+  if (!origin || cave.units.length === 0) return undefined;
+
+  const distances = cave.units.map((unit) =>
+    haversineKm(origin, {
+      latitude: Number(unit.latitude),
+      longitude: Number(unit.longitude),
+    }),
+  ).filter(Number.isFinite);
+  return distances.length > 0 ? Math.min(...distances) : undefined;
+}
 
 export default function Cavernas() {
   const [search, setSearch] = useState("");
@@ -134,21 +150,27 @@ export default function Cavernas() {
             data={query.data ?? []}
             keyExtractor={(cave) => cave.id}
             contentContainerStyle={{ gap: 12, paddingVertical: 16 }}
-            renderItem={({ item }: { item: Cave }) => (
-              <CardComponent
-                image={caveImage}
-                title={item.name}
-                tags={[
-                  ...(item.distanceKm !== undefined
-                    ? [formatDistanceKm(item.distanceKm)]
-                    : []),
-                  ...(activeFilter === "openNow" ? ["Aberta agora"] : []),
-                  ...(activeFilter === "classesToday" ? ["Aulas hoje"] : []),
-                ]}
-                subtitle={item.units[0]?.neighborhood ?? item.units[0]?.name ?? "Unidade sem endereço"}
-                onPress={() => undefined}
-              />
-            )}
+            renderItem={({ item }: { item: Cave }) => {
+              const distanceKm = getCaveDistanceKm(
+                item,
+                hasCoordinates
+                  ? { latitude: latitude as number, longitude: longitude as number }
+                  : undefined,
+              );
+              return (
+                <CardComponent
+                  image={caveImage}
+                  title={item.name}
+                  tags={[
+                    ...(distanceKm !== undefined ? [formatDistanceKm(distanceKm)] : []),
+                    ...(activeFilter === "openNow" ? ["Aberta agora"] : []),
+                    ...(activeFilter === "classesToday" ? ["Aulas hoje"] : []),
+                  ]}
+                  subtitle={item.units[0]?.neighborhood ?? item.units[0]?.name ?? "Unidade sem endereço"}
+                  onPress={() => undefined}
+                />
+              );
+            }}
             ListEmptyComponent={<Text style={styles.emptyText}>Nenhuma caverna encontrada.</Text>}
           />
         )}
