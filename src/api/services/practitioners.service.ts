@@ -41,6 +41,13 @@ export async function createPractitioner(
   return unwrap(data);
 }
 
+export async function getPractitioner(id: string): Promise<Practitioner> {
+  const { data } = await apiClient.get<ApiEnvelope<Practitioner>>(
+    routes.practitioner(id),
+  );
+  return unwrap(data);
+}
+
 export async function updatePractitionerLocation(
   practitionerId: string,
   payload: UpdatePractitionerLocationPayload,
