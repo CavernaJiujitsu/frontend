@@ -15,6 +15,36 @@ export const inicioStyles = StyleSheet.create({
     gap: Spacing.one,
     marginBottom: Spacing.two,
   },
+  filterRow: {
+    gap: Spacing.two,
+    height: 36,
+    alignItems: "center",
+    paddingRight: Spacing.four,
+  },
+  filterScroll: {
+    flexGrow: 0,
+    height: 36,
+  },
+  filterChip: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 18,
+    backgroundColor: Colors.light.backgroundElement,
+  },
+  filterChipSelected: {
+    backgroundColor: BrandColors.secondary,
+  },
+  filterChipPressed: {
+    opacity: 0.8,
+  },
+  filterChipText: {
+    color: Colors.light.text,
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  filterChipTextSelected: {
+    color: BrandColors.background,
+  },
   greeting: {
     fontSize: 24,
     fontWeight: "800",
