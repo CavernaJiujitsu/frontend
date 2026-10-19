@@ -10,6 +10,16 @@ export type CaveUnit = {
   neighborhood: string | null;
   latitude: string;
   longitude: string;
+  distanceKm?: number;
+};
+
+export type ListUnitsParams = {
+  search?: string;
+  nearest?: boolean;
+  openNow?: boolean;
+  classesToday?: boolean;
+  latitude?: number;
+  longitude?: number;
 };
 
 export type Cave = {
@@ -24,6 +34,17 @@ export async function getCave(id: string): Promise<Cave> {
     `${routes.caves}/${id}`,
   );
   return unwrap(data);
+}
+
+export async function listUnits(
+  caveId: string,
+  params: ListUnitsParams = {},
+): Promise<CaveUnit[]> {
+  const { data } = await apiClient.get<ApiEnvelope<PaginatedResponse<CaveUnit>>>(
+    `${routes.caves}/${caveId}/units`,
+    { params: { page: 1, limit: 100, ...params } },
+  );
+  return unwrap(data).data;
 }
 
 export async function listCaves(
