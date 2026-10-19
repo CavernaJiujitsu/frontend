@@ -1,11 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { FlatList, Text, View } from "react-native";
+import { FlatList, Pressable, ScrollView, Text, View } from "react-native";
 
 import { BottomNavbar } from "@/components/bottom-navbar/bottom-navbar";
 import CardComponent from "@/components/complex/card-component";
 import { SearchInput } from "@/components/customized/search-input/search-input";
-import { listCaves, type Cave } from "@/api/services/caves.service";
+import { listCaves, listUnits, type Cave } from "@/api/services/caves.service";
+import { getPractitioner } from "@/api/services/practitioners.service";
 import { caveImage, magnifierCaverna } from "@/assets/images";
 import { useAppStore } from "@/store/useAppStore";
 import { ScreenLayout } from "@/components/screen-layout/screen-layout";
@@ -15,17 +16,64 @@ import { globalStyles } from "@/styles/global.styles";
 import { inicioStyles as styles } from "@/styles/private/inicio.styles";
 import { formatDistanceKm } from "@/utils/distance";
 
+type CaveFilter = "nearest" | "openNow" | "classesToday";
+
+const filters: { key: CaveFilter; label: string }[] = [
+  { key: "nearest", label: "Mais próximas" },
+  { key: "openNow", label: "Abertas agora" },
+  { key: "classesToday", label: "Aulas hoje" },
+];
+
 export default function Cavernas() {
   const [search, setSearch] = useState("");
+  const [activeFilter, setActiveFilter] = useState<CaveFilter>("nearest");
   const location = useAppStore((state) => state.user.location);
+  const practitionerId = useAppStore((state) => state.user.practitionerId);
+  const profileQuery = useQuery({
+    queryKey: ["practitioner-location", practitionerId],
+    queryFn: () => getPractitioner(practitionerId!),
+    enabled: !location && Boolean(practitionerId),
+  });
+  const profileLatitude = profileQuery.data?.latitude;
+  const profileLongitude = profileQuery.data?.longitude;
+  const latitude =
+    location?.coords.latitude ??
+    (profileLatitude !== null && profileLatitude !== undefined
+      ? Number(profileLatitude)
+      : undefined);
+  const longitude =
+    location?.coords.longitude ??
+    (profileLongitude !== null && profileLongitude !== undefined
+      ? Number(profileLongitude)
+      : undefined);
+  const hasCoordinates = Number.isFinite(latitude) && Number.isFinite(longitude);
   const query = useQuery({
-    queryKey: ["caves", search, location?.coords.latitude, location?.coords.longitude],
-    queryFn: () =>
-      listCaves(
+    queryKey: [
+      "caves",
+      search,
+      activeFilter,
+      latitude,
+      longitude,
+    ],
+    queryFn: async () => {
+      const caves = await listCaves(
         search,
-        location?.coords.latitude,
-        location?.coords.longitude,
-      ),
+        hasCoordinates ? latitude : undefined,
+        hasCoordinates ? longitude : undefined,
+      );
+      if (activeFilter === "nearest") return caves;
+
+      const filtered = await Promise.all(
+        caves.map(async (cave) => {
+          const units = await listUnits(cave.id, {
+            openNow: activeFilter === "openNow",
+            classesToday: activeFilter === "classesToday",
+          });
+          return units.length > 0 ? { ...cave, units } : null;
+        }),
+      );
+      return filtered.filter((cave): cave is Cave => cave !== null);
+    },
   });
   useReportQueryError(query.error);
 
@@ -46,6 +94,39 @@ export default function Cavernas() {
           width="full"
           onClear={() => setSearch("")}
         />
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.filterScroll}
+          contentContainerStyle={styles.filterRow}
+        >
+          {filters.map((filter) => {
+            const selected = activeFilter === filter.key;
+            return (
+              <Pressable
+                key={filter.key}
+                accessibilityRole="button"
+                accessibilityState={{ selected }}
+                accessibilityLabel={`Filtrar por ${filter.label}`}
+                onPress={() => setActiveFilter(filter.key)}
+                style={({ pressed }) => [
+                  styles.filterChip,
+                  selected && styles.filterChipSelected,
+                  pressed && styles.filterChipPressed,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.filterChipText,
+                    selected && styles.filterChipTextSelected,
+                  ]}
+                >
+                  {filter.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
         {query.isLoading ? <LoadingSpinner label="Buscando cavernas…" /> : query.isError ? (
           <Text style={styles.emptyText}>Não foi possível carregar as cavernas.</Text>
         ) : (
@@ -57,7 +138,13 @@ export default function Cavernas() {
               <CardComponent
                 image={caveImage}
                 title={item.name}
-                tags={item.distanceKm !== undefined ? [formatDistanceKm(item.distanceKm)] : []}
+                tags={[
+                  ...(item.distanceKm !== undefined
+                    ? [formatDistanceKm(item.distanceKm)]
+                    : []),
+                  ...(activeFilter === "openNow" ? ["Aberta agora"] : []),
+                  ...(activeFilter === "classesToday" ? ["Aulas hoje"] : []),
+                ]}
                 subtitle={item.units[0]?.neighborhood ?? item.units[0]?.name ?? "Unidade sem endereço"}
                 onPress={() => undefined}
               />
