@@ -47,6 +47,9 @@ export const scheduleStyles = StyleSheet.create({
   list: {
     flex: 1,
   },
+  feedback: {
+    gap: Spacing.two,
+  },
   listContent: {
     paddingBottom: Spacing.four,
     gap: Spacing.two,

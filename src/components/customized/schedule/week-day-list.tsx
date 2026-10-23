@@ -1,5 +1,6 @@
 import { FlatList, Pressable, Text } from "react-native";
 
+import { Spacing } from "@/constants/theme";
 import type { ScheduleDay } from "@/types/schedule";
 import { weekDayListStyles as styles } from "./styles/week-day-list.styles";
 
@@ -18,10 +19,20 @@ export function WeekDayList({
 }: WeekDayListProps) {
   return (
     <FlatList
+      key={days[0]?.id}
       data={days}
       horizontal
       showsHorizontalScrollIndicator={false}
       keyExtractor={(item) => item.id}
+      initialScrollIndex={Math.max(
+        0,
+        days.findIndex((day) => day.id === selectedDayId),
+      )}
+      getItemLayout={(_, index) => ({
+        length: styles.day.width + Spacing.two,
+        offset: (styles.day.width + Spacing.two) * index,
+        index,
+      })}
       style={styles.list}
       contentContainerStyle={styles.content}
       renderItem={({ item }) => {
