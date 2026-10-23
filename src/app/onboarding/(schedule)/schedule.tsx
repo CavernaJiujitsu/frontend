@@ -1,7 +1,7 @@
+import { useQuery } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Alert, FlatList, Pressable, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { FlatList, Pressable, Text, View } from "react-native";
 
 import {
   formatScheduleDate,
@@ -16,12 +16,13 @@ import {
 } from "@/api/services/classes.service";
 import { backendMessage } from "@/api/utils/backend-message";
 import { ClassSkeleton } from "@/components/customized/class-skeleton/class-skeleton";
+import { DefaultButton } from "@/components/customized/default-button";
 import { ClassCard } from "@/components/customized/schedule/class-card";
 import { MonthSelector } from "@/components/customized/schedule/month-selector";
 import { WeekDayList } from "@/components/customized/schedule/week-day-list";
+import { ScreenLayout } from "@/components/screen-layout/screen-layout";
+import { BrandColors } from "@/constants/theme";
 import { useAppStore } from "@/store/useAppStore";
-import { reportError } from "@/store/useErrorStore";
-import { isLoadingKey, useLoadingStore } from "@/store/useLoadingStore";
 import { globalStyles } from "@/styles/global.styles";
 import { scheduleStyles as styles } from "@/styles/onboarding/schedule.styles";
 import type { ClassItem, ScheduleMonth } from "@/types/schedule";
@@ -41,7 +42,7 @@ function defaultDayId(year: number, monthIndex: number) {
     return `${year}-${month}-${day}`;
   }
   const month = String(monthIndex + 1).padStart(2, "0");
-  return `${year}-${month}-10`;
+  return `${year}-${month}-01`;
 }
 
 function toDateId(date: Date) {
@@ -62,14 +63,15 @@ function toClassItem(cls: BackendClass): ClassItem {
   const endsAt = new Date(cls.endsAt);
   const belts = (cls.belts ?? [])
     .map((item) => item?.belt?.name)
-    .filter((name): name is string => typeof name === "string" && name.length > 0);
+    .filter(
+      (name): name is string => typeof name === "string" && name.length > 0,
+    );
   return {
     id: cls.id,
     dateId: toDateId(startsAt),
     startTime: toTime(startsAt),
     endTime: toTime(endsAt),
     professor: cls.teacher?.user?.name ?? cls.teacher?.name ?? "Professor",
-    enrolled: 0,
     capacity: cls.capacity,
     tags:
       belts.length > 0
@@ -106,78 +108,47 @@ export default function ScheduleScreen() {
     () => days.find((day) => day.id === selectedDayId),
     [days, selectedDayId],
   );
-  const [allClasses, setAllClasses] = useState<ClassItem[]>([]);
+  const query = useQuery({
+    queryKey: ["schedule-classes", cavernaId],
+    enabled: isCavernaIdValid,
+    retry: false,
+    queryFn: async () => {
+      const cave = await getCave(cavernaId!);
+      const results = await Promise.all(
+        (cave.units ?? []).map((unit) => listClasses({ caveUnitId: unit.id })),
+      );
+      return results.flat().map(toClassItem);
+    },
+  });
   const practitionerId = useAppStore((state) => state.user.practitionerId);
   const [enrollingId, setEnrollingId] = useState<string | null>(null);
-  const isClassesLoading = useLoadingStore(isLoadingKey("schedule-classes"));
-  const classesRequestRef = useRef(0);
+  const [enrollmentFailure, setEnrollmentFailure] = useState<{
+    caveId: string | undefined;
+    message: string;
+  } | null>(null);
+  const enrollmentError =
+    enrollmentFailure?.caveId === cavernaId ? enrollmentFailure?.message : null;
+  const enrollmentLock = useRef(false);
+  const enrollmentContext = useRef({ active: false });
+  const isClassesLoading = query.isPending || query.isFetching;
 
   useEffect(() => {
-    if (!cavernaId || !isCavernaIdValid) {
-      Alert.alert(
-        "Atenção",
-        "Escolha uma caverna válida para ver os horários.",
-        [
-          {
-            text: "OK",
-            onPress: () => router.replace("/onboarding/nearby-gym"),
-          },
-        ],
-      );
-      return;
-    }
-    const requestId = ++classesRequestRef.current;
-    const store = useLoadingStore.getState();
-    store.show("schedule-classes");
-    void (async () => {
-      try {
-        const cave = await getCave(cavernaId);
-        const units = cave.units ?? [];
-        if (units.length === 0) {
-          if (classesRequestRef.current === requestId) setAllClasses([]);
-          return;
-        }
-        const results = await Promise.all(
-          units.map((unit) => listClasses({ caveUnitId: unit.id })),
-        );
-        if (classesRequestRef.current === requestId) {
-          setAllClasses(results.flat().map(toClassItem));
-        }
-      } catch (err: unknown) {
-        if (classesRequestRef.current === requestId) {
-          setAllClasses([]);
-          Alert.alert(
-            "Erro",
-            backendMessage(err, "Não foi possível carregar as aulas."),
-          );
-        }
-      } finally {
-        store.hide("schedule-classes");
-      }
-    })();
-  }, [cavernaId, isCavernaIdValid, router]);
+    const context = { active: true };
+    enrollmentContext.current = context;
+    return () => {
+      context.active = false;
+    };
+  }, [cavernaId]);
 
   const classes = useMemo(() => {
     if (!selectedDay) return [];
-    return allClasses.filter((classItem) => classItem.dateId === selectedDay.id);
-  }, [allClasses, selectedDay]);
-
-  const hasAnyClasses = useMemo(() => {
-    if (allClasses.length === 0) return false;
-    const dayIds = new Set(days.map((day) => day.id));
-    return allClasses.some((classItem) => dayIds.has(classItem.dateId));
-  }, [allClasses, days]);
-
-  const alertedCavernaRef = useRef<string | null>(null);
-  useEffect(() => {
-    if (!cavernaId || !isCavernaIdValid) return;
-    if (isClassesLoading || hasAnyClasses) return;
-    if (alertedCavernaRef.current === cavernaId) return;
-    alertedCavernaRef.current = cavernaId;
-    Alert.alert(cavernaTitle, "Essa caverna não possui horários disponíveis");
-  }, [cavernaId, cavernaTitle, hasAnyClasses, isCavernaIdValid, isClassesLoading]);
+    return (query.data ?? []).filter(
+      (classItem) => classItem.dateId === selectedDay.id,
+    );
+  }, [query.data, selectedDay]);
 
   const handleSelectMonth = (month: ScheduleMonth) => {
+    setEnrollmentFailure(null);
     setSelectedMonthIndex(month.index);
     setSelectedDayId(defaultDayId(year, month.index));
   };
@@ -191,27 +162,39 @@ export default function ScheduleScreen() {
   };
 
   const handleSelectClass = async (classItem: ClassItem) => {
-    if (enrollingId !== null) return;
+    if (enrollmentLock.current) return;
     if (!practitionerId) {
-      Alert.alert(
-        "Atenção",
-        "Sua conta não foi criada. Volte e crie sua conta novamente.",
-      );
+      setEnrollmentFailure({
+        caveId: cavernaId,
+        message: "Sua conta não foi criada. Volte e crie sua conta novamente.",
+      });
       return;
     }
+    const context = enrollmentContext.current;
+    enrollmentLock.current = true;
+    setEnrollmentFailure(null);
     setEnrollingId(classItem.id);
     try {
       await enrollClass(classItem.id, { practitionerId });
-      router.replace("/inicio");
+      if (context.active) router.replace("/inicio");
     } catch (err: unknown) {
-      reportError(err);
+      if (context.active) {
+        setEnrollmentFailure({
+          caveId: cavernaId,
+          message: backendMessage(
+            err,
+            "Não foi possível reservar sua aula. Tente novamente.",
+          ),
+        });
+      }
     } finally {
+      enrollmentLock.current = false;
       setEnrollingId(null);
     }
   };
 
   return (
-    <SafeAreaView style={globalStyles.screen}>
+    <ScreenLayout>
       <View style={[globalStyles.container, styles.pageGap]}>
         <Pressable
           accessibilityRole="button"
@@ -243,7 +226,10 @@ export default function ScheduleScreen() {
         <WeekDayList
           days={days}
           selectedDayId={selectedDayId}
-          onSelectDay={(day) => setSelectedDayId(day.id)}
+          onSelectDay={(day) => {
+            setEnrollmentFailure(null);
+            setSelectedDayId(day.id);
+          }}
         />
 
         {selectedDay ? (
@@ -252,33 +238,84 @@ export default function ScheduleScreen() {
           </Text>
         ) : null}
 
-        {isClassesLoading ? (
+        {!isCavernaIdValid ? (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyTitle} accessibilityRole="alert">
+              Escolha uma caverna válida
+            </Text>
+            <Text style={styles.emptyText}>
+              Volte para escolher uma caverna e consultar seus horários.
+            </Text>
+            <DefaultButton
+              label="Escolher outra caverna"
+              color={BrandColors.primary}
+              action={() => router.replace("/onboarding/nearby-gym")}
+            />
+          </View>
+        ) : isClassesLoading ? (
           <ClassSkeleton />
+        ) : query.isError ? (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyTitle} accessibilityRole="alert">
+              Não foi possível carregar as aulas
+            </Text>
+            <Text style={styles.emptyText}>
+              {backendMessage(
+                query.error,
+                "Não foi possível carregar as aulas.",
+              )}
+            </Text>
+            <DefaultButton
+              label="Tentar novamente"
+              color={BrandColors.primary}
+              action={() => {
+                void query.refetch();
+              }}
+            />
+          </View>
         ) : (
-          <FlatList
-            data={classes}
-            keyExtractor={(item) => item.id}
-            showsVerticalScrollIndicator={false}
-            style={styles.list}
-            contentContainerStyle={styles.listContent}
-            renderItem={({ item }) => (
-              <ClassCard
-                classItem={item}
-                onPress={handleSelectClass}
-                loading={enrollingId === item.id}
-              />
-            )}
-            ListEmptyComponent={
-              <View style={styles.emptyContainer}>
-                <Text style={styles.emptyTitle}>Nenhuma aula encontrada</Text>
-                <Text style={styles.emptyText}>
-                  Não existem aulas disponíveis para este dia nesta caverna.
+          <>
+            {enrollmentError ? (
+              <View style={styles.feedback}>
+                <Text style={styles.emptyText} accessibilityRole="alert">
+                  {enrollmentError}
                 </Text>
+                {!practitionerId ? (
+                  <DefaultButton
+                    label="Criar conta"
+                    color={BrandColors.primary}
+                    action={() => router.replace("/onboarding/create-account")}
+                  />
+                ) : null}
               </View>
-            }
-          />
+            ) : null}
+            <FlatList
+              data={classes}
+              extraData={enrollingId}
+              keyExtractor={(item) => item.id}
+              showsVerticalScrollIndicator={false}
+              style={styles.list}
+              contentContainerStyle={styles.listContent}
+              renderItem={({ item }) => (
+                <ClassCard
+                  classItem={item}
+                  onPress={handleSelectClass}
+                  loading={enrollingId === item.id}
+                  disabled={enrollingId !== null}
+                />
+              )}
+              ListEmptyComponent={
+                <View style={styles.emptyContainer}>
+                  <Text style={styles.emptyTitle}>Nenhuma aula encontrada</Text>
+                  <Text style={styles.emptyText}>
+                    Não existem aulas disponíveis para este dia nesta caverna.
+                  </Text>
+                </View>
+              }
+            />
+          </>
         )}
       </View>
-    </SafeAreaView>
+    </ScreenLayout>
   );
 }

@@ -1,8 +1,21 @@
-# Pending — Popup de caverna sem horários
+# Agenda sem aulas e recuperação de falhas
 
-Status: **pending** — aguardando reunião com o time para validar viabilidade e se faz sentido.
+Status: **decisão aprovada no card #88 em 22/10/2026**. A proposta de popup abaixo é histórica e foi substituída por estados inline.
 
-## Decisão atual (mock)
+## Comportamento atual aprovado
+
+- ClassSkeleton durante carregamento, sem anunciar ausência de horários antes da resposta.
+- Falha de consulta mostra erro e Tentar novamente; nunca vira lista vazia.
+- Consulta concluída sem aulas mostra Nenhuma aula encontrada para o dia selecionado, sem bloquear calendário ou abrir popup.
+- Caverna sem unidades usa o mesmo vazio após a consulta. Identificador ausente/inválido mostra orientação e Escolher outra caverna, sem request inválido.
+- Inscrição bloqueia todos os cartões durante envio; navega a /inicio após sucesso e preserva lista após falha. Sem conta, orientar Criar conta. Resposta após sair da tela/trocar caverna não redireciona.
+- Outro mês começa no dia 1; o seletor inicia no dia selecionado.
+- Sem ocupação na API, mostrar Capacidade: N pessoas, sem inventar zero inscritos ou vagas livres. Mocks continuam isolados em api/mocks.
+- Reutilizar ScreenLayout e TanStack Query existentes. Filtro semanal/paginação completa ficam no #89.
+
+Evidências em `.docs/88-class-selection/test.md`. Figma não fornecido no card; visual segue componentes/tokens existentes, conforme aprovação.
+
+## Histórico — proposta anterior (mock, substituída)
 
 Quando o aluno escolhe, na tela anterior (escolha de caverna), uma caverna que
 não possui nenhum horário no mês selecionado, a tela de schedule exibe um popup:
