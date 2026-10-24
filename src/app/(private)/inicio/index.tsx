@@ -88,7 +88,7 @@ export default function Inicio() {
             </View>
           </View>
 
-          <Pressable accessibilityRole="button" accessibilityLabel="Ver todas as faixas" onPress={() => router.push("/trilha")} hitSlop={10} style={styles.linkWrap}>
+          <Pressable accessibilityRole="button" accessibilityLabel="Ver todas as faixas" onPress={() => router.replace("/trilha")} hitSlop={10} style={styles.linkWrap}>
             <Text style={styles.link}>Ver todas as faixas →</Text>
           </Pressable>
 

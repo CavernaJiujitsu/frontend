@@ -33,7 +33,7 @@ export function BottomNavbar({ testID }: BottomNavbarProps) {
       style={[styles.bar, { paddingBottom: Math.max(insets.bottom, 12) }]}
     >
       {ITEMS.map((item) => {
-        const selected = pathname === item.href;
+        const selected = pathname === item.href || pathname.startsWith(`${item.href}/`);
         return (
           <Pressable
             key={item.href}
@@ -42,7 +42,7 @@ export function BottomNavbar({ testID }: BottomNavbarProps) {
             accessibilityState={{ selected }}
             hitSlop={10}
             onPress={() => {
-              if (!selected) router.replace(item.href);
+              if (pathname !== item.href) router.replace(item.href);
             }}
             style={({ pressed }) => [
               styles.item,

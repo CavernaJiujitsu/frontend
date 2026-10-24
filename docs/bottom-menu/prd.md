@@ -88,3 +88,8 @@ não pelo navigator.
 - Alterados: `app/(private)/_layout.tsx`, `app/(private)/index.tsx` (redirect),
   `app/onboarding/(schedule)/schedule.tsx` (redirect pós-inscrição).
 - Removidos: `app/(private)/{index,trilha,cavernas,perfil}.tsx` planos (movidos).
+
+## Detalhe da trilha
+A rota `/trilha/[stageId]` mantém a aba Trilha selecionada. Tocar Trilha no
+menu retorna à raiz `/trilha` por replace; abrir o detalhe usa push. Ver
+`docs/student-trail/prd.md` para o escopo demonstrativo e bloqueios de integração.

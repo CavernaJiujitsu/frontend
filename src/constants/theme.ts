@@ -68,3 +68,8 @@ export const PageInset = {
 } as const;
 
 export const MaxContentWidth = 800;
+
+export const BeltColors = {
+  white: '#F5F5F5', yellow: '#FFD600', orange: '#FF8A00', green: '#24C76A',
+  blue: '#2E7CF6', purple: '#8A4DAB', brown: '#8B5E34', black: '#16171B',
+} as const;

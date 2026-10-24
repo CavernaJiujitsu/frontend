@@ -1,90 +1,39 @@
-import { profileStyles } from "@/styles/private/profileStyles";
-import { ScrollView, Text, TouchableOpacity, View } from "react-native";
-
-import { BottomNavbar } from "@/components/bottom-navbar/bottom-navbar";
-import { ScreenLayout } from "@/components/screen-layout/screen-layout";
-import { globalStyles } from "@/styles/global.styles";
-import { inicioStyles as styles } from "@/styles/private/inicio.styles";
-import { useState } from "react";
+import { useState } from 'react';
+import { Image } from 'expo-image';
+import { Pressable, Text, View } from 'react-native';
+import { profilePreview } from '@/api/mocks/student-preview';
+import { PreviewControls, PreviewFeedback, StudentPage } from '@/components/student-preview/preview-kit';
+import { studentStyles as s } from '@/styles/private/student-preview.styles';
+import type { PreviewScenario } from '@/types/student-preview';
 
 export default function Perfil() {
+  const [scenario, setScenario] = useState<PreviewScenario>('ready');
   const [openSection, setOpenSection] = useState<string | null>(null);
-
-  const toggleAccordion = (section: string) => {
-    setOpenSection(openSection === section ? null : section);
-  };
-
-  return (
-    <ScreenLayout bottomNav={<BottomNavbar/>}>
-      <ScrollView contentContainerStyle={[globalStyles.container, styles.content, profileStyles.scrollContainer]}>
-      
-        <View style={styles.header}>
-          <Text style={styles.greeting} accessibilityRole="header">
-            Perfil
-          </Text>
-          <Text style={styles.greetingSub}>Seus dados e sua graduação</Text>
-        </View>
-        
-        <View style={profileStyles.profileHeader}>
-          <View style={profileStyles.avatarPlaceholder}/>
-          <Text style={profileStyles.name}>Nome do usuário</Text>
-          <View style={profileStyles.badge}>
-            <Text style={profileStyles.badgeText}>Faixa: Azul</Text>
-          </View>
-        </View>
-
-        <View style={profileStyles.statsContainer}>
-          <View style={profileStyles.statBox}>
-            <Text style={profileStyles.statValue}>10</Text>
-            <Text style={profileStyles.statLabel}>Horas</Text>
-          </View>
-          <View style={profileStyles.statBox}>
-            <Text style={profileStyles.statValue}>5</Text>
-            <Text style={profileStyles.statLabel}>Aulas</Text>
-          </View>
-          <View style={profileStyles.statBox}>
-            <Text style={profileStyles.statValue}>6</Text>
-            <Text style={profileStyles.statLabel}>Sequências</Text>
-          </View>
-        </View>
-
-        <View style={profileStyles.accordionGroup}>
-          <View style={profileStyles.accordionItem}>
-            <TouchableOpacity onPress={() => toggleAccordion("edit")} activeOpacity={0.7}>
-              <Text style={profileStyles.accordionTitle}>Editar Perfil</Text>
-            </TouchableOpacity>
-            {openSection === "edit" && (
-              <View style={profileStyles.accordionContent}>
-                <Text style={profileStyles.subText}>Conteúdo do Editar Perfil</Text>
-              </View>
-            )}
-          </View>
-
-          <View style={profileStyles.accordionItem}>
-            <TouchableOpacity onPress={() => toggleAccordion("certificates")} activeOpacity={0.7}>
-              <Text style={profileStyles.accordionTitle}>Certificados</Text>
-            </TouchableOpacity>
-            {openSection === "certificates" && (
-              <View style={profileStyles.accordionContent}>
-                <Text style={profileStyles.subText}>Conteúdo das Configurações</Text>
-              </View>
-            )}
-          </View>
-
-          <View style={profileStyles.accordionItem}>
-            <TouchableOpacity onPress={() => toggleAccordion("settings")} activeOpacity={0.7}>
-              <Text style={profileStyles.accordionTitle}>Configurações</Text>
-            </TouchableOpacity>
-            {openSection === "settings" && (
-              <View style={profileStyles.accordionContent}>
-                <Text style={profileStyles.subText}>Conteúdo das Configurações</Text>
-              </View>
-            )}
-          </View>
-
-        </View>
-
-      </ScrollView> 
-    </ScreenLayout>
-  );
+  const missing = scenario === 'missing';
+  const visible = scenario === 'ready' || missing;
+  return <StudentPage title="Perfil" subtitle="Seus dados e sua graduação">
+    <PreviewControls scenario={scenario} onChange={setScenario} scenarios={['ready', 'missing', 'empty', 'loading', 'error']} />
+    <PreviewFeedback scenario={scenario} retry={() => setScenario('ready')} />
+    {visible && <>
+      <View style={s.profile}>
+        <Image source={require('../../../../assets/images/student-preview/avatar.svg')} style={s.avatar} accessibilityLabel="Avatar de demonstração" />
+        <Text style={s.title}>{missing ? 'Nome não informado' : profilePreview.name}</Text>
+        <Text style={s.accent}>{missing ? 'Graduação indisponível' : profilePreview.belt}</Text>
+      </View>
+      <View style={s.stats}>{profilePreview.stats.map(stat => <View key={stat.label} style={s.stat} accessibilityLabel={`${stat.label}: ${missing ? 'indisponível' : stat.value}`}>
+        <Text style={s.value}>{missing ? '—' : stat.value}</Text><Text style={s.body}>{stat.label}</Text>
+      </View>)}</View>
+      {missing && <Text style={s.body}>Os indicadores ainda não estão disponíveis. Ausência de dados não significa zero.</Text>}
+      {[
+        { id: 'profile', title: 'Dados do perfil', content: `${missing ? 'E-mail não informado' : profilePreview.email}\nA edição do perfil estará disponível em breve.` },
+        { id: 'certificates', title: 'Certificados', content: 'A consulta de certificados estará disponível em breve.' },
+        { id: 'settings', title: 'Configurações', content: 'As configurações estarão disponíveis em breve.' },
+      ].map(section => <View key={section.id} style={s.card}>
+        <Pressable accessibilityRole="button" accessibilityState={{ expanded: openSection === section.id }} style={({ pressed }) => [s.action, pressed && s.pressed]} onPress={() => setOpenSection(openSection === section.id ? null : section.id)}>
+          <Text style={s.title}>{section.title} {openSection === section.id ? '−' : '+'}</Text>
+        </Pressable>
+        {openSection === section.id && <Text style={s.body}>{section.content}</Text>}
+      </View>)}
+    </>}
+  </StudentPage>;
 }
