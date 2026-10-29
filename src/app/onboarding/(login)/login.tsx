@@ -51,9 +51,7 @@ export default function LoginScreen() {
   };
 
   const handleForgotPassword = () => {
-    useErrorStore
-      .getState()
-      .show("A recuperação de senha será disponibilizada em breve.");
+    router.push("/onboarding/forgot-password");
   };
 
   const handleCreateAccount = () => {

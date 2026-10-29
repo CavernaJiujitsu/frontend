@@ -1,6 +1,7 @@
 export const API_PREFIX = "/api/v1";
 
 export const routes = {
+  passwordRecoveryRequest: `${API_PREFIX}/auth/password-recovery/request`,
   practitioners: `${API_PREFIX}/practitioners`,
   practitioner: (practitionerId: string) =>
     `${API_PREFIX}/practitioners/${practitionerId}`,

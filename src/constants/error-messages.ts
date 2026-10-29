@@ -32,7 +32,8 @@ const INTERNAL_CODE_MESSAGES: Record<
   INVALID_CREDENTIALS: () => "Credenciais inválidas. Tente novamente.",
   TOKEN_EXPIRED: () => "Sua sessão expirou. Entre novamente.",
   FORBIDDEN: () => "Você não tem permissão para essa ação.",
-  RATE_LIMITED: () => "Muitas tentativas. Aguarde um pouco.",
+  RATE_LIMITED: () =>
+    "Você está temporariamente bloqueado por muitas tentativas. Aguarde antes de tentar novamente.",
   OFFLINE: () => "Sem conexão. Verifique sua internet.",
   TIMEOUT: () => "A requisição demorou demais. Tente novamente.",
   SERVER_ERROR: () => "Erro no servidor. Tente novamente em instantes.",
@@ -46,7 +47,8 @@ const ERROR_TYPE_FALLBACK: Record<string, string> = {
   NOT_FOUND: "Não encontramos esse recurso.",
   AUTH: "Sua sessão expirou. Entre novamente.",
   FORBIDDEN: "Você não tem permissão para essa ação.",
-  RATE_LIMIT: "Muitas tentativas. Aguarde um pouco.",
+  RATE_LIMIT:
+    "Você está temporariamente bloqueado por muitas tentativas. Aguarde antes de tentar novamente.",
   SERVER_ERROR: "Algo deu errado. Tente novamente em instantes.",
 };
 

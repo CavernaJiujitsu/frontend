@@ -8,6 +8,7 @@ export type ClassCardProps = {
   classItem: ClassItem;
   onPress: (classItem: ClassItem) => void;
   loading?: boolean;
+  disabled?: boolean;
   testID?: string;
 };
 
@@ -15,12 +16,13 @@ export function ClassCard({
   classItem,
   onPress,
   loading = false,
+  disabled = false,
   testID,
 }: ClassCardProps) {
   const { startTime, endTime, professor, enrolled, capacity, tags } = classItem;
   const isEnrolled = classItem.isEnrolled === true;
-  const isFull = enrolled >= capacity;
-  const isDisabled = isFull || isEnrolled || loading;
+  const isFull = enrolled !== undefined && enrolled >= capacity;
+  const isDisabled = isFull || isEnrolled || loading || disabled;
   const actionLabel = loading
     ? "Inscrevendo…"
     : isEnrolled
@@ -71,7 +73,9 @@ export function ClassCard({
 
       <View style={styles.footer}>
         <Text style={styles.capacity}>
-          {enrolled}/{capacity} vagas
+          {enrolled === undefined
+            ? `Capacidade: ${capacity} pessoas`
+            : `${enrolled}/${capacity} inscritos`}
         </Text>
 
         <Pressable

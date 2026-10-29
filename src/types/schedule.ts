@@ -11,7 +11,7 @@ export type ClassItem = {
   startTime: string;
   endTime: string;
   professor: string;
-  enrolled: number;
+  enrolled?: number;
   capacity: number;
   tags: ClassTag[];
   isEnrolled?: boolean;
