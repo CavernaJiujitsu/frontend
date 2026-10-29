@@ -1,26 +1,28 @@
-# Revisão — recuperação e redefinição de senha
-
-> Registro histórico de 25/10/2026, anterior à implementação da solicitação do link em 29/10/2026. Os achados abaixo não representam o estado atual da branch; consultar `implement.md` e `test.md`.
+# Revisão — solicitação de recuperação de senha
 
 ## Escopo
 
-Comparação do `plan.md` desta demanda com o código presente na branch `feat/password-recovery` em 25/10/2026. O plano está marcado como **aguardando aprovação do PO**. Não há `blueprint.md`, `implement.md` ou `test.md` nesta pasta.
+Revisão da branch `feat/password-recovery` contra `origin/main` em 29/10/2026, após correção da navegação assíncrona e teste do fluxo no Expo web com API local.
 
 ## Achados
 
 | ID | Severidade | Categoria | Achado | Onde | Recomendação |
 | --- | --- | --- | --- | --- | --- |
-| R1 | 🔴 alto | Fluxo e critérios 1–2 | O botão “Esqueci minha senha” apenas mostra “A recuperação de senha será disponibilizada em breve.” Não há solicitação de e-mail, validação, confirmação genérica nem tratamento de 429/503 ou falha de rede. | `src/app/onboarding/(login)/login.tsx:53–57,155–163` | Após aprovação do plano, criar a tela de solicitação e conectar o botão a ela. |
-| R2 | 🔴 alto | Rota e critérios 3–4, 7–8 | Não existe rota pública `/reset-password`, leitura de token, formulário de nova senha, estado de link inválido ou saudação definida pelo plano. | `src/app/` | Criar a rota e implementar os estados previstos; usar saudação genérica enquanto não houver origem segura para o nome. |
-| R3 | 🔴 alto | API e critérios 5–7 | Não existe serviço de recuperação em `src/api/services/`; portanto, nenhuma das operações do backend é chamada e não há validação da senha nem confirmação de sucesso. | `src/api/services/` | Espelhar os DTOs e controller do backend e integrar as telas após aprovação. Enviar somente `{ token, password }` no reset. |
-| R4 | 🟡 médio | Processo e evidências | O plano segue sem aprovação registrada, e faltam `blueprint.md`, `implement.md` e `test.md`. Não há evidência de fluxo web, deep link ou chamadas HTTP. | `.docs/password-recovery/` | Aprovar/refinar o plano antes de codificar e registrar implementação e testes conforme o fluxo SDD. |
+| R1 | 🔵 informativo | Cobertura de plataformas | O fluxo principal, validações, confirmação, retorno manual, 429 e saída durante envio passaram no Chrome. O viewport de 360 × 800 não pôde ser aplicado pela automação, e não havia dispositivo iOS/Android nesta sessão. | `.docs/password-recovery/test.md` | Conferir o layout e a navegação em dispositivo na homologação do PR. |
+| R2 | ✅ resolvido | Navegação assíncrona | Ao sair do formulário, a geração da requisição é invalidada. Uma resposta tardia não grava a mensagem, não abre a confirmação nem mostra erro na tela abandonada; o caso passou no Chrome. | `src/app/onboarding/(password-recovery)/forgot-password.tsx` | Nenhuma ação restante. |
+| R3 | ✅ resolvido | Artefato SDD | `plan.md` agora registra a imagem fornecida pelo PO e a dispensa do conector Figma para esta entrega. | `.docs/password-recovery/plan.md` | Nenhuma ação restante. |
 
 ## Conformidades verificadas
 
-- O login existente usa `FormField`, `DefaultButton`, tokens de tema, área segura e textos em PT-BR.
-- A busca nas rotas e nos serviços não encontrou manipulação de token nem persistência ou log de senha para este fluxo, pois ele ainda não existe.
-- `bun run lint` e `bunx tsc --noEmit` passaram no código atual. Esses checks não validam os critérios funcionais da recuperação.
+- Serviço usa a rota, o método e o corpo `{ email }` do DTO/controller do backend. O envelope 200 exige `message` não vazia antes de confirmar.
+- Solicitação existente e inexistente dependem da mesma mensagem pública do backend; a UI não recebe indicador de existência da conta.
+- Erro 429 é classificado pelo normalizador compartilhado e apresentado via `reportError`/toast global; 400/503/rede permanecem no formulário.
+- E-mail é validado localmente quanto a obrigatoriedade, espaços, formato e 160 caracteres. O botão bloqueia toques repetidos durante o envio.
+- Mensagem de sucesso permanece em memória e fora da URL. Não foram encontrados logs de e-mail, token, senha ou dados sensíveis nos arquivos da feature; nenhuma alteração em `.env`, `ios/` ou `android/`.
+- Nenhuma montagem insegura de URL/HTML, WebView ou `dangerouslySetInnerHTML` encontrada no diff.
+- Rotas em `src/app/`, estilos em `src/styles/onboarding/`, uso de `ScreenLayout`, `FormField`, `DefaultButton`, tokens de tema, imports `@/` e textos de UI em PT-BR. Nenhuma dependência nova.
+- Não há listas ou enums nesta entrega; verificações de `key` estável e enum não se aplicam.
 
 ## Conclusão
 
-**Plano não implementado; bloqueia considerar a demanda concluída ou pronta para merge.** É necessário resolver a aprovação e a decisão pendente sobre personalização do nome, implementar os fluxos e registrar testes em `test.md`.
+O desvio de navegação foi corrigido e o fluxo principal recebeu evidência funcional. A cobertura em dispositivo e no viewport mobile específico permanece como limite de homologação registrado em R1.

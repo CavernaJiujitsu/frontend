@@ -2,7 +2,7 @@
 
 ## Estado
 
-Implementação de código concluída em 29/10/2026 conforme o plano e o blueprint aprovados. A validação funcional na interface ainda depende de navegador de automação ou dispositivo disponível; consultar `test.md` antes de considerar a demanda pronta.
+Implementação de código concluída em 29/10/2026 conforme o plano e o blueprint aprovados. O fluxo foi exercitado no Expo web com a API local; consultar `test.md` para evidências e limites de cobertura.
 
 ## O que foi feito
 
@@ -21,6 +21,7 @@ Implementação de código concluída em 29/10/2026 conforme o plano e o bluepri
 - O bloqueio de novas solicitações continua sob autoridade do backend. A resposta 429 da rota não fornece duração confiável, então a UI não mostra contagem regressiva.
 - O serviço falha se um sucesso não trouxer `message` válida, evitando mostrar uma confirmação inventada.
 - A confirmação usa guarda de saída para que limpar a mensagem no retorno ao login não dispare redirecionamento concorrente à solicitação.
+- A revisão antes do PR encontrou uma corrida ao sair do formulário durante o envio. A tela agora invalida a resposta pendente ao perder foco ou ao voltar ao login, evitando navegação e toast tardios.
 
 ## Validação executada
 
@@ -29,9 +30,10 @@ Implementação de código concluída em 29/10/2026 conforme o plano e o bluepri
 - `bunx expo export --platform web --output-dir /tmp/password-recovery-web`: passou e exportou `/onboarding/forgot-password` e `/onboarding/check-email`.
 - `git diff --check`: passou.
 - API local: HTTP 200 com mensagem pública para e-mail sintético inexistente; HTTP 400 para e-mail inválido; HTTP 429 após repetição. A rota via proxy configurado em `.env` (`localhost:4000`) respondeu 200.
+- Expo web no Chrome: navegação desde o login, validações locais, confirmação com mensagem do backend, retorno manual, timer de 60 segundos, toast 429 e saída durante o envio passaram.
 
 ## Pendências
 
-- Exercitar o fluxo interativo e comparar visualmente com a imagem em navegador ou dispositivo. O navegador de automação ficou indisponível durante o teste; o resultado está registrado em `test.md`.
+- A verificação em dispositivo iOS/Android e o viewport de 360 × 800 não foram concluídos; a automação de viewport no Chrome falhou. O resultado está registrado em `test.md`.
 - A abertura do link e redefinição da senha pertencem à etapa posterior prevista no plano.
 - `bun.lock` já estava modificado antes desta implementação e não foi alterado intencionalmente por ela.

@@ -1,5 +1,5 @@
-import { useRouter } from "expo-router";
-import { useRef } from "react";
+import { useFocusEffect, useRouter } from "expo-router";
+import { useCallback, useRef } from "react";
 import { Controller, useForm } from "react-hook-form";
 import {
   KeyboardAvoidingView,
@@ -27,6 +27,15 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export default function ForgotPasswordScreen() {
   const router = useRouter();
   const submissionLocked = useRef(false);
+  const requestGeneration = useRef(0);
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        requestGeneration.current += 1;
+        submissionLocked.current = false;
+      };
+    }, []),
+  );
   const {
     control,
     handleSubmit,
@@ -36,18 +45,24 @@ export default function ForgotPasswordScreen() {
     reValidateMode: "onChange",
   });
 
-  const goToLogin = () => router.replace("/onboarding/login");
+  const goToLogin = () => {
+    requestGeneration.current += 1;
+    router.replace("/onboarding/login");
+  };
 
   const onSubmit = async ({ email }: RequestForm) => {
     if (submissionLocked.current) return;
     submissionLocked.current = true;
+    const currentRequest = ++requestGeneration.current;
     usePasswordRecoveryStore.getState().clearConfirmationMessage();
 
     try {
       const message = await requestPasswordRecovery({ email });
+      if (currentRequest !== requestGeneration.current) return;
       usePasswordRecoveryStore.getState().setConfirmationMessage(message);
       router.replace("/onboarding/check-email");
     } catch (error) {
+      if (currentRequest !== requestGeneration.current) return;
       submissionLocked.current = false;
       reportError(error);
     }

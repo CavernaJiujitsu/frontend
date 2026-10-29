@@ -77,6 +77,6 @@ Conferir lint e typecheck. Exercitar no app web navegação, validação, loadin
 - Sem `Retry-After` na resposta 429 da rota de recuperação, o app só pode informar que o bloqueio é temporário. O servidor continua sendo a autoridade para liberar novas tentativas.
 - O envio de e-mail pode falhar após o backend aceitar o pedido; por segurança, o backend ainda devolve 200. A UI deve manter a mensagem pública recebida.
 - A recuperação completa da senha dependerá da etapa posterior que implementa a rota do link e o formulário de redefinição.
-- O conector Figma exigiu reautenticação. As telas foram inspecionadas visualmente no navegador; a implementação de detalhes e ativos deverá confirmar o contexto de design quando o conector estiver disponível.
+- O conector Figma exigiu reautenticação. O PO forneceu uma imagem das duas telas e aprovou a implementação por essa referência; o conector deixou de ser dependência desta entrega.
 
 **Status:** aprovado pelo PO em 25/10/2026; blueprint e código autorizados após aprovação do blueprint.
