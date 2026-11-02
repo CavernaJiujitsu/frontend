@@ -1,5 +1,11 @@
 This is an Expo/React Native mobile application. Prioritize mobile-first patterns, performance, and cross-platform compatibility.
 
+## Codex cloud collaboration
+
+- Read [`docs/codex-cloud-workflow.md`](./docs/codex-cloud-workflow.md) at the start of each task. It records project references, mobile chat handoff, and collaboration rules.
+- Check the current GitHub base branch, open PRs, and active work before creating a branch or PR. A `/workspace` checkout may be stale; never push or merge based only on its local state.
+- Follow the SDD workflow below. Prior approval applies only to the approved scope and stage; record the card and decisions in `.docs/<slug>/`.
+
 ## SDD workflow (skills + `.docs/`)
 
 - Skills live in `.agents/skills/` (canonical) and are mirrored in `.codex/skills/` and `.claude/skills/`. Flow: `feature-plan` → `feature-implementation` → `feature-teste`; `feature-review` and `pr-create` on demand; `trello-ticket` runs the whole flow for a board card; `ui-style` defines the visual language. Keep the mirrors in sync when editing a skill.
