@@ -13,15 +13,25 @@ Este documento é o ponto de entrada para chats novos. Serve ao frontend e ao ba
 
 Links não concedem acesso a conteúdo privado: usar a integração conectada ao chat ou pedir o conteúdo do card/tela quando o acesso falhar. Não deduzir requisitos apenas pelo título do card. Em divergência entre card, Figma, diagrama, docs e código, registrar a diferença no plano e obter decisão de produto antes de alterar contrato ou regra. No backend, `docs/business-rules.md` e `docs/schema.dbml` continuam sendo as referências canônicas do domínio até uma mudança aprovada.
 
+## O que o usuário precisa fazer
+
+Escolher o ambiente do repositório e pedir a tarefa em linguagem natural, por exemplo: “continue o card #80”. O agente deve descobrir o card e suas referências, conferir o estado remoto, executar os comandos e preparar os artefatos. Não exigir que o usuário use terminal, copie arquivos entre chats ou repita os links deste documento. Pedir apenas uma decisão de produto, acesso que realmente esteja faltando ou a aprovação exigida pelo fluxo SDD. Se uma integração privada não funcionar, dizer qual informação falta e continuar a parte independente.
+
+O agrupamento de chats no aplicativo serve para navegação. O estado compartilhado fica no Trello (escopo/status), GitHub (código, PRs e checks) e `.docs/<slug>/` (decisões e evidências). Evitar uma segunda lista manual de status que possa divergir dessas fontes. Para ver o que foi entregue, consultar PRs integrados e os artefatos `.docs/` de cada repositório. Um chat novo deve reconstruir esse estado; não depender da memória de outro chat.
+
 ## Um card, um chat, uma branch
 
-1. Abrir um chat por card e vinculá-lo ao repositório correspondente. Para trabalho em ambos os repositórios, relacionar os dois PRs e registrar a dependência; não misturar histórico Git de backend e frontend.
-2. No início, ler `AGENTS.md`, este documento e os documentos de produto relevantes. Consultar o card completo, comentários e anexos; conferir PRs e branches abertos por outras pessoas. Verificar se o card já está em desenvolvimento ou entregue antes de criar trabalho duplicado.
+1. Abrir um chat principal por card no ambiente do repositório correspondente. Para trabalho em ambos os repositórios, usar chats/branches separados por repositório, relacionar os dois PRs e registrar a dependência; não misturar histórico Git de backend e frontend. O usuário pode pedir o fluxo inteiro pelo chat; o agente coordena as etapas.
+2. No início, ler `AGENTS.md`, este documento e os documentos de produto relevantes. Consultar o card completo, comentários e anexos; conferir PRs e branches abertos por outras pessoas. Verificar se o card já está em desenvolvimento ou entregue antes de criar trabalho duplicado. Se já houver branch/PR do card, identificar responsável, escopo e próximo passo antes de tocar nela; não assumir que a branch está livre.
 3. Conferir no GitHub o commit atual da branch base e suas regras. Usar o fluxo de integração vigente do repositório: o backend tem CI em PRs para `dev` e `main` e deploy ao enviar para `main`; o frontend tem CI em `dev` e `main`, mas o preview Azure do PR usa `main`. Se a base não estiver clara, definir isso no plano antes de abrir o PR. Não assumir que a cópia local da nuvem está atualizada.
 4. Criar uma branch exclusiva do card a partir da base confirmada (`feat/<numero>-<resumo>` ou `fix/<numero>-<resumo>`). Não reaproveitar branch de outro card, não fazer force push e não escrever diretamente em `main` ou `dev`.
 5. Seguir as skills e `.docs/<slug>/`: plano com critérios de aceite e fora de escopo; aprovação do plano; blueprint e aprovação; implementação; testes registrados em `test.md`; revisão; PR. Aprovações de cards anteriores não aprovam o card atual.
-6. Antes do PR, comparar a branch com a base atual, atualizar a branch sem sobrescrever trabalho alheio, executar os checks aplicáveis e confirmar contrato entre backend e frontend. No PR, incluir link do card, decisões, evidências, limitações e dependência de outro PR. Pedir revisão humana para contrato, migration, autenticação, dados pessoais ou publicação.
-7. Só integrar após revisão e checks exigidos. Confirmar o SHA/base imediatamente antes do merge. Como `main` pode disparar publicação, tratar o merge como etapa distinta da criação do PR. Atualizar status do card apenas depois de verificar o resultado.
+6. Antes do PR, comparar a branch com a base atual, atualizar a branch sem sobrescrever trabalho alheio, executar os checks aplicáveis e confirmar contrato entre backend e frontend. Não alterar base de PR ou branch de outro colaborador sem conferir a intenção registrada. No PR, incluir link do card, decisões, evidências, limitações e dependência de outro PR. Pedir revisão humana para contrato, migration, autenticação, dados pessoais ou publicação.
+7. Só integrar após revisão e checks exigidos. Confirmar o SHA/base imediatamente antes do merge. Como `main` pode disparar publicação, tratar o merge como etapa distinta da criação do PR. Se um check falhar por infraestrutura, registrar causa e responsável; não tratá-lo como sucesso nem contorná-lo sem decisão explícita. Atualizar status do card apenas depois de verificar o resultado.
+
+## Passagem entre chats
+
+Antes de encerrar uma etapa, registrar em `.docs/<slug>/` e no PR: branch/base, commit ou PR atual, critérios concluídos, checks com resultado, decisões pendentes, bloqueios e próximo passo. Para trabalho ainda sem PR, deixar esse resumo no artefato da etapa (`plan.md`, `implement.md` ou `test.md`). O próximo chat relê esses registros e confirma no GitHub se ainda estão atuais. O usuário só precisa indicar o card ou o PR; não precisa transferir a conversa inteira.
 
 ## Segurança e ambientes
 
