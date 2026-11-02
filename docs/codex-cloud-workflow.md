@@ -30,6 +30,10 @@ Links não concedem acesso a conteúdo privado: usar a integração conectada ao
 - Conferir a autorização efetiva do GitHub antes de prometer push ou PR. A integração do chat e a autenticação do terminal são acessos separados; se o Git do terminal falhar, usar a integração autorizada ou informar o bloqueio sem expor credenciais.
 - Evitar mudanças em CI, infraestrutura, secrets e deploy junto com um card funcional. Quando necessárias, criar PR separado e explicar o efeito de publicação.
 
+## Proteções a configurar no GitHub
+
+Um mantenedor com permissão administrativa deve configurar regras para `main` e, se a equipe continuar usando essa base, `dev`: exigir PR e revisão de outra pessoa, exigir os checks de CI correspondentes, invalidar aprovações após novos commits e bloquear force push, exclusão e push direto. Conferir os nomes dos checks no GitHub antes de torná-los obrigatórios. Essas regras são controles do repositório, não são ativadas por este documento; verificar a configuração efetiva antes de depender delas.
+
 ## Como iniciar pelo celular
 
 Abra um chat novo no projeto/repositório certo e envie, por exemplo:
