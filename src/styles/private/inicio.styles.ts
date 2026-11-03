@@ -23,7 +23,11 @@ export const inicioStyles = StyleSheet.create({
   },
   filterScroll: {
     flexGrow: 0,
-    height: 48,
+    height: 56,
+  },
+  filterContainer: {
+    height: 56,
+    overflow: "visible",
   },
   filterChip: {
     paddingHorizontal: 16,

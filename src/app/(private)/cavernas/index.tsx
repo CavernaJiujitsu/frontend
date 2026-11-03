@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { router, type Href } from "expo-router";
 import { useState } from "react";
 import { FlatList, Pressable, ScrollView, Text, View } from "react-native";
 
@@ -110,6 +111,7 @@ export default function Cavernas() {
           width="full"
           onClear={() => setSearch("")}
         />
+        <View style={styles.filterContainer}>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -143,6 +145,7 @@ export default function Cavernas() {
             );
           })}
         </ScrollView>
+        </View>
         {query.isLoading ? <LoadingSpinner label="Buscando cavernas…" /> : query.isError ? (
           <Text style={styles.emptyText}>Não foi possível carregar as cavernas.</Text>
         ) : (
@@ -169,7 +172,7 @@ export default function Cavernas() {
                     ...(activeFilter === "classesToday" ? ["Aulas hoje"] : []),
                   ]}
                   subtitle={item.units[0]?.neighborhood ?? item.units[0]?.name ?? "Unidade sem endereço"}
-                  onPress={() => undefined}
+                  onPress={() => router.push({ pathname: "/cavernas/[cavernaId]/aulas", params: { cavernaId: item.id, cavernaTitle: item.name } } as unknown as Href)}
                 />
               );
             }}
