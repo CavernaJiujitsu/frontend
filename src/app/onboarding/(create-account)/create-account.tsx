@@ -11,6 +11,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { createPractitioner } from "@/api/services/practitioners.service";
+import { login } from "@/api/services/auth.service";
 import { backendMessage } from "@/api/utils/backend-message";
 import { DefaultButton } from "@/components/customized/default-button";
 import { FormField } from "@/components/customized/form-field/form-field";
@@ -57,6 +58,7 @@ export default function CreateAccountScreen() {
   const router = useRouter();
   const setProfile = useAppStore((state) => state.setProfile);
   const setPractitionerId = useAppStore((state) => state.setPractitionerId);
+  const setAccessToken = useAppStore((state) => state.setAccessToken);
   const location = useAppStore((state) => state.user.location);
 
   const [nome, setNome] = useState("");
@@ -84,8 +86,10 @@ export default function CreateAccountScreen() {
         user: { name: nome.trim(), email: email.trim(), password: senha },
         ...(coordinates ? { coordinates } : {}),
       });
+      const session = await login({ email: email.trim(), password: senha });
       setProfile({ nome: nome.trim(), email: email.trim() });
       setPractitionerId(practitioner.id);
+      setAccessToken(session.accessToken);
       router.replace("/onboarding/location-permission");
     } catch (err) {
       setSubmitError(

@@ -10,8 +10,8 @@ import {
 } from "react-native";
 import Svg, { Path } from "react-native-svg";
 
-import { inicioMock } from "@/api/mocks/inicio";
 import { getHomeSummary } from "@/api/services/home.service";
+import { getMyProfile } from "@/api/services/profile.service";
 import { BottomNavbar } from "@/components/bottom-navbar/bottom-navbar";
 import { LoadingSpinner } from "@/components/customized/loading-spinner/loading-spinner";
 import { ScreenLayout } from "@/components/screen-layout/screen-layout";
@@ -32,8 +32,16 @@ const cardStyles = StyleSheet.create({
 export default function Inicio() {
   const router = useRouter();
   const practitionerId = useAppStore((state) => state.user.practitionerId);
+  const accessToken = useAppStore((state) => state.user.accessToken);
   const location = useAppStore((state) => state.user.location);
-  const belt = inicioMock.belt;
+  const profileQuery = useQuery({
+    queryKey: ["profile-me", practitionerId],
+    queryFn: getMyProfile,
+    enabled: Boolean(practitionerId && accessToken),
+  });
+  useReportQueryError(profileQuery.error);
+  const belt = profileQuery.data?.activeBelt;
+  const trailStats = profileQuery.data?.trailStats;
   const homeQuery = useQuery({
     queryKey: [
       "home-summary",
@@ -46,20 +54,13 @@ export default function Inicio() {
         latitude: location?.coords.latitude,
         longitude: location?.coords.longitude,
       }),
-    enabled: Boolean(practitionerId),
+    enabled: Boolean(practitionerId && accessToken),
   });
   useReportQueryError(homeQuery.error);
 
   const home = homeQuery.data;
   const userName =
-    home?.practitioner.fullName.split(" ")[0] ?? inicioMock.userName;
-  const beltProgress =
-    belt.totalCheckpoints > 0
-      ? Math.min(
-          Math.max(belt.completedCheckpoints / belt.totalCheckpoints, 0),
-          1,
-        )
-      : 0;
+    home?.practitioner.fullName.split(" ")[0] ?? profileQuery.data?.name ?? "Aluno";
   const nextClass = home?.nextClass
     ? {
         weekday: new Intl.DateTimeFormat("pt-BR", { weekday: "short" })
@@ -109,38 +110,20 @@ export default function Inicio() {
           </View>
 
           <View
-            accessibilityLabel={`${belt.name}, ${belt.completedCheckpoints} de ${belt.totalCheckpoints} checkpoints`}
+            accessibilityLabel={belt && trailStats ? `${belt.name}, ${trailStats.requiredCompleted} de ${trailStats.requiredTotal} movimentos obrigatórios` : "Avaliação de faixa pendente"}
             style={[globalStyles.card, cardStyles.card]}
           >
             <View style={cardStyles.contentGap}>
               <View style={styles.beltRow}>
-                <View
-                  style={[styles.beltDot, { backgroundColor: belt.color }]}
-                />
+                <View style={[styles.beltDot, { backgroundColor: belt?.color ?? BrandColors.border }]} />
                 <View>
-                  <Text style={styles.beltName}>{belt.name}</Text>
+                  <Text style={styles.beltName}>{belt?.name ?? "Avaliação pendente"}</Text>
                   <Text style={styles.beltProgressText}>
-                    {belt.completedCheckpoints} / {belt.totalCheckpoints}{" "}
-                    checkpoints
+                    {trailStats ? `${trailStats.requiredCompleted} / ${trailStats.requiredTotal} movimentos obrigatórios` : "A faixa ainda não foi confirmada"}
                   </Text>
                 </View>
               </View>
-              <View
-                style={styles.progressTrack}
-                accessibilityRole="progressbar"
-                accessibilityValue={{
-                  min: 0,
-                  max: belt.totalCheckpoints,
-                  now: belt.completedCheckpoints,
-                }}
-              >
-                <View
-                  style={[
-                    styles.progressFill,
-                    { width: `${beltProgress * 100}%` },
-                  ]}
-                />
-              </View>
+              {trailStats ? <View style={styles.progressTrack} accessibilityRole="progressbar" accessibilityValue={{ min: 0, max: 100, now: trailStats.percent }}><View style={[styles.progressFill, { width: `${trailStats.percent}%` }]} /></View> : null}
             </View>
           </View>
 

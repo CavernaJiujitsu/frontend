@@ -14,10 +14,14 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Svg, { Path } from "react-native-svg";
 
 import { localeIcon } from "@/assets/images";
+import { login } from "@/api/services/auth.service";
+import { backendMessage } from "@/api/utils/backend-message";
 import { DefaultButton } from "@/components/customized/default-button";
 import { FormField } from "@/components/customized/form-field/form-field";
 import { BrandColors, Colors } from "@/constants/theme";
 import { useErrorStore } from "@/store/useErrorStore";
+import { useAppStore } from "@/store/useAppStore";
+import { normalizeApiError } from "@/utils/normalize-api-error";
 import { globalStyles } from "@/styles/global.styles";
 import { styles } from "@/styles/onboarding/login.styles";
 
@@ -28,10 +32,12 @@ type LoginForm = {
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const SUBMISSION_FEEDBACK_DELAY_MS = 350;
+const INVALID_LOGIN_MESSAGE = "Senha ou e-mail está errado.";
 
 export default function LoginScreen() {
   const router = useRouter();
   const [showSenha, setShowSenha] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const {
     control,
     formState: { isSubmitting },
@@ -41,13 +47,29 @@ export default function LoginScreen() {
     reValidateMode: "onChange",
   });
 
-  const handleLogin = async () => {
-    await new Promise<void>((resolve) => {
-      setTimeout(resolve, SUBMISSION_FEEDBACK_DELAY_MS);
-    });
-    useErrorStore.getState().show(
-      "A autenticação será conectada em uma tarefa separada.",
-    );
+  const setProfile = useAppStore((state) => state.setProfile);
+  const setPractitionerId = useAppStore((state) => state.setPractitionerId);
+  const setAccessToken = useAppStore((state) => state.setAccessToken);
+
+  const handleLogin = async ({ email, senha }: LoginForm) => {
+    setSubmitError(null);
+    try {
+      await new Promise<void>((resolve) => {
+        setTimeout(resolve, SUBMISSION_FEEDBACK_DELAY_MS);
+      });
+      const response = await login({ email: email.trim(), password: senha });
+      setAccessToken(response.accessToken);
+      setPractitionerId(response.practitionerId);
+      setProfile({ nome: email.trim(), email: email.trim() });
+      router.replace("/inicio");
+    } catch (error) {
+      const normalizedError = normalizeApiError(error);
+      const message = normalizedError.status === 401
+        ? INVALID_LOGIN_MESSAGE
+        : backendMessage(error, "Não foi possível entrar. Tente novamente.");
+      setSubmitError(message);
+      useErrorStore.getState().show(message);
+    }
   };
 
   const handleForgotPassword = () => {
@@ -108,7 +130,10 @@ export default function LoginScreen() {
             <Controller
               control={control}
               name="senha"
-              rules={{ validate: (value) => value || "Informe sua senha." }}
+              rules={{
+                validate: (value) =>
+                  value.trim().length > 0 || "Informe sua senha.",
+              }}
               render={({ field: { onChange, value }, fieldState: { error } }) => (
                 <FormField
                   accessibilityLabel="Senha"
@@ -159,6 +184,8 @@ export default function LoginScreen() {
             >
               <Text style={styles.forgotPasswordText}>Esqueci minha senha</Text>
             </Pressable>
+
+            {submitError ? <Text style={styles.submitError}>{submitError}</Text> : null}
 
             <DefaultButton
               action={handleSubmit(handleLogin)}

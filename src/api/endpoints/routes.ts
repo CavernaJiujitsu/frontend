@@ -1,8 +1,11 @@
 export const API_PREFIX = "/api/v1";
 
 export const routes = {
+  login: `${API_PREFIX}/auth/login`,
   passwordRecoveryRequest: `${API_PREFIX}/auth/password-recovery/request`,
   practitioners: `${API_PREFIX}/practitioners`,
+  practitionerTrail: `${API_PREFIX}/practitioners/me/trail`,
+  profileMe: `${API_PREFIX}/profiles/me`,
   practitioner: (practitionerId: string) =>
     `${API_PREFIX}/practitioners/${practitionerId}`,
   belts: `${API_PREFIX}/belts`,

@@ -9,12 +9,14 @@ interface AppState {
     locationPermissionGranted: boolean;
     profile: { nome: string; email: string } | null;
     practitionerId: string | null;
+    accessToken: string | null;
     beltValidationId: string | null;
   };
   setUserLocation: (location: Location.LocationObject) => void;
   setLocationPermissionGranted: (granted: boolean) => void;
   setProfile: (profile: { nome: string; email: string }) => void;
   setPractitionerId: (practitionerId: string | null) => void;
+  setAccessToken: (accessToken: string | null) => void;
   setBeltValidationId: (beltValidationId: string | null) => void;
   resetUser: () => void;
 }
@@ -24,6 +26,7 @@ const initialUser: AppState["user"] = {
   locationPermissionGranted: false,
   profile: null,
   practitionerId: null,
+  accessToken: null,
   beltValidationId: null,
 };
 
@@ -46,6 +49,10 @@ export const useAppStore = create<AppState>()(
       setPractitionerId: (practitionerId) =>
         set((state) => ({
           user: { ...state.user, practitionerId },
+        })),
+      setAccessToken: (accessToken) =>
+        set((state) => ({
+          user: { ...state.user, accessToken },
         })),
       setBeltValidationId: (beltValidationId) =>
         set((state) => ({

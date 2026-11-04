@@ -81,6 +81,12 @@ export const studentStyles = StyleSheet.create({
   },
   fill: { height: 6, backgroundColor: BrandColors.borderSecondary },
   profile: { alignItems: "center", gap: Spacing.two },
+  pendingPage: { gap: Spacing.three },
+  pendingEyebrow: { color: BrandColors.secondary, fontSize: 12, fontWeight: "700" },
+  pendingHeading: { color: Colors.light.text, fontSize: 24, lineHeight: 30, fontWeight: "800" },
+  pendingBadge: { alignSelf: "flex-start", backgroundColor: Colors.light.backgroundSelected, borderRadius: 8, paddingHorizontal: Spacing.three, paddingVertical: Spacing.two },
+  beltRow: { flexDirection: "row", alignItems: "center", gap: Spacing.two },
+  beltDot: { width: 16, height: 16, borderRadius: 8 },
   avatar: { width: 80, height: 80 },
   stats: { flexDirection: "row", flexWrap: "wrap", gap: Spacing.two },
   stat: {
