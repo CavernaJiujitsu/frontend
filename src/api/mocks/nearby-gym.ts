@@ -50,11 +50,11 @@ export const nearbyGymMocks: NearbyGymMock[] = [
   },
 ];
 
-export async function fetchNearbyGyms(search: string): Promise<NearbyGymMock[]> {
+export async function fetchNearbyGyms(
+  search: string,
+): Promise<NearbyGymMock[]> {
   await wait(NEARBY_GYMS_DELAY_MS);
   const term = search.trim().toLowerCase();
   if (term.length === 0) return nearbyGymMocks;
-  return nearbyGymMocks.filter((gym) =>
-    gym.title.toLowerCase().includes(term),
-  );
+  return nearbyGymMocks.filter((gym) => gym.title.toLowerCase().includes(term));
 }

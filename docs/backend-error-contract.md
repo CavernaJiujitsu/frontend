@@ -20,16 +20,16 @@ continua valendo — o front lê `status + internalCode`.
 
 ## Campos
 
-| Campo | Regra |
-|---|---|
-| `errorType` | Enum grosso p/ telemetria: `VALIDATION \| DUPLICATE_RESOURCE \| CONFLICT \| NOT_FOUND \| AUTH \| FORBIDDEN \| RATE_LIMIT \| SERVER_ERROR` |
+| Campo          | Regra                                                                                                                                        |
+| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `errorType`    | Enum grosso p/ telemetria: `VALIDATION \| DUPLICATE_RESOURCE \| CONFLICT \| NOT_FOUND \| AUTH \| FORBIDDEN \| RATE_LIMIT \| SERVER_ERROR`    |
 | `internalCode` | `SCREAMING_SNAKE`, estável. **Mudar = breaking change versionada pelo back.** É a chave do popup customizável e do dicionário pt-BR no front |
-| `message` | Inglês técnico, só fallback/log. Nunca exibido quando há tradução |
-| `domain` | Contexto DDD: `auth \| profile \| gym \| schedule \| client \| server` |
-| `field` | Campo do formulário (só 400/422), `null` quando não se aplica |
-| `params` | Variáveis p/ interpolar a mensagem pt-BR (ex. `title`) |
-| `details` | Lista de erros de validação `{ field?, code, message? }` |
-| `traceId` | Id da requisição p/ rastrear 500 no log |
+| `message`      | Inglês técnico, só fallback/log. Nunca exibido quando há tradução                                                                            |
+| `domain`       | Contexto DDD: `auth \| profile \| gym \| schedule \| client \| server`                                                                       |
+| `field`        | Campo do formulário (só 400/422), `null` quando não se aplica                                                                                |
+| `params`       | Variáveis p/ interpolar a mensagem pt-BR (ex. `title`)                                                                                       |
+| `details`      | Lista de erros de validação `{ field?, code, message? }`                                                                                     |
+| `traceId`      | Id da requisição p/ rastrear 500 no log                                                                                                      |
 
 ## Exemplos
 

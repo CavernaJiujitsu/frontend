@@ -1,14 +1,14 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { Alert } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
-import * as Location from "expo-location";
-import { useLocationPermission } from "@/hooks/use-location-permission";
 import { updatePractitionerLocation } from "@/api/services/practitioners.service";
 import { backendMessage } from "@/api/utils/backend-message";
+import { useLocationPermission } from "@/hooks/use-location-permission";
 import { useAppStore } from "@/store/useAppStore";
 import { globalStyles } from "@/styles/global.styles";
 import { normalizeCoordinates } from "@/utils/location";
+import * as Location from "expo-location";
+import { useRouter } from "expo-router";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Alert } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 import { LocationPermissionActions } from "@/components/onboarding/location-permission/location-permission-actions";
 import { LocationPermissionBody } from "@/components/onboarding/location-permission/location-permission-body";
@@ -114,10 +114,11 @@ export default function LocationPermissionScreen() {
     continueToNearbyGym();
   }, [continueToNearbyGym]);
 
-  const { isRequestingPermission, handleRequestLocation } = useLocationPermission({
-    onPermissionGranted: handlePermissionGranted,
-    onPermissionDenied: handlePermissionDenied,
-  });
+  const { isRequestingPermission, handleRequestLocation } =
+    useLocationPermission({
+      onPermissionGranted: handlePermissionGranted,
+      onPermissionDenied: handlePermissionDenied,
+    });
 
   return (
     <SafeAreaView style={globalStyles.screen}>

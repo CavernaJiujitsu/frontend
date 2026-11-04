@@ -29,21 +29,21 @@ Local: `src/components/customized/form-field/form-field.tsx`
 
 Props:
 
-| Prop | Tipo | Default | Regra |
-|---|---|---|---|
-| `label` | `string` | — | Obrigatório, exibido acima do input |
-| `value` | `string` | — | Estado pertence à tela |
-| `onChangeText` | `(text: string) => void` | — | Obrigatório |
-| `placeholder` | `string?` | — | Opcional |
-| `error` | `string?` | — | Quando presente: borda de erro + texto abaixo |
-| `secureTextEntry` | `boolean?` | — | Repassado ao `TextInput` |
-| `keyboardType` | `KeyboardTypeOptions?` | `"default"` | Repassado |
-| `autoCapitalize` | `"none" \| "sentences" \| "words" \| "characters"?` | `"sentences"` | Repassado |
-| `rightAction` | `React.ReactNode?` | — | Slot à direita (ex. Mostrar/Ocultar senha) |
-| `width` | `number \| "full" \| "half"?` | `"full"` | Convenção `SearchInput`: `full` = 100%, `half` = 50%, número clamp 10–100 |
-| `editable` | `boolean?` | `true` | Repassado |
-| `testID` | `string?` | — | No wrapper |
-| `accessibilityLabel` | `string?` | `placeholder ?? label` | No `TextInput` |
+| Prop                 | Tipo                                                | Default                | Regra                                                                     |
+| -------------------- | --------------------------------------------------- | ---------------------- | ------------------------------------------------------------------------- |
+| `label`              | `string`                                            | —                      | Obrigatório, exibido acima do input                                       |
+| `value`              | `string`                                            | —                      | Estado pertence à tela                                                    |
+| `onChangeText`       | `(text: string) => void`                            | —                      | Obrigatório                                                               |
+| `placeholder`        | `string?`                                           | —                      | Opcional                                                                  |
+| `error`              | `string?`                                           | —                      | Quando presente: borda de erro + texto abaixo                             |
+| `secureTextEntry`    | `boolean?`                                          | —                      | Repassado ao `TextInput`                                                  |
+| `keyboardType`       | `KeyboardTypeOptions?`                              | `"default"`            | Repassado                                                                 |
+| `autoCapitalize`     | `"none" \| "sentences" \| "words" \| "characters"?` | `"sentences"`          | Repassado                                                                 |
+| `rightAction`        | `React.ReactNode?`                                  | —                      | Slot à direita (ex. Mostrar/Ocultar senha)                                |
+| `width`              | `number \| "full" \| "half"?`                       | `"full"`               | Convenção `SearchInput`: `full` = 100%, `half` = 50%, número clamp 10–100 |
+| `editable`           | `boolean?`                                          | `true`                 | Repassado                                                                 |
+| `testID`             | `string?`                                           | —                      | No wrapper                                                                |
+| `accessibilityLabel` | `string?`                                           | `placeholder ?? label` | No `TextInput`                                                            |
 
 Comportamento: dumb, sem estado interno; `placeholderTextColor = Colors.light.textSecondary`.
 
