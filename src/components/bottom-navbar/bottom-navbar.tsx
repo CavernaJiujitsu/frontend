@@ -33,7 +33,8 @@ export function BottomNavbar({ testID }: BottomNavbarProps) {
       style={[styles.bar, { paddingBottom: Math.max(insets.bottom, 12) }]}
     >
       {ITEMS.map((item) => {
-        const selected = pathname === item.href || pathname.startsWith(`${item.href}/`);
+        const selected =
+          pathname === item.href || pathname.startsWith(`${item.href}/`);
         return (
           <Pressable
             key={item.href}

@@ -6,8 +6,11 @@ type PasswordRecoveryState = {
   clearConfirmationMessage: () => void;
 };
 
-export const usePasswordRecoveryStore = create<PasswordRecoveryState>((set) => ({
-  confirmationMessage: null,
-  setConfirmationMessage: (confirmationMessage) => set({ confirmationMessage }),
-  clearConfirmationMessage: () => set({ confirmationMessage: null }),
-}));
+export const usePasswordRecoveryStore = create<PasswordRecoveryState>(
+  (set) => ({
+    confirmationMessage: null,
+    setConfirmationMessage: (confirmationMessage) =>
+      set({ confirmationMessage }),
+    clearConfirmationMessage: () => set({ confirmationMessage: null }),
+  }),
+);

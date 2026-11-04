@@ -1,7 +1,7 @@
-import { create } from 'zustand';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { createJSONStorage, persist } from 'zustand/middleware';
-import type * as Location from 'expo-location';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import type * as Location from "expo-location";
+import { create } from "zustand";
+import { createJSONStorage, persist } from "zustand/middleware";
 
 interface AppState {
   user: {
@@ -19,7 +19,7 @@ interface AppState {
   resetUser: () => void;
 }
 
-const initialUser: AppState['user'] = {
+const initialUser: AppState["user"] = {
   location: null,
   locationPermissionGranted: false,
   profile: null,
@@ -54,7 +54,7 @@ export const useAppStore = create<AppState>()(
       resetUser: () => set({ user: initialUser }),
     }),
     {
-      name: 'caverna-user-store',
+      name: "caverna-user-store",
       storage: createJSONStorage(() => AsyncStorage),
     },
   ),

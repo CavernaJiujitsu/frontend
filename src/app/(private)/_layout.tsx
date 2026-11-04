@@ -10,7 +10,10 @@ export default function PrivateLayout() {
   const insets = useSafeAreaInsets();
 
   function handleCheckin() {
-    Alert.alert("Check-in", "O check-in rápido estará disponível em breve. Oss!");
+    Alert.alert(
+      "Check-in",
+      "O check-in rápido estará disponível em breve. Oss!",
+    );
   }
 
   return (

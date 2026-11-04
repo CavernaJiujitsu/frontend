@@ -1,11 +1,6 @@
 import { StyleSheet } from "react-native";
 
-import {
-  BrandColors,
-  Colors,
-  PageInset,
-  Spacing,
-} from "@/constants/theme";
+import { BrandColors, Colors, PageInset, Spacing } from "@/constants/theme";
 
 export const globalStyles = StyleSheet.create({
   screen: {

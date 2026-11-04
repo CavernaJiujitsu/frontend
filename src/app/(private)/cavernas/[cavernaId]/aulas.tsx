@@ -7,6 +7,15 @@ function firstParam(value: string | string[] | undefined) {
 }
 
 export default function PrivateCaveScheduleRoute() {
-  const params = useLocalSearchParams<{ cavernaId?: string | string[]; cavernaTitle?: string | string[] }>();
-  return <ScheduleScreen mode="private" cavernaId={firstParam(params.cavernaId)} cavernaTitle={firstParam(params.cavernaTitle)} />;
+  const params = useLocalSearchParams<{
+    cavernaId?: string | string[];
+    cavernaTitle?: string | string[];
+  }>();
+  return (
+    <ScheduleScreen
+      mode="private"
+      cavernaId={firstParam(params.cavernaId)}
+      cavernaTitle={firstParam(params.cavernaTitle)}
+    />
+  );
 }

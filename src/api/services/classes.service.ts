@@ -36,19 +36,16 @@ export type ListClassesParams = {
 export async function listClasses(
   params: ListClassesParams = {},
 ): Promise<BackendClass[]> {
-  const { data } = await apiClient.get<ApiEnvelope<PaginatedResponse<BackendClass>>>(
-    routes.classes,
-    {
-      params: {
-        page: params.page ?? 1,
-        limit: params.limit ?? 100,
-        ...(params.caveUnitId
-          ? { caveUnitId: params.caveUnitId }
-          : {}),
-        ...(params.type ? { type: params.type } : {}),
-      },
+  const { data } = await apiClient.get<
+    ApiEnvelope<PaginatedResponse<BackendClass>>
+  >(routes.classes, {
+    params: {
+      page: params.page ?? 1,
+      limit: params.limit ?? 100,
+      ...(params.caveUnitId ? { caveUnitId: params.caveUnitId } : {}),
+      ...(params.type ? { type: params.type } : {}),
     },
-  );
+  });
   return unwrap(data).data;
 }
 

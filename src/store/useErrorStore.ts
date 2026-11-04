@@ -1,6 +1,9 @@
 import { create } from "zustand";
 
-import { DEFAULT_ERROR_DURATION_MS, getErrorMessage } from "@/constants/error-messages";
+import {
+  DEFAULT_ERROR_DURATION_MS,
+  getErrorMessage,
+} from "@/constants/error-messages";
 import { normalizeApiError } from "@/utils/normalize-api-error";
 
 export type ErrorToastOptions = {

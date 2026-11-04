@@ -1,9 +1,6 @@
 import { isAxiosError } from "axios";
 
-import {
-  BackendErrorSchema,
-  type AppError,
-} from "@/api/types/api-error";
+import { BackendErrorSchema, type AppError } from "@/api/types/api-error";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
