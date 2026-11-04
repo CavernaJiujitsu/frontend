@@ -1,17 +1,13 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
-import {
-  Alert,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import Svg, { Path } from "react-native-svg";
 
+import { queryClient } from "@/api/bootstrap/query-client";
+import { cancelClassEnrollment, checkInClass } from "@/api/services/classes.service";
 import { getHomeSummary } from "@/api/services/home.service";
 import { getMyProfile } from "@/api/services/profile.service";
+import { backendMessage } from "@/api/utils/backend-message";
 import { BottomNavbar } from "@/components/bottom-navbar/bottom-navbar";
 import { LoadingSpinner } from "@/components/customized/loading-spinner/loading-spinner";
 import { ScreenLayout } from "@/components/screen-layout/screen-layout";
@@ -59,6 +55,19 @@ export default function Inicio() {
   useReportQueryError(homeQuery.error);
 
   const home = homeQuery.data;
+  const currentClass = home?.nextClass;
+  const enrollmentMutation = useMutation({
+    mutationFn: async ({ action, classId, enrollmentId }: { action: "check-in" | "cancel"; classId: string; enrollmentId: string }) =>
+      action === "check-in" ? checkInClass(classId, enrollmentId) : cancelClassEnrollment(classId, enrollmentId),
+    onSuccess: async (_data, variables) => {
+      await Promise.all([
+        homeQuery.refetch(),
+        queryClient.invalidateQueries({ queryKey: ["profile-me", practitionerId] }),
+      ]);
+      Alert.alert(variables.action === "check-in" ? "Presença confirmada" : "Inscrição cancelada", variables.action === "check-in" ? "Nos vemos na aula. Oss!" : "A vaga foi liberada.");
+    },
+    onError: (error: unknown) => Alert.alert("Não foi possível concluir", backendMessage(error, "A inscrição não está mais disponível.")),
+  });
   const userName =
     home?.practitioner.fullName.split(" ")[0] ?? profileQuery.data?.name ?? "Aluno";
   const nextClass = home?.nextClass
@@ -145,7 +154,7 @@ export default function Inicio() {
                   label="Carregando informações da sua próxima aula…"
                   size={44}
                 />
-              ) : nextClass ? (
+              ) : nextClass && currentClass ? (
                 <>
                   <View style={styles.nextClassRow}>
                     <Text style={styles.nextClassTime}>
@@ -159,22 +168,23 @@ export default function Inicio() {
                     <Text style={styles.teacher}>
                       Prof. {nextClass.teacherName}
                     </Text>
-                    <Pressable
+                    {currentClass.enrollmentStatus === "PENDING" ? <Pressable
                       accessibilityRole="button"
                       accessibilityLabel="Confirmar presença na próxima aula"
-                      style={({ pressed }) => [
-                        styles.confirmBtn,
-                        pressed && styles.confirmBtnPressed,
-                      ]}
-                      onPress={() =>
-                        Alert.alert(
-                          "Presença confirmada",
-                          "Nos vemos na próxima aula. Oss!",
-                        )
-                      }
+                      disabled={enrollmentMutation.isPending}
+                      style={({ pressed }) => [styles.confirmBtn, pressed && styles.confirmBtnPressed]}
+                      onPress={() => enrollmentMutation.mutate({ action: "check-in", classId: currentClass.classId, enrollmentId: currentClass.enrollmentId })}
                     >
-                      <Text style={styles.confirmBtnText}>Confirmar</Text>
-                    </Pressable>
+                      <Text style={styles.confirmBtnText}>{enrollmentMutation.isPending ? "Aguarde…" : "Confirmar"}</Text>
+                    </Pressable> : <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel="Cancelar inscrição da próxima aula"
+                      disabled={enrollmentMutation.isPending}
+                      style={({ pressed }) => [styles.confirmBtn, pressed && styles.confirmBtnPressed]}
+                      onPress={() => enrollmentMutation.mutate({ action: "cancel", classId: currentClass.classId, enrollmentId: currentClass.enrollmentId })}
+                    >
+                      <Text style={styles.confirmBtnText}>Cancelar</Text>
+                    </Pressable>}
                   </View>
                 </>
               ) : (

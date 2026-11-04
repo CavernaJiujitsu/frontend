@@ -13,6 +13,7 @@ export type Practitioner = {
   user: PractitionerUser;
   latitude: string | null;
   longitude: string | null;
+  age: number | null;
 };
 
 export type PractitionerCoordinates = {
@@ -30,6 +31,14 @@ export type CreatePractitionerPayload = {
 };
 
 export type UpdatePractitionerLocationPayload = PractitionerCoordinates;
+
+export type UpdatePractitionerPayload = {
+  name?: string;
+  email?: string;
+  age?: number;
+  latitude?: number;
+  longitude?: number;
+};
 
 export async function createPractitioner(
   payload: CreatePractitionerPayload,
@@ -51,6 +60,17 @@ export async function getPractitioner(id: string): Promise<Practitioner> {
 export async function updatePractitionerLocation(
   practitionerId: string,
   payload: UpdatePractitionerLocationPayload,
+): Promise<Practitioner> {
+  const { data } = await apiClient.patch<ApiEnvelope<Practitioner>>(
+    routes.practitioner(practitionerId),
+    payload,
+  );
+  return unwrap(data);
+}
+
+export async function updatePractitioner(
+  practitionerId: string,
+  payload: UpdatePractitionerPayload,
 ): Promise<Practitioner> {
   const { data } = await apiClient.patch<ApiEnvelope<Practitioner>>(
     routes.practitioner(practitionerId),

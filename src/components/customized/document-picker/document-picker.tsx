@@ -2,15 +2,14 @@ import * as DocumentPicker from "expo-document-picker";
 import { Alert, Text, TouchableOpacity, View } from "react-native";
 import { useCallback } from "react";
 
-import {
-  MAX_CERTIFICATE_SIZE_BYTES,
-  type CertificateMock,
-} from "@/api/mocks/belts";
+import type { CertificateFile } from "@/api/services/certificates.service";
 import { documentPickerStyles as styles } from "@/components/customized/document-picker/styles/document-picker.styles";
 
+const MAX_CERTIFICATE_SIZE_BYTES = 5 * 1024 * 1024;
+
 type CertificatePickerProps = {
-  value: CertificateMock | null;
-  onChange: (file: CertificateMock | null) => void;
+  value: CertificateFile | null;
+  onChange: (file: CertificateFile | null) => void;
   disabled?: boolean;
 };
 

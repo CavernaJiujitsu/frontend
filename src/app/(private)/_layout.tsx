@@ -1,5 +1,5 @@
-import { Stack } from "expo-router";
-import { Alert, StyleSheet, View } from "react-native";
+import { Stack, router } from "expo-router";
+import { StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { BOTTOM_NAVBAR_BASE_HEIGHT } from "@/components/bottom-navbar/bottom-navbar";
@@ -8,13 +8,6 @@ import { BrandColors } from "@/constants/theme";
 
 export default function PrivateLayout() {
   const insets = useSafeAreaInsets();
-
-  function handleCheckin() {
-    Alert.alert(
-      "Check-in",
-      "O check-in rápido estará disponível em breve. Oss!",
-    );
-  }
 
   return (
     <View style={styles.host}>
@@ -25,7 +18,9 @@ export default function PrivateLayout() {
         }}
       />
       <CheckinFab
-        onPress={handleCheckin}
+        onPress={() => router.replace("/inicio")}
+        label="Próxima aula"
+        accessibilityLabel="Abrir próxima aula"
         style={{ bottom: insets.bottom + BOTTOM_NAVBAR_BASE_HEIGHT + 16 }}
       />
     </View>

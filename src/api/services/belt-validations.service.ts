@@ -12,12 +12,17 @@ export type BeltValidationStatus =
 export type BeltValidation = {
   id: string;
   status: BeltValidationStatus;
+  practitionerId?: string;
+  targetBeltId?: string | null;
+  certificateUrl?: string | null;
+  classId?: string | null;
 };
 
 export type DeclareBeltValidationPayload = {
   practitionerId: string;
   targetBeltId?: string;
   certificateUrl?: string;
+  classId?: string;
 };
 
 export async function declareBeltValidation(
@@ -28,4 +33,15 @@ export async function declareBeltValidation(
     payload,
   );
   return unwrap(data);
+}
+
+export async function listMyBeltValidations(
+  practitionerId: string,
+): Promise<BeltValidation[]> {
+  const { data } = await apiClient.get<
+    ApiEnvelope<{ data: BeltValidation[] }>
+  >(routes.beltValidations, {
+    params: { page: 1, limit: 100, practitionerId },
+  });
+  return unwrap(data).data;
 }

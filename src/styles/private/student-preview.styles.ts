@@ -101,4 +101,12 @@ export const studentStyles = StyleSheet.create({
   value: { color: BrandColors.secondary, fontSize: 18, fontWeight: "800" },
   action: { minHeight: 48, justifyContent: "center" },
   pressed: { opacity: 0.75 },
+  input: {
+    borderWidth: 1,
+    borderColor: BrandColors.border,
+    borderRadius: 10,
+    padding: Spacing.two,
+    color: Colors.light.text,
+    backgroundColor: Colors.light.background,
+  },
 });

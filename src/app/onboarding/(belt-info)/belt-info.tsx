@@ -3,12 +3,11 @@ import { useEffect, useState } from "react";
 import { Alert, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import type { CertificateMock } from "@/api/mocks/belts";
 import {
   declareBeltValidation,
 } from "@/api/services/belt-validations.service";
 import { listBelts, type Belt } from "@/api/services/belts.service";
-import { uploadCertificate } from "@/api/services/certificates.service";
+import { uploadCertificate, type CertificateFile } from "@/api/services/certificates.service";
 import { backendMessage } from "@/api/utils/backend-message";
 import { DefaultButton } from "@/components/customized/default-button";
 import { CertificatePicker } from "@/components/customized/document-picker/document-picker";
@@ -38,7 +37,7 @@ export default function BeltInfoScreen() {
   );
   const [belts, setBelts] = useState<Belt[]>([]);
   const [selectedBelt, setSelectedBelt] = useState<string>("");
-  const [selectedFile, setSelectedFile] = useState<CertificateMock | null>(
+  const [selectedFile, setSelectedFile] = useState<CertificateFile | null>(
     null,
   );
   const [isLoadingBelts, setIsLoadingBelts] = useState<boolean>(true);

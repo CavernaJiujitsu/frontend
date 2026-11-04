@@ -3,8 +3,7 @@ import { Alert, FlatList, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 
-import { magnifierCaverna } from "@/assets/images";
-import type { NearbyGymMock } from "@/api/mocks/nearby-gym";
+import { caveImage, magnifierCaverna } from "@/assets/images";
 import { listCaves, type Cave } from "@/api/services/caves.service";
 import { backendMessage } from "@/api/utils/backend-message";
 import CardComponent from "@/components/complex/card-component";
@@ -18,7 +17,15 @@ import { formatDistanceKm } from "@/utils/distance";
 
 const SEARCH_DEBOUNCE_MS = 350;
 
-function toGymCard(cave: Cave): NearbyGymMock {
+type GymCard = {
+  id: string;
+  image: typeof caveImage;
+  title: string;
+  tags: string[];
+  subtitle: string;
+};
+
+function toGymCard(cave: Cave): GymCard {
   const units = cave.units ?? [];
   const nearest = units[0];
   const where = nearest?.neighborhood ?? nearest?.name ?? "";
@@ -28,7 +35,7 @@ function toGymCard(cave: Cave): NearbyGymMock {
       : (where ?? cave.name);
   return {
     id: cave.id,
-    image: `https://picsum.photos/seed/${cave.id}/200/200`,
+    image: caveImage,
     title: cave.name,
     tags: units.length > 1 ? [`${units.length} unidades`] : [],
     subtitle,
@@ -38,7 +45,7 @@ function toGymCard(cave: Cave): NearbyGymMock {
 export default function NearByGym() {
   const router = useRouter();
   const [search, setSearch] = useState("");
-  const [gyms, setGyms] = useState<NearbyGymMock[]>([]);
+  const [gyms, setGyms] = useState<GymCard[]>([]);
   const isLoading = useLoadingStore(isLoadingKey("nearby-gyms"));
   const requestRef = useRef(0);
 

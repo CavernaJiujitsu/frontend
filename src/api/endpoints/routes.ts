@@ -6,10 +6,12 @@ export const routes = {
   practitioners: `${API_PREFIX}/practitioners`,
   practitionerTrail: `${API_PREFIX}/practitioners/me/trail`,
   profileMe: `${API_PREFIX}/profiles/me`,
+  profilePhoto: `${API_PREFIX}/profiles/me/photo`,
   practitioner: (practitionerId: string) =>
     `${API_PREFIX}/practitioners/${practitionerId}`,
   belts: `${API_PREFIX}/belts`,
   certificatesUpload: `${API_PREFIX}/certificates/upload`,
+  certificates: `${API_PREFIX}/certificates`,
   beltValidations: `${API_PREFIX}/belt-validations`,
   caves: `${API_PREFIX}/caves`,
   classes: `${API_PREFIX}/classes`,

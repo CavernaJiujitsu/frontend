@@ -3,7 +3,7 @@ import { useRouter } from "expo-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { FlatList, Pressable, Text, View } from "react-native";
 
-import { formatScheduleDate, getMonthDays, getScheduleMonths } from "@/api/mocks/schedule";
+import { formatScheduleDate, getMonthDays, getScheduleMonths } from "@/utils/schedule";
 import { getCave } from "@/api/services/caves.service";
 import { enrollClass, listClasses, type BackendClass } from "@/api/services/classes.service";
 import { backendMessage } from "@/api/utils/backend-message";

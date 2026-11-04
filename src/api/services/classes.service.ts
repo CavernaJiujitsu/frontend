@@ -5,7 +5,7 @@ import type { PaginatedResponse } from "@/api/types/pagination";
 
 export type ClassEnrollment = {
   id: string;
-  status: string;
+  status: "PENDING" | "IN_PROGRESS" | "CONFIRMED" | "EXPIRED" | "CANCELLED";
 };
 
 export type EnrollClassPayload = {
@@ -56,6 +56,26 @@ export async function enrollClass(
   const { data } = await apiClient.post<ApiEnvelope<ClassEnrollment>>(
     `${routes.classes}/${classId}/enrollments`,
     payload,
+  );
+  return unwrap(data);
+}
+
+export async function checkInClass(
+  classId: string,
+  enrollmentId: string,
+): Promise<ClassEnrollment> {
+  const { data } = await apiClient.post<ApiEnvelope<ClassEnrollment>>(
+    `${routes.classes}/${classId}/enrollments/${enrollmentId}/check-in`,
+  );
+  return unwrap(data);
+}
+
+export async function cancelClassEnrollment(
+  classId: string,
+  enrollmentId: string,
+): Promise<ClassEnrollment> {
+  const { data } = await apiClient.post<ApiEnvelope<ClassEnrollment>>(
+    `${routes.classes}/${classId}/enrollments/${enrollmentId}/cancel`,
   );
   return unwrap(data);
 }

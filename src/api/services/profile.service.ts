@@ -27,7 +27,7 @@ export type ProfileStatistics = {
   streakUnit: "days";
   timezone: "America/Sao_Paulo";
   window: "all_time";
-  hoursAccuracy: "scheduled_duration_estimate";
+  hoursAccuracy: "scheduled_duration_estimate" | "measured" | "mixed";
 };
 export type MyProfile = {
   id: string;
@@ -42,4 +42,31 @@ export type MyProfile = {
 export async function getMyProfile(): Promise<MyProfile> {
   const { data } = await apiClient.get<ApiEnvelope<MyProfile>>(routes.profileMe);
   return unwrap(data);
+}
+
+export type ProfilePhotoFile = {
+  uri: string;
+  name: string;
+  mimeType?: string;
+};
+
+export async function replaceMyProfilePhoto(
+  file: ProfilePhotoFile,
+): Promise<MyProfile> {
+  const form = new FormData();
+  form.append("file", {
+    uri: file.uri,
+    name: file.name,
+    type: file.mimeType ?? "image/jpeg",
+  } as unknown as Blob);
+  const { data } = await apiClient.put<ApiEnvelope<MyProfile>>(
+    routes.profilePhoto,
+    form,
+    { headers: { "Content-Type": "multipart/form-data" } },
+  );
+  return unwrap(data);
+}
+
+export async function deleteMyProfilePhoto(): Promise<void> {
+  await apiClient.delete<ApiEnvelope<MyProfile>>(routes.profilePhoto);
 }
