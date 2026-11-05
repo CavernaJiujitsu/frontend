@@ -34,6 +34,7 @@ function internalCodeForStatus(status?: number, fallback?: string): string {
   if (status === 403) return "FORBIDDEN";
   if (status === 422 || status === 400) return "VALIDATION_FAILED";
   if (status === 429) return "RATE_LIMITED";
+  if (status === 503) return "SERVICE_UNAVAILABLE";
   if (status !== undefined && status >= 500) return "SERVER_ERROR";
   return "UNKNOWN";
 }
