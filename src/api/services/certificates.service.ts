@@ -32,7 +32,6 @@ export async function uploadCertificate(
   const { data } = await apiClient.post<ApiEnvelope<UploadedCertificate>>(
     routes.certificatesUpload,
     form,
-    { headers: { "Content-Type": "multipart/form-data" } },
   );
   return unwrap(data);
 }
