@@ -20,7 +20,10 @@
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
-      "permissions": ["ACCESS_COARSE_LOCATION", "ACCESS_FINE_LOCATION"],
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION"
+      ],
       "predictiveBackGestureEnabled": false
     },
     "web": {
@@ -42,6 +45,14 @@
         "expo-location",
         {
           "locationWhenInUsePermission": "O Caverna Jiu-Jitsu usa sua localização para encontrar as cavernas mais próximas de você."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "Permita o acesso à câmera para tirar sua foto de perfil.",
+          "photosPermission": "Permita o acesso às fotos para atualizar seu perfil.",
+          "microphonePermission": false
         }
       ]
     ],

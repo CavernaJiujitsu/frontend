@@ -1,3 +1,4 @@
+import { Platform } from "react-native";
 import { apiClient } from "@/api/bootstrap/axios-bootstrap";
 import { routes } from "@/api/endpoints/routes";
 import { unwrap, type ApiEnvelope } from "@/api/types/envelope";
@@ -48,21 +49,27 @@ export type ProfilePhotoFile = {
   uri: string;
   name: string;
   mimeType?: string;
+  file?: File;
 };
 
 export async function replaceMyProfilePhoto(
   file: ProfilePhotoFile,
 ): Promise<MyProfile> {
   const form = new FormData();
-  form.append("file", {
+  if (Platform.OS === "web") {
+    const blob = (file.file ?? (await fetch(file.uri).then((response) => response.blob()))) as Blob;
+    form.append("file", blob, file.name);
+  } else {
+    form.append("file", {
     uri: file.uri,
     name: file.name,
     type: file.mimeType ?? "image/jpeg",
-  } as unknown as Blob);
+    } as unknown as Blob);
+  }
   const { data } = await apiClient.put<ApiEnvelope<MyProfile>>(
     routes.profilePhoto,
     form,
-    { headers: { "Content-Type": "multipart/form-data" } },
+    { headers: { "Content-Type": Platform.OS === "web" ? undefined : "multipart/form-data" } },
   );
   return unwrap(data);
 }
