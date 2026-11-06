@@ -1,13 +1,27 @@
-import { Stack, router } from "expo-router";
+import { Stack, useRouter } from "expo-router";
+import { useEffect } from "react";
 import { StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { useAppStore } from "@/store/useAppStore";
 import { BOTTOM_NAVBAR_BASE_HEIGHT } from "@/components/bottom-navbar/bottom-navbar";
 import { CheckinFab } from "@/components/customized/checkin-fab/checkin-fab";
 import { BrandColors } from "@/constants/theme";
 
 export default function PrivateLayout() {
   const insets = useSafeAreaInsets();
+  const { accessToken, practitionerId } = useAppStore((state) => state.user);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!accessToken || !practitionerId) {
+      router.replace("/onboarding/login");
+    }
+  }, [accessToken, practitionerId, router]);
+
+  if (!accessToken || !practitionerId) {
+    return null;
+  }
 
   return (
     <View style={styles.host}>
