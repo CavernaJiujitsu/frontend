@@ -19,8 +19,7 @@ import { DefaultButton } from "@/components/customized/default-button";
 import { FormField } from "@/components/customized/form-field/form-field";
 import { BrandColors, Colors } from "@/constants/theme";
 import { reportError } from "@/store/useErrorStore";
-import { useAppStore } from "@/store/useAppStore";
-import { useSessionStore } from "@/store/useSessionStore";
+import { startSession } from "@/auth/session";
 import { globalStyles } from "@/styles/global.styles";
 import { styles } from "@/styles/onboarding/login.styles";
 
@@ -45,19 +44,12 @@ export default function LoginScreen() {
 
   const handleLogin = async ({ email, senha }: LoginForm) => {
     try {
-      const { accessToken, tokenType, expiresIn, practitionerId } = await login({
+      const session = await login({
         email: email.trim(),
         password: senha,
       });
 
-      useSessionStore.getState().setSession({
-        accessToken,
-        tokenType,
-        expiresIn,
-      });
-      useAppStore.getState().setPractitionerId(practitionerId);
-      useAppStore.getState().setAccessToken(accessToken);
-      useAppStore.getState().setProfile({ nome: email.trim(), email: email.trim() });
+      startSession(session, { nome: email.trim(), email: email.trim() });
       router.replace("/inicio");
     } catch (error) {
       reportError(error);

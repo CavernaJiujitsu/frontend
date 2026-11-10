@@ -9,6 +9,7 @@ import {
 import { getPractitioner, updatePractitioner } from "@/api/services/practitioners.service";
 import { backendMessage } from "@/api/utils/backend-message";
 import { queryClient } from "@/api/bootstrap/query-client";
+import { endSession } from "@/auth/session";
 import { DefaultButton } from "@/components/customized/default-button";
 import { ProfilePhoto } from "@/components/profile-photo";
 import { StudentPage } from "@/components/student-preview/preview-kit";
@@ -21,7 +22,6 @@ import { studentStyles as s } from "@/styles/private/student-preview.styles";
 export default function Perfil() {
   const practitionerId = useAppStore((state) => state.user.practitionerId);
   const accessToken = useAppStore((state) => state.user.accessToken);
-  const resetUser = useAppStore((state) => state.resetUser);
   const [openSection, setOpenSection] = useState<string | null>(null);
   const [name, setName] = useState<string | null>(null);
   const [email, setEmail] = useState<string | null>(null);
@@ -46,8 +46,7 @@ export default function Perfil() {
   ];
 
   const handleLogout = () => {
-    resetUser();
-    queryClient.clear();
+    endSession();
     router.replace("/onboarding/login");
   };
 
