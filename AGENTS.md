@@ -1,5 +1,7 @@
 This is an Expo/React Native mobile application. Prioritize mobile-first patterns, performance, and cross-platform compatibility.
 
+Before each increment, fetch `dev` and the working branch, compare commits and open PRs with GitHub, and record the base. Repeat before publishing; integrate remote changes without overwriting other work and validate their impact. A local branch name alone does not establish that the checkout is current.
+
 ## SDD workflow (skills + `.docs/`)
 
 - Skills live in `.agents/skills/` (canonical) and are mirrored in `.codex/skills/` and `.claude/skills/`. Flow: `feature-plan` → `feature-implementation` → `feature-teste`; `feature-review` and `pr-create` on demand; `trello-ticket` runs the whole flow for a board card; `ui-style` defines the visual language. Keep the mirrors in sync when editing a skill.

@@ -1,0 +1,42 @@
+[
+  {
+    "case": "units error is explicit",
+    "passed": true
+  },
+  {
+    "case": "no automatic unit selection",
+    "passed": true
+  },
+  {
+    "case": "empty search",
+    "passed": true
+  },
+  {
+    "case": "pagination reaches units beyond the first twenty",
+    "passed": true
+  },
+  {
+    "case": "failed confirmation retains selection and does not advance",
+    "passed": true
+  },
+  {
+    "case": "successful confirmation advances to belt selection",
+    "passed": true
+  },
+  {
+    "case": "profile reads the persisted origin",
+    "passed": true
+  },
+  {
+    "case": "new login preserves the correct origin",
+    "passed": true
+  },
+  {
+    "case": "late save response does not redirect after leaving the screen",
+    "passed": true
+  },
+  {
+    "case": "invalid deep link is recoverable",
+    "passed": true
+  }
+]
