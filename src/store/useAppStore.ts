@@ -19,6 +19,9 @@ interface AppState {
   setAccessToken: (accessToken: string | null) => void;
   setBeltValidationId: (beltValidationId: string | null) => void;
   resetUser: () => void;
+  setAuthenticatedUser: (
+    identity: Pick<AppState["user"], "accessToken" | "practitionerId" | "profile">,
+  ) => void;
 }
 
 const initialUser: AppState["user"] = {
@@ -59,6 +62,8 @@ export const useAppStore = create<AppState>()(
           user: { ...state.user, beltValidationId },
         })),
       resetUser: () => set({ user: initialUser }),
+      setAuthenticatedUser: (identity) =>
+        set({ user: { ...initialUser, ...identity } }),
     }),
     {
       name: "caverna-user-store",
