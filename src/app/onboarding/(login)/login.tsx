@@ -18,8 +18,8 @@ import { localeIcon } from "@/assets/images";
 import { DefaultButton } from "@/components/customized/default-button";
 import { FormField } from "@/components/customized/form-field/form-field";
 import { BrandColors, Colors } from "@/constants/theme";
-import { reportError } from "@/store/useErrorStore";
-import { startSession } from "@/auth/session";
+import { reportError, useErrorStore } from "@/store/useErrorStore";
+import { startSession, StudentProfileRequiredError } from "@/auth/session";
 import { globalStyles } from "@/styles/global.styles";
 import { styles } from "@/styles/onboarding/login.styles";
 
@@ -52,7 +52,13 @@ export default function LoginScreen() {
       startSession(session, { nome: email.trim(), email: email.trim() });
       router.replace("/inicio");
     } catch (error) {
-      reportError(error);
+      if (error instanceof StudentProfileRequiredError) {
+        useErrorStore.getState().show(error.message, {
+          internalCode: "STUDENT_PROFILE_REQUIRED",
+        });
+      } else {
+        reportError(error);
+      }
     }
   };
 

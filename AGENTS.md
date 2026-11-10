@@ -2,6 +2,8 @@ This is an Expo/React Native mobile application. Prioritize mobile-first pattern
 
 Before each increment, fetch `dev` and the working branch, compare commits and open PRs with GitHub, and record the base. Repeat before publishing; integrate remote changes without overwriting other work and validate their impact. A local branch name alone does not establish that the checkout is current.
 
+When mentioning a Trello card in chat, include its number and literal title. State whether the increment fixes a bug/gap in an existing card or implements a pending card. The PO authorizes reopening cards with verified problems; explain the evidence and explicitly report when the card can be marked complete, distinguishing validated implementation from pending integration. Do not claim a board move without a successful tool action.
+
 ## SDD workflow (skills + `.docs/`)
 
 - Skills live in `.agents/skills/` (canonical) and are mirrored in `.codex/skills/` and `.claude/skills/`. Flow: `feature-plan` → `feature-implementation` → `feature-teste`; `feature-review` and `pr-create` on demand; `trello-ticket` runs the whole flow for a board card; `ui-style` defines the visual language. Keep the mirrors in sync when editing a skill.

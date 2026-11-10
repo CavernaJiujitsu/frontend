@@ -6,6 +6,8 @@
 
 Ao estabelecer outra sessão, limpar Query cache e substituir atomicamente os dados do usuário. Localização, permissão, declaração de faixa e perfil anterior não devem acompanhar a próxima conta. O practitionerId usado é o retornado pelo login, não um ID confiado ao formulário.
 
+O login compartilhado também pode devolver conta autorizada de gestão sem practitionerId. O app do aluno verifica esse identificador antes de qualquer alteração de cache/store: informa a ausência de perfil de aluno e orienta usar a aplicação da gestão. Não abre a home com ID ausente, não inventa um practitioner nem cria perfil automaticamente.
+
 ## HTTP e expiração
 
 - Axios lê o token atual e adiciona Bearer. Cadastro, login e solicitação de recuperação são públicos e não herdam a credencial da conta anterior.
