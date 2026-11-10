@@ -6,7 +6,7 @@ import { Alert, Pressable, Text, TextInput, View } from "react-native";
 import {
   getMyProfile,
 } from "@/api/services/profile.service";
-import { getPractitioner, updatePractitioner } from "@/api/services/practitioners.service";
+import { getPractitioner, getPractitionerOrigin, updatePractitioner } from "@/api/services/practitioners.service";
 import { backendMessage } from "@/api/utils/backend-message";
 import { queryClient } from "@/api/bootstrap/query-client";
 import { endSession } from "@/auth/session";
@@ -39,6 +39,11 @@ export default function Perfil() {
     enabled: Boolean(practitionerId && accessToken),
   });
   const statistics = profile?.statistics;
+  const origin = useQuery({
+    queryKey: ["practitioner-origin", practitionerId],
+    queryFn: () => getPractitionerOrigin(practitionerId!),
+    enabled: Boolean(practitionerId && accessToken),
+  });
   const stats = [
     { label: "Horas", value: statistics ? `${statistics.hoursTrained}h` : null },
     { label: "Aulas", value: statistics ? String(statistics.classesCompleted) : null },
@@ -108,6 +113,16 @@ export default function Perfil() {
             ))}
           </View>
           {!profile.statistics ? <Text style={s.body}>Os indicadores ainda não estão disponíveis. Ausência de dados não significa zero.</Text> : null}
+          <View style={s.card}>
+            <Text style={s.title}>Unidade de origem</Text>
+            {origin.isPending ? <Text style={s.body}>Carregando origem…</Text> : origin.isError ? <>
+              <Text style={s.body}>Não foi possível consultar sua origem.</Text>
+              <DefaultButton label="Recarregar origem" color={BrandColors.primary} action={() => void origin.refetch()} />
+            </> : origin.data ? <>
+              <Text style={s.body}>{origin.data.caveName} · {origin.data.caveUnitName}</Text>
+              <Text style={s.body}>Você pode treinar em outras unidades sem mudar sua origem.</Text>
+            </> : <Text style={s.body}>Origem ainda não informada.</Text>}
+          </View>
           <View style={s.card}>
             <Pressable accessibilityRole="button" accessibilityState={{ expanded: openSection === "profile" }} style={({ pressed }) => [s.action, pressed && s.pressed]} onPress={() => setOpenSection(openSection === "profile" ? null : "profile")}>
               <Text style={s.title}>Dados do perfil {openSection === "profile" ? "−" : "+"}</Text>

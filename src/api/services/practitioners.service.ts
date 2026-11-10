@@ -21,6 +21,38 @@ export type PractitionerCoordinates = {
   longitude: number;
 };
 
+export type PractitionerOrigin = {
+  caveId: string;
+  caveName: string;
+  caveUnitId: string;
+  caveUnitName: string;
+};
+
+export async function getPractitionerOrigin(
+  id: string,
+): Promise<PractitionerOrigin | null> {
+  const { data } = await apiClient.get<ApiEnvelope<PractitionerOrigin | null>>(
+    routes.practitionerOrigin(id),
+  );
+  return unwrap(data);
+}
+
+export async function setPractitionerOrigin(
+  id: string,
+  payload: Pick<PractitionerOrigin, "caveId" | "caveUnitId">,
+): Promise<PractitionerOrigin> {
+  const { data } = await apiClient.put<ApiEnvelope<PractitionerOrigin | null>>(
+    routes.practitionerOrigin(id),
+    payload,
+  );
+  const origin = unwrap(data);
+  if (!origin)
+    throw new Error(
+      "A unidade de origem não está mais disponível. Tente novamente.",
+    );
+  return origin;
+}
+
 export type CreatePractitionerPayload = {
   user: {
     name: string;
