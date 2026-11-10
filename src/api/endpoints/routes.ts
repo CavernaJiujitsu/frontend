@@ -9,6 +9,8 @@ export const routes = {
   profilePhoto: `${API_PREFIX}/profiles/me/photo`,
   practitioner: (practitionerId: string) =>
     `${API_PREFIX}/practitioners/${practitionerId}`,
+  practitionerOrigin: (practitionerId: string) =>
+    `${API_PREFIX}/practitioners/${practitionerId}/origin`,
   belts: `${API_PREFIX}/belts`,
   certificatesUpload: `${API_PREFIX}/certificates/upload`,
   certificates: `${API_PREFIX}/certificates`,

@@ -4,7 +4,7 @@ import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-nati
 import Svg, { Path } from "react-native-svg";
 
 import { queryClient } from "@/api/bootstrap/query-client";
-import { cancelClassEnrollment, checkInClass } from "@/api/services/classes.service";
+import { cancelClassEnrollment } from "@/api/services/classes.service";
 import { getHomeSummary } from "@/api/services/home.service";
 import { getMyProfile } from "@/api/services/profile.service";
 import { backendMessage } from "@/api/utils/backend-message";
@@ -57,14 +57,14 @@ export default function Inicio() {
   const home = homeQuery.data;
   const currentClass = home?.nextClass;
   const enrollmentMutation = useMutation({
-    mutationFn: async ({ action, classId, enrollmentId }: { action: "check-in" | "cancel"; classId: string; enrollmentId: string }) =>
-      action === "check-in" ? checkInClass(classId, enrollmentId) : cancelClassEnrollment(classId, enrollmentId),
-    onSuccess: async (_data, variables) => {
+    mutationFn: async ({ classId, enrollmentId }: { classId: string; enrollmentId: string }) =>
+      cancelClassEnrollment(classId, enrollmentId),
+    onSuccess: async () => {
       await Promise.all([
         homeQuery.refetch(),
         queryClient.invalidateQueries({ queryKey: ["profile-me", practitionerId] }),
       ]);
-      Alert.alert(variables.action === "check-in" ? "Presença confirmada" : "Inscrição cancelada", variables.action === "check-in" ? "Nos vemos na aula. Oss!" : "A vaga foi liberada.");
+      Alert.alert("Inscrição cancelada", "A vaga foi liberada.");
     },
     onError: (error: unknown) => Alert.alert("Não foi possível concluir", backendMessage(error, "A inscrição não está mais disponível.")),
   });
@@ -168,24 +168,20 @@ export default function Inicio() {
                     <Text style={styles.teacher}>
                       Prof. {nextClass.teacherName}
                     </Text>
-                    {currentClass.enrollmentStatus === "PENDING" ? <Pressable
-                      accessibilityRole="button"
-                      accessibilityLabel="Confirmar presença na próxima aula"
-                      disabled={enrollmentMutation.isPending}
-                      style={({ pressed }) => [styles.confirmBtn, pressed && styles.confirmBtnPressed]}
-                      onPress={() => enrollmentMutation.mutate({ action: "check-in", classId: currentClass.classId, enrollmentId: currentClass.enrollmentId })}
-                    >
-                      <Text style={styles.confirmBtnText}>{enrollmentMutation.isPending ? "Aguarde…" : "Confirmar"}</Text>
-                    </Pressable> : <Pressable
+                    {currentClass.enrollmentStatus === "PENDING" || currentClass.enrollmentStatus === "IN_PROGRESS" ? <Pressable
                       accessibilityRole="button"
                       accessibilityLabel="Cancelar inscrição da próxima aula"
+                      accessibilityState={{ disabled: enrollmentMutation.isPending, busy: enrollmentMutation.isPending }}
                       disabled={enrollmentMutation.isPending}
                       style={({ pressed }) => [styles.confirmBtn, pressed && styles.confirmBtnPressed]}
-                      onPress={() => enrollmentMutation.mutate({ action: "cancel", classId: currentClass.classId, enrollmentId: currentClass.enrollmentId })}
+                      onPress={() => enrollmentMutation.mutate({ classId: currentClass.classId, enrollmentId: currentClass.enrollmentId })}
                     >
-                      <Text style={styles.confirmBtnText}>Cancelar</Text>
-                    </Pressable>}
+                      <Text style={styles.confirmBtnText}>{enrollmentMutation.isPending ? "Aguarde…" : "Cancelar"}</Text>
+                    </Pressable> : currentClass.enrollmentStatus === "CONFIRMED" ? <View style={styles.tag}>
+                      <Text style={styles.tagText}>Presença confirmada</Text>
+                    </View> : null}
                   </View>
+                  <Text style={styles.emptyText}>{currentClass.enrollmentStatus === "CONFIRMED" ? "Presença registrada pelo professor." : "A presença será confirmada pelo professor na aula."}</Text>
                 </>
               ) : (
                 <Text style={styles.emptyText}>

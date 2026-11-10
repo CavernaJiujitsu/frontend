@@ -1,4 +1,4 @@
- import { apiClient } from "@/api/bootstrap/axios-bootstrap";
+import { apiClient } from "@/api/bootstrap/axios-bootstrap";
 import { routes } from "@/api/endpoints/routes";
 import { unwrap, type ApiEnvelope } from "@/api/types/envelope";
 import type { PaginatedResponse } from "@/api/types/pagination";
@@ -14,6 +14,8 @@ export type CaveUnit = {
 };
 
 export type ListUnitsParams = {
+  page?: number;
+  limit?: number;
   search?: string;
   nearest?: boolean;
   openNow?: boolean;
@@ -40,11 +42,21 @@ export async function listUnits(
   caveId: string,
   params: ListUnitsParams = {},
 ): Promise<CaveUnit[]> {
-  const { data } = await apiClient.get<ApiEnvelope<PaginatedResponse<CaveUnit>>>(
-    `${routes.caves}/${caveId}/units`,
-    { params: { page: 1, limit: 100, ...params } },
-  );
-  return unwrap(data).data;
+  return (await listUnitsPage(caveId, params)).data;
+}
+
+export async function listUnitsPage(
+  caveId: string,
+  params: ListUnitsParams = {},
+  signal?: AbortSignal,
+): Promise<PaginatedResponse<CaveUnit>> {
+  const { data } = await apiClient.get<
+    ApiEnvelope<PaginatedResponse<CaveUnit>>
+  >(`${routes.caves}/${caveId}/units`, {
+    params: { page: 1, limit: 100, ...params },
+    signal,
+  });
+  return unwrap(data);
 }
 
 export async function listCaves(

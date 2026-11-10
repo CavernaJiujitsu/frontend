@@ -1,0 +1,34 @@
+[
+  {
+    "case": "Pending reservation offers own cancellation and teacher guidance",
+    "passed": true
+  },
+  {
+    "case": "Temporary cancellation failure preserves reservation and allows retry",
+    "passed": true
+  },
+  {
+    "case": "Pending cancellation disables duplicate submission and sends current Bearer",
+    "passed": true
+  },
+  {
+    "case": "Successful pending cancellation refreshes home to empty state",
+    "passed": true
+  },
+  {
+    "case": "Actual schedule reserves for logged-in student with existing API contract",
+    "passed": true
+  },
+  {
+    "case": "IN_PROGRESS reservation can also be cancelled by its owner",
+    "passed": true
+  },
+  {
+    "case": "Teacher-confirmed attendance displays status without invalid student actions",
+    "passed": true
+  },
+  {
+    "case": "Student browser never invokes teacher check-in endpoint",
+    "passed": true
+  }
+]
