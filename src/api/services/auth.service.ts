@@ -12,7 +12,7 @@ export type LoginResponse = {
   tokenType: "Bearer";
   expiresIn: number;
   userId: string;
-  practitionerId: string;
+  practitionerId?: string;
 };
 
 export async function login(payload: LoginPayload): Promise<LoginResponse> {

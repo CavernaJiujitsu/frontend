@@ -1,0 +1,22 @@
+[
+  {
+    "case": "management API omits practitionerId",
+    "passed": true
+  },
+  {
+    "case": "management response is rejected before changing active identity",
+    "passed": true
+  },
+  {
+    "case": "refused management session preserves student query cache",
+    "passed": true
+  },
+  {
+    "case": "management response cannot establish an anonymous student session",
+    "passed": true
+  },
+  {
+    "case": "student session still establishes the exact practitioner",
+    "passed": true
+  }
+]

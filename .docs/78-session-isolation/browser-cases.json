@@ -1,0 +1,42 @@
+[
+  {
+    "name": "own profile A from real API",
+    "passed": true
+  },
+  {
+    "name": "logout clears identity and cache",
+    "passed": true
+  },
+  {
+    "name": "account B does not inherit A",
+    "passed": true
+  },
+  {
+    "name": "late 401 preserves new session",
+    "passed": true
+  },
+  {
+    "name": "new account stays readable after late 401",
+    "passed": true
+  },
+  {
+    "name": "cross-account request is forbidden without logout",
+    "passed": true
+  },
+  {
+    "name": "public failed login does not drop active session",
+    "passed": true
+  },
+  {
+    "name": "conditional logout cannot clear another session",
+    "passed": true
+  },
+  {
+    "name": "current 401 clears all personal state and cache",
+    "passed": true
+  },
+  {
+    "name": "reload preserves the correct account",
+    "passed": true
+  }
+]

@@ -1,0 +1,22 @@
+[
+  {
+    "case": "real management login is valid but student home is not opened",
+    "passed": true
+  },
+  {
+    "case": "guidance is visible and login route is preserved",
+    "passed": true
+  },
+  {
+    "case": "student can sign in after the management attempt with the correct practitioner",
+    "passed": true
+  },
+  {
+    "case": "real student profile remains readable",
+    "passed": true
+  },
+  {
+    "case": "guidance is also shown when a student was previously signed in",
+    "passed": true
+  }
+]
