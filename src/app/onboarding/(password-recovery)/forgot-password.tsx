@@ -57,9 +57,13 @@ export default function ForgotPasswordScreen() {
     usePasswordRecoveryStore.getState().clearConfirmationMessage();
 
     try {
-      const message = await requestPasswordRecovery({ email });
+      await requestPasswordRecovery({ email });
       if (currentRequest !== requestGeneration.current) return;
-      usePasswordRecoveryStore.getState().setConfirmationMessage(message);
+      usePasswordRecoveryStore
+        .getState()
+        .setConfirmationMessage(
+          "Se houver uma conta com este e-mail, enviaremos um link de recuperação.",
+        );
       router.replace("/onboarding/check-email");
     } catch (error) {
       if (currentRequest !== requestGeneration.current) return;

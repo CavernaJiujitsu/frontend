@@ -10,16 +10,16 @@ import { BrandColors } from "@/constants/theme";
 
 export default function PrivateLayout() {
   const insets = useSafeAreaInsets();
-  const { accessToken, practitionerId } = useAppStore((state) => state.user);
+  const { accessToken } = useAppStore((state) => state.user);
   const router = useRouter();
 
   useEffect(() => {
-    if (!accessToken || !practitionerId) {
+    if (!accessToken) {
       router.replace("/onboarding/login");
     }
-  }, [accessToken, practitionerId, router]);
+  }, [accessToken, router]);
 
-  if (!accessToken || !practitionerId) {
+  if (!accessToken) {
     return null;
   }
 

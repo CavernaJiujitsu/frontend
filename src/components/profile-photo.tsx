@@ -1,22 +1,26 @@
+import { useQuery } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 import { Modal, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { Image } from "expo-image";
 import * as DocumentPicker from "expo-document-picker";
 import * as ImagePicker from "expo-image-picker";
 import { queryClient } from "@/api/bootstrap/query-client";
-import { deleteMyProfilePhoto, replaceMyProfilePhoto, type MyProfile, type ProfilePhotoFile } from "@/api/services/profile.service";
+import { deleteMyProfilePhoto, getMyProfilePhoto, replaceMyProfilePhoto, type ProfilePhotoFile, type ProfilePhotoResponse } from "@/api/services/profile.service";
 import { backendMessage } from "@/api/utils/backend-message";
 import { DefaultButton } from "@/components/customized/default-button";
 import { BrandColors, Colors } from "@/constants/theme";
 import { API_URL } from "@/constants/api";
 
-type Props = { photoUrl?: string | null; practitionerId: string | null };
-
-export function ProfilePhoto({ photoUrl, practitionerId }: Props) {
+export function ProfilePhoto() {
   const [panel, setPanel] = useState<"menu" | "update" | "view" | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const locked = useRef(false);
+  const photoQuery = useQuery({
+    queryKey: ["profile-photo"],
+    queryFn: getMyProfilePhoto,
+  });
+  const photoUrl = photoQuery.data?.photoUrl;
   const uri = photoUrl ? new URL(photoUrl, API_URL).href : null;
   const close = () => { if (!locked.current) { setPanel(null); setError(null); } };
 
@@ -53,8 +57,9 @@ export function ProfilePhoto({ photoUrl, practitionerId }: Props) {
         if (file.mimeType && !["image/jpeg", "image/png"].includes(file.mimeType)) throw new Error("Escolha uma imagem JPG ou PNG.");
         updatedPhoto = (await replaceMyProfilePhoto(file)).photoUrl ?? null;
       }
-      queryClient.setQueryData<MyProfile>(["profile-me", practitionerId], (current) => current ? { ...current, photoUrl: updatedPhoto } : current);
-      await queryClient.invalidateQueries({ queryKey: ["profile-me", practitionerId] });
+      queryClient.setQueryData<ProfilePhotoResponse>(["profile-photo"], {
+        photoUrl: updatedPhoto,
+      });
       setPanel(null);
     } catch (cause) {
       setError(backendMessage(cause, "Não foi possível atualizar a foto. Tente novamente."));

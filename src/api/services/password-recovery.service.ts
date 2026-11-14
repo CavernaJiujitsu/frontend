@@ -6,21 +6,20 @@ export type RequestPasswordRecoveryPayload = {
   email: string;
 };
 
+export type ResetPasswordPayload = {
+  token: string;
+  password: string;
+};
+
 export async function requestPasswordRecovery(
   payload: RequestPasswordRecoveryPayload,
-): Promise<string> {
-  const response = await apiClient.post<ApiEnvelope<null>>(
+): Promise<void> {
+  await apiClient.post<ApiEnvelope<null>>(
     routes.passwordRecoveryRequest,
     payload,
   );
+}
 
-  if (
-    response.status !== 200 ||
-    typeof response.data?.message !== "string" ||
-    !response.data.message.trim()
-  ) {
-    throw new Error("Resposta inválida do servidor.");
-  }
-
-  return response.data.message;
+export async function resetPassword(payload: ResetPasswordPayload): Promise<void> {
+  await apiClient.post<ApiEnvelope<null>>(routes.passwordRecoveryReset, payload);
 }

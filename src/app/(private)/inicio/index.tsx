@@ -4,7 +4,7 @@ import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-nati
 import Svg, { Path } from "react-native-svg";
 
 import { queryClient } from "@/api/bootstrap/query-client";
-import { cancelClassEnrollment, checkInClass } from "@/api/services/classes.service";
+import { cancelClassEnrollment } from "@/api/services/classes.service";
 import { getHomeSummary } from "@/api/services/home.service";
 import { getMyProfile } from "@/api/services/profile.service";
 import { backendMessage } from "@/api/utils/backend-message";
@@ -27,44 +27,41 @@ const cardStyles = StyleSheet.create({
 
 export default function Inicio() {
   const router = useRouter();
-  const practitionerId = useAppStore((state) => state.user.practitionerId);
   const accessToken = useAppStore((state) => state.user.accessToken);
   const location = useAppStore((state) => state.user.location);
   const profileQuery = useQuery({
-    queryKey: ["profile-me", practitionerId],
+    queryKey: ["profile-me"],
     queryFn: getMyProfile,
-    enabled: Boolean(practitionerId && accessToken),
+    enabled: Boolean(accessToken),
   });
   useReportQueryError(profileQuery.error);
   const belt = profileQuery.data?.activeBelt;
-  const trailStats = profileQuery.data?.trailStats;
   const homeQuery = useQuery({
     queryKey: [
       "home-summary",
-      practitionerId,
       location?.coords.latitude,
       location?.coords.longitude,
     ],
     queryFn: () =>
-      getHomeSummary(practitionerId!, {
+      getHomeSummary({
         latitude: location?.coords.latitude,
         longitude: location?.coords.longitude,
       }),
-    enabled: Boolean(practitionerId && accessToken),
+    enabled: Boolean(accessToken),
   });
   useReportQueryError(homeQuery.error);
 
   const home = homeQuery.data;
   const currentClass = home?.nextClass;
   const enrollmentMutation = useMutation({
-    mutationFn: async ({ action, classId, enrollmentId }: { action: "check-in" | "cancel"; classId: string; enrollmentId: string }) =>
-      action === "check-in" ? checkInClass(classId, enrollmentId) : cancelClassEnrollment(classId, enrollmentId),
-    onSuccess: async (_data, variables) => {
+    mutationFn: ({ classId, enrollmentId }: { classId: string; enrollmentId: string }) =>
+      cancelClassEnrollment(classId, enrollmentId),
+    onSuccess: async () => {
       await Promise.all([
         homeQuery.refetch(),
-        queryClient.invalidateQueries({ queryKey: ["profile-me", practitionerId] }),
+        queryClient.invalidateQueries({ queryKey: ["profile-me"] }),
       ]);
-      Alert.alert(variables.action === "check-in" ? "Presença confirmada" : "Inscrição cancelada", variables.action === "check-in" ? "Nos vemos na aula. Oss!" : "A vaga foi liberada.");
+      Alert.alert("Inscrição cancelada", "A vaga foi liberada.");
     },
     onError: (error: unknown) => Alert.alert("Não foi possível concluir", backendMessage(error, "A inscrição não está mais disponível.")),
   });
@@ -119,7 +116,7 @@ export default function Inicio() {
           </View>
 
           <View
-            accessibilityLabel={belt && trailStats ? `${belt.name}, ${trailStats.requiredCompleted} de ${trailStats.requiredTotal} movimentos obrigatórios` : "Avaliação de faixa pendente"}
+            accessibilityLabel={belt ? belt.name : "Avaliação de faixa pendente"}
             style={[globalStyles.card, cardStyles.card]}
           >
             <View style={cardStyles.contentGap}>
@@ -127,12 +124,9 @@ export default function Inicio() {
                 <View style={[styles.beltDot, { backgroundColor: belt?.color ?? BrandColors.border }]} />
                 <View>
                   <Text style={styles.beltName}>{belt?.name ?? "Avaliação pendente"}</Text>
-                  <Text style={styles.beltProgressText}>
-                    {trailStats ? `${trailStats.requiredCompleted} / ${trailStats.requiredTotal} movimentos obrigatórios` : "A faixa ainda não foi confirmada"}
-                  </Text>
+                  <Text style={styles.beltProgressText}>Acompanhe sua evolução na trilha</Text>
                 </View>
               </View>
-              {trailStats ? <View style={styles.progressTrack} accessibilityRole="progressbar" accessibilityValue={{ min: 0, max: 100, now: trailStats.percent }}><View style={[styles.progressFill, { width: `${trailStats.percent}%` }]} /></View> : null}
             </View>
           </View>
 
@@ -168,23 +162,15 @@ export default function Inicio() {
                     <Text style={styles.teacher}>
                       Prof. {nextClass.teacherName}
                     </Text>
-                    {currentClass.enrollmentStatus === "PENDING" ? <Pressable
-                      accessibilityRole="button"
-                      accessibilityLabel="Confirmar presença na próxima aula"
-                      disabled={enrollmentMutation.isPending}
-                      style={({ pressed }) => [styles.confirmBtn, pressed && styles.confirmBtnPressed]}
-                      onPress={() => enrollmentMutation.mutate({ action: "check-in", classId: currentClass.classId, enrollmentId: currentClass.enrollmentId })}
-                    >
-                      <Text style={styles.confirmBtnText}>{enrollmentMutation.isPending ? "Aguarde…" : "Confirmar"}</Text>
-                    </Pressable> : <Pressable
+                    <Pressable
                       accessibilityRole="button"
                       accessibilityLabel="Cancelar inscrição da próxima aula"
                       disabled={enrollmentMutation.isPending}
                       style={({ pressed }) => [styles.confirmBtn, pressed && styles.confirmBtnPressed]}
-                      onPress={() => enrollmentMutation.mutate({ action: "cancel", classId: currentClass.classId, enrollmentId: currentClass.enrollmentId })}
+                      onPress={() => enrollmentMutation.mutate({ classId: currentClass.classId, enrollmentId: currentClass.enrollmentId })}
                     >
                       <Text style={styles.confirmBtnText}>Cancelar</Text>
-                    </Pressable>}
+                    </Pressable>
                   </View>
                 </>
               ) : (
@@ -202,7 +188,7 @@ export default function Inicio() {
             >
               <LoadingSpinner label="Buscando cavernas próximas…" size={44} />
             </View>
-          ) : homeQuery.isError || !practitionerId ? (
+          ) : homeQuery.isError ? (
             <View
               style={[globalStyles.card, cardStyles.card, styles.feedbackCard]}
             >

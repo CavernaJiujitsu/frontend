@@ -45,18 +45,13 @@ export default function LoginScreen() {
 
   const handleLogin = async ({ email, senha }: LoginForm) => {
     try {
-      const { accessToken, tokenType, expiresIn, practitionerId } = await login({
+      const session = await login({
         email: email.trim(),
         password: senha,
       });
 
-      useSessionStore.getState().setSession({
-        accessToken,
-        tokenType,
-        expiresIn,
-      });
-      useAppStore.getState().setPractitionerId(practitionerId);
-      useAppStore.getState().setAccessToken(accessToken);
+      useSessionStore.getState().setSession(session);
+      useAppStore.getState().setAuthIdentity(session);
       useAppStore.getState().setProfile({ nome: email.trim(), email: email.trim() });
       router.replace("/inicio");
     } catch (error) {

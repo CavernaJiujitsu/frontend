@@ -20,12 +20,11 @@ const movementLabels = {
 
 export default function StageDetail() {
   const { stageId } = useLocalSearchParams<{ stageId: string }>();
-  const practitionerId = useAppStore((state) => state.user.practitionerId);
   const accessToken = useAppStore((state) => state.user.accessToken);
   const query = useQuery({
-    queryKey: ["practitioner-trail", practitionerId],
+    queryKey: ["practitioner-trail"],
     queryFn: getMyTrail,
-    enabled: Boolean(practitionerId && accessToken),
+    enabled: Boolean(accessToken),
   });
   useReportQueryError(query.error);
 
@@ -42,7 +41,7 @@ export default function StageDetail() {
           <Text style={s.body}>Entre novamente para carregar esta etapa.</Text>
           <DefaultButton label="Voltar para o login" color={BrandColors.primary} action={() => router.replace("/onboarding/login")} />
         </View>
-      ) : query.isLoading || !practitionerId ? <LoadingSpinner label="Carregando etapa…" /> : query.isError ? (
+      ) : query.isLoading ? <LoadingSpinner label="Carregando etapa…" /> : query.isError ? (
         <View style={s.card}>
           <Text style={s.title}>Não foi possível carregar a etapa</Text>
           <Text style={s.body}>Verifique sua conexão e tente novamente.</Text>
@@ -51,7 +50,7 @@ export default function StageDetail() {
       ) : query.data?.noActiveBelt ? (
         <View style={s.card}>
           <Text style={s.title}>Avaliação pendente</Text>
-          <Text style={s.body}>{query.data.message}</Text>
+          <Text style={s.body}>Sua faixa será confirmada presencialmente por um professor.</Text>
         </View>
       ) : !stage ? (
         <View style={s.card}>

@@ -70,6 +70,38 @@ export async function checkInClass(
   return unwrap(data);
 }
 
+export type ParticipationPausePayload = {
+  startedAt: string;
+  endedAt: string;
+};
+
+export type SetParticipationPayload = {
+  startedAt: string;
+  endedAt: string;
+  pauses?: ParticipationPausePayload[];
+  reason?: string;
+};
+
+export type ParticipationResult = {
+  enrollmentId: string;
+  durationMinutes: number;
+  hoursAccuracy: "scheduled_duration_estimate" | "measured";
+  participationStartedAt: string;
+  participationEndedAt: string;
+};
+
+export async function setClassParticipation(
+  classId: string,
+  enrollmentId: string,
+  payload: SetParticipationPayload,
+): Promise<ParticipationResult> {
+  const { data } = await apiClient.patch<ApiEnvelope<ParticipationResult>>(
+    `${routes.classes}/${classId}/enrollments/${enrollmentId}/participation`,
+    payload,
+  );
+  return unwrap(data);
+}
+
 export async function cancelClassEnrollment(
   classId: string,
   enrollmentId: string,

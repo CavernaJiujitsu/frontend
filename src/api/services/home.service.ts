@@ -50,11 +50,10 @@ export type HomeSummary = {
 };
 
 export async function getHomeSummary(
-  practitionerId: string,
   params: HomeSummaryParams = {},
 ): Promise<HomeSummary> {
   const { data } = await apiClient.get<ApiEnvelope<HomeSummary>>(
-    routes.practitionerHome(practitionerId),
+    routes.profileReadonlyHome,
     {
       params: {
         ...(params.latitude !== undefined && params.longitude !== undefined
