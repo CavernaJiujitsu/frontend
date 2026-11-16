@@ -16,7 +16,15 @@ import { LoadingSpinner } from "@/components/customized/loading-spinner/loading-
 import { BrandColors } from "@/constants/theme";
 import { useReportQueryError } from "@/hooks/use-report-query-error";
 import { useAppStore } from "@/store/useAppStore";
+import { useSessionStore } from "@/store/useSessionStore";
 import { studentStyles as s } from "@/styles/private/student-preview.styles";
+
+function classTypeLabel(value: string | null | undefined): string | null {
+  if (value === "SCHEDULED") return "Treino";
+  if (value === "VALIDATION") return "Avaliação";
+  if (value === "EXAM") return "Exame";
+  return value ?? null;
+}
 
 export default function Perfil() {
   const practitionerId = useAppStore((state) => state.user.practitionerId);
@@ -27,9 +35,9 @@ export default function Perfil() {
   const [email, setEmail] = useState<string | null>(null);
   const [age, setAge] = useState<string | null>(null);
   const query = useQuery({
-    queryKey: ["profile-me", practitionerId],
+    queryKey: ["profile-me"],
     queryFn: getMyProfile,
-    enabled: Boolean(practitionerId && accessToken),
+    enabled: Boolean(accessToken),
   });
   useReportQueryError(query.error);
   const profile = query.data;
@@ -38,15 +46,16 @@ export default function Perfil() {
     queryFn: () => getPractitioner(practitionerId!),
     enabled: Boolean(practitionerId && accessToken),
   });
-  const statistics = profile?.statistics;
+  const trainingRecord = profile?.trainingRecord;
   const stats = [
-    { label: "Horas", value: statistics ? `${statistics.hoursTrained}h` : null },
-    { label: "Aulas", value: statistics ? String(statistics.classesCompleted) : null },
-    { label: "Sequência", value: statistics ? String(statistics.trainingStreak) : null },
+    { label: "Última aula", value: classTypeLabel(trainingRecord?.class) },
+    { label: "Caverna", value: trainingRecord?.caveUnit ?? null },
+    { label: "Data", value: trainingRecord ? new Intl.DateTimeFormat("pt-BR", { dateStyle: "short" }).format(new Date(trainingRecord.startsAt)) : null },
   ];
 
   const handleLogout = () => {
     resetUser();
+    useSessionStore.getState().clearSession();
     queryClient.clear();
     router.replace("/onboarding/login");
   };
@@ -70,7 +79,7 @@ export default function Perfil() {
     },
     onSuccess: async () => {
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["profile-me", practitionerId] }),
+        queryClient.invalidateQueries({ queryKey: ["profile-me"] }),
         queryClient.invalidateQueries({ queryKey: ["practitioner-me", practitionerId] }),
       ]);
       Alert.alert("Perfil atualizado", "Seus dados foram salvos.");
@@ -88,7 +97,7 @@ export default function Perfil() {
             <Text style={s.accent}>Voltar para o login</Text>
           </Pressable>
         </View>
-      ) : query.isLoading || !practitionerId ? <LoadingSpinner label="Carregando seu perfil…" /> : query.isError ? (
+      ) : query.isLoading ? <LoadingSpinner label="Carregando seu perfil…" /> : query.isError ? (
         <View style={s.card}>
           <Text style={s.title}>Não foi possível carregar seu perfil</Text>
           <Text style={s.body}>Verifique sua conexão e tente novamente.</Text>
@@ -96,7 +105,7 @@ export default function Perfil() {
       ) : profile ? (
         <>
           <View style={s.profile}>
-            <ProfilePhoto photoUrl={profile.photoUrl} practitionerId={practitionerId} />
+            <ProfilePhoto />
             <Text style={s.title}>{profile.name}</Text>
             <Text style={s.accent}>{profile.activeBelt?.name ?? "Graduação indisponível"}</Text>
           </View>
@@ -108,7 +117,7 @@ export default function Perfil() {
               </View>
             ))}
           </View>
-          {!profile.statistics ? <Text style={s.body}>Os indicadores ainda não estão disponíveis. Ausência de dados não significa zero.</Text> : null}
+          {!trainingRecord ? <Text style={s.body}>Seu registro de treino ainda não está disponível.</Text> : null}
           <View style={s.card}>
             <Pressable accessibilityRole="button" accessibilityState={{ expanded: openSection === "profile" }} style={({ pressed }) => [s.action, pressed && s.pressed]} onPress={() => setOpenSection(openSection === "profile" ? null : "profile")}>
               <Text style={s.title}>Dados do perfil {openSection === "profile" ? "−" : "+"}</Text>

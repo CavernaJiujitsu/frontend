@@ -21,15 +21,14 @@ function isActiveTrail(trail: Awaited<ReturnType<typeof getMyTrail>>): trail is 
   return trail.noActiveBelt === false;
 }
 
-function PendingEvaluation({ message }: { message: string }) {
+function PendingEvaluation() {
   return (
     <View style={s.pendingPage}>
       <Text style={s.pendingEyebrow}>CAVERNA</Text>
       <Text style={s.pendingHeading}>Sua jornada começou</Text>
-      <Text style={s.body}>Sua faixa será confirmada presencialmente por um professor.</Text>
       <View style={s.card}>
         <Text style={s.title}>Avaliação pendente</Text>
-        <Text style={s.body}>{message}</Text>
+        <Text style={s.body}>Sua faixa será confirmada presencialmente por um professor.</Text>
         <View style={s.pendingBadge}>
           <Text style={s.accent}>Aguardando avaliação</Text>
         </View>
@@ -40,18 +39,21 @@ function PendingEvaluation({ message }: { message: string }) {
 
 function TrailContent({ trail }: { trail: ActiveTrail }) {
   const stages = [...trail.stages].sort((a, b) => a.position - b.position);
+  const beltColor = trail.belt?.color ?? BrandColors.border;
+  const title = trail.belt?.name ?? trail.trail?.name ?? "Trilha de progressão";
+  const subtitle = trail.belt && trail.trail ? trail.trail.name : null;
   return (
     <>
       <View style={s.card}>
         <View style={s.beltRow}>
-          <View style={[s.beltDot, { backgroundColor: trail.beltColor }]} />
+          <View style={[s.beltDot, { backgroundColor: beltColor }]} />
           <View>
-            <Text style={s.title}>{trail.beltName}</Text>
-            <Text style={s.body}>{trail.trailName}</Text>
+            <Text style={s.title}>{title}</Text>
+            {subtitle ? <Text style={s.body}>{subtitle}</Text> : null}
           </View>
         </View>
         <Progress percentage={trail.percent} label={`${trail.requiredCompleted} / ${trail.requiredTotal} movimentos obrigatórios`} />
-        {trail.trailDescription ? <Text style={s.body}>{trail.trailDescription}</Text> : null}
+        {trail.trail?.description ? <Text style={s.body}>{trail.trail.description}</Text> : null}
       </View>
       <Text style={s.title} accessibilityRole="header">Etapas da trilha</Text>
       {stages.map((stage, index) => (
@@ -59,7 +61,7 @@ function TrailContent({ trail }: { trail: ActiveTrail }) {
           <View style={s.rail}>
             {index < stages.length - 1 && <View style={s.line} />}
             <View style={stage.isCurrent ? s.ring : s.marker}>
-              <View style={[s.dot, { backgroundColor: trail.beltColor }]} />
+              <View style={[s.dot, { backgroundColor: beltColor }]} />
             </View>
           </View>
           <View style={[s.stage, stage.isCurrent && s.current]}>
@@ -82,12 +84,11 @@ function TrailContent({ trail }: { trail: ActiveTrail }) {
 }
 
 export default function Trilha() {
-  const practitionerId = useAppStore((state) => state.user.practitionerId);
   const accessToken = useAppStore((state) => state.user.accessToken);
   const query = useQuery({
-    queryKey: ["practitioner-trail", practitionerId],
+    queryKey: ["practitioner-trail"],
     queryFn: getMyTrail,
-    enabled: Boolean(practitionerId && accessToken),
+    enabled: Boolean(accessToken),
   });
   useReportQueryError(query.error);
 
@@ -99,13 +100,13 @@ export default function Trilha() {
           <Text style={s.body}>Entre novamente para carregar sua trilha.</Text>
           <DefaultButton label="Voltar para o login" color={BrandColors.primary} action={() => router.replace("/onboarding/login")} />
         </View>
-      ) : query.isLoading || !practitionerId ? <LoadingSpinner label="Carregando sua trilha…" /> : query.isError ? (
+      ) : query.isLoading ? <LoadingSpinner label="Carregando sua trilha…" /> : query.isError ? (
         <View style={s.card}>
           <Text style={s.title}>Não foi possível carregar sua trilha</Text>
           <Text style={s.body}>Verifique sua conexão e tente novamente.</Text>
           <DefaultButton label="Tentar novamente" color={BrandColors.primary} action={() => query.refetch()} />
         </View>
-      ) : query.data && !isActiveTrail(query.data) ? <PendingEvaluation message={query.data.message} /> : query.data ? <TrailContent trail={query.data} /> : null}
+      ) : query.data && !isActiveTrail(query.data) ? <PendingEvaluation /> : query.data ? <TrailContent trail={query.data} /> : null}
     </StudentPage>
   );
 }

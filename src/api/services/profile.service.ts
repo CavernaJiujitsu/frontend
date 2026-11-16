@@ -10,38 +10,26 @@ export type ActiveBelt = {
   level: number;
   startedAt: string;
 };
-export type TrailStats = {
-  trailId: string;
-  trailName: string;
-  percent: number;
-  requiredCompleted: number;
-  requiredTotal: number;
-  currentStageId: string | null;
-  stagesCount: number;
-  completedStagesCount: number;
-};
-export type ProfileStatistics = {
-  hoursTrained: number;
-  hoursUnit: "hours";
-  classesCompleted: number;
-  trainingStreak: number;
-  streakUnit: "days";
-  timezone: "America/Sao_Paulo";
-  window: "all_time";
-  hoursAccuracy: "scheduled_duration_estimate" | "measured" | "mixed";
-};
 export type MyProfile = {
-  id: string;
+  practitionerId: string;
+  userId: string;
   name: string;
   email: string;
-  photoUrl?: string | null;
+  photoKey?: string | null;
   activeBelt: ActiveBelt | null;
-  trailStats: TrailStats | null;
-  statistics: ProfileStatistics | null;
+  trainingRecord: {
+    id: string;
+    startsAt: string;
+    endsAt: string;
+    caveUnit: string | null;
+    class: string | null;
+  } | null;
 };
 
 export async function getMyProfile(): Promise<MyProfile> {
-  const { data } = await apiClient.get<ApiEnvelope<MyProfile>>(routes.profileMe);
+  const { data } = await apiClient.get<ApiEnvelope<MyProfile>>(
+    routes.profileReadonlyMe,
+  );
   return unwrap(data);
 }
 
@@ -52,9 +40,20 @@ export type ProfilePhotoFile = {
   file?: File;
 };
 
+export type ProfilePhotoResponse = {
+  photoUrl: string | null;
+};
+
+export async function getMyProfilePhoto(): Promise<ProfilePhotoResponse> {
+  const { data } = await apiClient.get<ApiEnvelope<ProfilePhotoResponse>>(
+    routes.profileMe,
+  );
+  return unwrap(data);
+}
+
 export async function replaceMyProfilePhoto(
   file: ProfilePhotoFile,
-): Promise<MyProfile> {
+): Promise<ProfilePhotoResponse> {
   const form = new FormData();
   if (Platform.OS === "web") {
     const blob = (file.file ?? (await fetch(file.uri).then((response) => response.blob()))) as Blob;
@@ -66,7 +65,7 @@ export async function replaceMyProfilePhoto(
     type: file.mimeType ?? "image/jpeg",
     } as unknown as Blob);
   }
-  const { data } = await apiClient.put<ApiEnvelope<MyProfile>>(
+  const { data } = await apiClient.put<ApiEnvelope<ProfilePhotoResponse>>(
     routes.profilePhoto,
     form,
     { headers: { "Content-Type": Platform.OS === "web" ? undefined : "multipart/form-data" } },
@@ -75,5 +74,5 @@ export async function replaceMyProfilePhoto(
 }
 
 export async function deleteMyProfilePhoto(): Promise<void> {
-  await apiClient.delete<ApiEnvelope<MyProfile>>(routes.profilePhoto);
+  await apiClient.delete<ApiEnvelope<ProfilePhotoResponse>>(routes.profilePhoto);
 }

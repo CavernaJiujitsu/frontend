@@ -17,6 +17,7 @@ import { DefaultButton } from "@/components/customized/default-button";
 import { FormField } from "@/components/customized/form-field/form-field";
 import { BrandColors } from "@/constants/theme";
 import { useAppStore } from "@/store/useAppStore";
+import { useSessionStore } from "@/store/useSessionStore";
 import { globalStyles } from "@/styles/global.styles";
 import { styles } from "@/styles/onboarding/create-account.styles";
 import { normalizeCoordinates } from "@/utils/location";
@@ -57,8 +58,7 @@ function validate(nome: string, email: string, senha: string): FieldErrors {
 export default function CreateAccountScreen() {
   const router = useRouter();
   const setProfile = useAppStore((state) => state.setProfile);
-  const setPractitionerId = useAppStore((state) => state.setPractitionerId);
-  const setAccessToken = useAppStore((state) => state.setAccessToken);
+  const setAuthIdentity = useAppStore((state) => state.setAuthIdentity);
   const location = useAppStore((state) => state.user.location);
 
   const [nome, setNome] = useState("");
@@ -88,8 +88,8 @@ export default function CreateAccountScreen() {
       });
       const session = await login({ email: email.trim(), password: senha });
       setProfile({ nome: nome.trim(), email: email.trim() });
-      setPractitionerId(practitioner.id);
-      setAccessToken(session.accessToken);
+      useSessionStore.getState().setSession(session);
+      setAuthIdentity({ ...session, practitionerId: practitioner.id });
       router.replace("/onboarding/location-permission");
     } catch (err) {
       setSubmitError(

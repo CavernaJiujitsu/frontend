@@ -10,12 +10,17 @@ export type CertificateFile = {
   size?: number;
 };
 
-export type UploadedCertificate = {
+export type CertificateRecord = {
   id: string;
   originalName: string;
   fileName: string;
   filePath: string;
   mimeType: string;
+  certificateUrl?: string | null;
+  createdAt: string;
+};
+
+export type UploadedCertificate = CertificateRecord & {
   url: string;
 };
 
@@ -36,11 +41,13 @@ export async function uploadCertificate(
   return unwrap(data);
 }
 
-export async function listCertificates(): Promise<UploadedCertificate[]> {
+export async function listCertificates(
+  params: { page?: number; limit?: number } = {},
+): Promise<CertificateRecord[]> {
   const { data } = await apiClient.get<
-    ApiEnvelope<PaginatedResponse<UploadedCertificate>>
-  >(routes.certificates, {
-    params: { page: 1, limit: 100 },
+    ApiEnvelope<PaginatedResponse<CertificateRecord>>
+  >(routes.graduationCertificates, {
+    params: { page: params.page ?? 1, limit: params.limit ?? 100 },
   });
   return unwrap(data).data;
 }

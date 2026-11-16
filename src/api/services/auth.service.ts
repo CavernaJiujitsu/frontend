@@ -12,12 +12,16 @@ export type LoginResponse = {
   tokenType: "Bearer";
   expiresIn: number;
   userId: string;
-  practitionerId: string;
+  roles: UserRole[];
+  practitionerId?: string;
+  teacherId?: string;
 };
+
+export type UserRole = "STUDENT" | "TEACHER" | "ADMIN" | "CAVE_ADMIN";
 
 export async function login(payload: LoginPayload): Promise<LoginResponse> {
   const { data } = await apiClient.post<ApiEnvelope<LoginResponse>>(
-    routes.login,
+    routes.mobileLogin,
     payload,
   );
   return unwrap(data);
