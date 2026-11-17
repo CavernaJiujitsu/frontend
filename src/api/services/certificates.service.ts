@@ -1,7 +1,7 @@
+import { Platform } from "react-native";
 import { apiClient } from "@/api/bootstrap/axios-bootstrap";
 import { routes } from "@/api/endpoints/routes";
 import { unwrap, type ApiEnvelope } from "@/api/types/envelope";
-import type { PaginatedResponse } from "@/api/types/pagination";
 
 export type CertificateFile = {
   uri: string;
@@ -28,26 +28,20 @@ export async function uploadCertificate(
   file: CertificateFile,
 ): Promise<UploadedCertificate> {
   const form = new FormData();
-  form.append("file", {
-    uri: file.uri,
-    name: file.name,
-    type: file.mimeType ?? "application/octet-stream",
-  } as unknown as Blob);
+  if (Platform.OS === "web") {
+    const blob = await fetch(file.uri).then((response) => response.blob());
+    form.append("file", blob, file.name);
+  } else {
+    form.append("file", {
+      uri: file.uri,
+      name: file.name,
+      type: file.mimeType ?? "application/octet-stream",
+    } as unknown as Blob);
+  }
 
   const { data } = await apiClient.post<ApiEnvelope<UploadedCertificate>>(
     routes.certificatesUpload,
     form,
   );
   return unwrap(data);
-}
-
-export async function listCertificates(
-  params: { page?: number; limit?: number } = {},
-): Promise<CertificateRecord[]> {
-  const { data } = await apiClient.get<
-    ApiEnvelope<PaginatedResponse<CertificateRecord>>
-  >(routes.graduationCertificates, {
-    params: { page: params.page ?? 1, limit: params.limit ?? 100 },
-  });
-  return unwrap(data).data;
 }

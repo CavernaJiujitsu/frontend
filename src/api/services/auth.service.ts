@@ -15,9 +15,15 @@ export type LoginResponse = {
   roles: UserRole[];
   practitionerId?: string;
   teacherId?: string;
+  caveId?: string;
 };
 
-export type UserRole = "STUDENT" | "TEACHER" | "ADMIN" | "CAVE_ADMIN";
+export type UserRole =
+  | "STUDENT"
+  | "TEACHER"
+  | "CAVE_ADMIN"
+  | "ADMIN"
+  | "ROOT";
 
 export async function login(payload: LoginPayload): Promise<LoginResponse> {
   const { data } = await apiClient.post<ApiEnvelope<LoginResponse>>(

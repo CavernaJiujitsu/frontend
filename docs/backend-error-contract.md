@@ -1,52 +1,101 @@
-# Contrato de erro v1 (backend é dono)
+# Contrato de erro (o backend é o dono)
 
-Todo `4xx/5xx` retorna esse body, sem wrapper `{ data }`. O `status` HTTP
-continua valendo — o front lê `status + internalCode`.
+Fonte: filtro global `backend/src/modules/shared/filters/http-exception.filter.ts`
+(registrado como `APP_FILTER` em `backend/src/modules/shared/shared.module.ts`).
+Todo `4xx/5xx` responde este corpo, sem o envelope `{ data }`:
 
 ```json
 {
-  "errorType": "DUPLICATE_RESOURCE",
-  "errorDescription": {
-    "internalCode": "CAVERNA_ALREADY_EXISTS",
-    "message": "Caverna already exists for this owner",
-    "domain": "gym",
-    "field": null,
-    "params": { "title": "Caverna Central" },
-    "details": [{ "field": "email", "code": "INVALID_FORMAT" }],
-    "traceId": "req_abc123"
-  }
+  "message": "Aula lotada",
+  "timestamp": "2026-11-17T09:59:17.396Z",
+  "path": "/api/v1/classes/<id>/enrollments"
 }
 ```
 
-## Campos
+Não existem `errorType`, `errorDescription` nem `internalCode`. O front decide
+pelo **status HTTP** e pelo texto do **`message`**.
 
-| Campo          | Regra                                                                                                                                        |
-| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| `errorType`    | Enum grosso p/ telemetria: `VALIDATION \| DUPLICATE_RESOURCE \| CONFLICT \| NOT_FOUND \| AUTH \| FORBIDDEN \| RATE_LIMIT \| SERVER_ERROR`    |
-| `internalCode` | `SCREAMING_SNAKE`, estável. **Mudar = breaking change versionada pelo back.** É a chave do popup customizável e do dicionário pt-BR no front |
-| `message`      | Inglês técnico, só fallback/log. Nunca exibido quando há tradução                                                                            |
-| `domain`       | Contexto DDD: `auth \| profile \| gym \| schedule \| client \| server`                                                                       |
-| `field`        | Campo do formulário (só 400/422), `null` quando não se aplica                                                                                |
-| `params`       | Variáveis p/ interpolar a mensagem pt-BR (ex. `title`)                                                                                       |
-| `details`      | Lista de erros de validação `{ field?, code, message? }`                                                                                     |
-| `traceId`      | Id da requisição p/ rastrear 500 no log                                                                                                      |
+## Como o `message` é montado no backend
 
-## Exemplos
+| Origem | `message` | Idioma |
+| --- | --- | --- |
+| `throw new XxxException('texto')` nos services e guards | o texto | PT-BR (mensagem de negócio) |
+| `ValidationPipe` (class-validator) | todas as violações juntadas com `"; "` (o filtro já transforma o array em string) | inglês, exceto as que têm `message` custom no DTO |
+| `Parse*Pipe` (por exemplo `ParseUUIDPipe`) | `Validation failed (uuid is expected)` | inglês |
+| Rota inexistente | `Cannot GET /api/v1/...` | inglês |
+| JSON mal formado | `JSON Parse error: ...` | inglês |
+| Erro não tratado (500) | `Internal server error` | inglês |
+| Violação de unique (corrida) | `Registro já existente` (409) | PT-BR |
 
-- `400` mal formatado → `VALIDATION / VALIDATION_FAILED`, `domain: client`
-- `404` → `NOT_FOUND / RESOURCE_NOT_FOUND`
-- `409` duplicidade → `DUPLICATE_RESOURCE / CAVERNA_ALREADY_EXISTS` (`params.title`)
-- `409` conflito → `CONFLICT / SCHEDULE_CONFLICT`
-- `422` validação → `VALIDATION / VALIDATION_FAILED` + `details[]`
-- `500` → `SERVER_ERROR / SERVER_ERROR` + `traceId`
+Alguns DTOs têm mensagem custom em PT (`E-mail não pode conter espaços`,
+`latitude e longitude devem ser enviadas juntas`, `Credenciais inválidas` no
+login). Elas costumam vir **misturadas** com as mensagens padrão em inglês na
+mesma resposta, e as de DTO aninhado vêm com prefixo (`user.E-mail não pode...`).
+
+## Exemplos reais (conferidos com `curl` em 17/11/2026)
+
+| Requisição | Status | `message` |
+| --- | --- | --- |
+| `POST /mobile/auth/login` senha errada | 401 | `E-mail ou senha inválidos` |
+| Rota protegida com token inválido ou sem token | 401 | `Token de acesso inválido` |
+| `POST /mobile/auth/login` com `{}` | 400 | `email must be shorter than or equal to 160 characters; email must be an email; E-mail não pode conter espaços; Credenciais inválidas; Credenciais inválidas; Credenciais inválidas` |
+| `POST /practitioners` com e-mail com espaço | 400 | `user.email must be an email; user.E-mail não pode conter espaços` |
+| `GET /caves?academyUnitId=1` | 400 | `property academyUnitId should not exist` |
+| `GET /classes/not-a-uuid` | 400 | `Validation failed (uuid is expected)` |
+| `POST /mobile/auth/login` com JSON quebrado | 400 | `JSON Parse error: Expected '}'` |
+| `POST /certificates/upload` com tipo inválido | 400 | `Apenas arquivos JPG, PNG ou PDF são permitidos!` |
+| `DELETE /classes/:id` como aluno | 403 | `Você não tem permissão para gerenciar esta aula` |
+| `GET /classes/<uuid inexistente>` | 404 | `Aula não encontrada` |
+| `GET /does-not-exist` | 404 | `Cannot GET /api/v1/does-not-exist` |
+| `POST /practitioners` com e-mail repetido | 409 | `Email já cadastrado` |
+| `POST /classes/:id/enrollments` de novo | 409 | `Aluno já inscrito nesta aula` |
+| Outros 409 de inscrição (no código) | 409 | `Aula lotada`, `Faixa atual do aluno não é elegível para esta aula` |
+| Login bloqueado por tentativas (no código) | 429 | `Muitas tentativas de login. Tente novamente mais tarde` (+ header `Retry-After`) |
+
+## Política de exibição no app
+
+Implementada em `src/constants/error-messages.ts` (`getErrorMessage`), nesta ordem:
+
+1. **Sessão expirada**: 401 de uma requisição que levou `Authorization: Bearer`
+   → `Sessão expirada. Entre novamente.` (o texto do backend é ignorado).
+2. **Sem resposta**: `Sem conexão. Verifique sua internet.` ou, em timeout,
+   `A requisição demorou demais. Tente novamente.`
+3. **Mensagem de negócio do backend**: o `message` é exibido como veio, sem
+   segmentos repetidos.
+4. Se o `message` é **técnico** (qualquer segmento bate com um padrão em inglês
+   de framework: `must`/`should` do class-validator, `Validation failed`,
+   `Cannot GET`, `JSON`, `ThrottlerException`, textos padrão como
+   `Internal server error`), ele **inteiro** é escondido. Mostrar só a parte em
+   PT de uma lista mista confunde (por exemplo `E-mail não pode conter espaços`
+   para um e-mail vazio). Nesse caso:
+   - usa o `fallback` da tela, se ela passou um (`getErrorMessage(e, "Não foi possível salvar a aula.")`);
+   - senão, um texto genérico em PT pelo status (400/422: dados inválidos;
+     403: sem permissão; 404: não encontrado; 409: conflito; 429: muitas
+     tentativas; 5xx: erro no servidor).
+
+O 401 do login **não** é sessão expirada: as rotas públicas de auth
+(`mobile/auth/login`, `auth/password-recovery/*`) nunca levam o bearer, então
+o app mostra `E-mail ou senha inválidos`.
+
+## Sessão expirada
+
+`src/api/bootstrap/axios-bootstrap.ts`: num 401 de requisição que levou o
+token **atual** do store, chama `expireSession()` (`src/utils/session.ts`):
+limpa token e identidade (mantém a localização do aparelho), limpa o
+`queryClient`, faz `router.replace("/onboarding/login")` e mostra o toast
+global. Requisições concorrentes com 401 disparam isso uma vez só: depois do
+primeiro reset o token do store já não é o que elas enviaram. As telas não
+tratam 401.
 
 ## Front
 
-Schema em `src/api/types/api-error.ts` (zod `safeParse`, nunca lança).
-Normalizador em `src/utils/normalize-api-error.ts` aceita o contrato v1,
-formatos legados `{ message/error/code }` e falhas sem resposta
-(`OFFLINE` / `TIMEOUT`). Dicionário pt-BR em
-`src/constants/error-messages.ts`. Popup global via
-`src/store/useErrorStore.ts` + `ErrorToast` montado no `_layout`
-(auto-dismiss 5s). Telas usam `reportError(e)` no `catch` ou
-`useReportQueryError(query.error)`.
+- Schema: `src/api/types/api-error.ts` (`BackendErrorBodySchema`, zod
+  `safeParse`, nunca lança). `AppError = { kind, status?, message?, path? }`,
+  com `kind` = `http | session-expired | offline | timeout | unknown`.
+- Normalizador: `src/utils/normalize-api-error.ts` (`normalizeApiError(e)`).
+  Ele só lê o que o backend mandou; não deduz motivo de negócio pelo status.
+- Texto exibível: `getErrorMessage(normalizeApiError(e), fallback?)`. Nunca
+  mostre `appError.message` direto: ele pode estar em inglês.
+- Para ramificar: `normalizeApiError(e).status` (por exemplo, 409 na inscrição).
+- Toast global: `reportError(e)` no `catch`, ou `useReportQueryError(query.error)`
+  (`src/store/useErrorStore.ts` + `ErrorToast` no `_layout`, some em 5 s).

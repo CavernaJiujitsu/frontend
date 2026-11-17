@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
-import { router, type Href } from "expo-router";
+import { router } from "expo-router";
 import { useState } from "react";
-import { FlatList, Pressable, ScrollView, Text, View } from "react-native";
+import { FlatList, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
-import { listCaves, listUnits, type Cave } from "@/api/services/caves.service";
+import { listCaves, type Cave } from "@/api/services/caves.service";
 import { getPractitioner } from "@/api/services/practitioners.service";
 import { caveImage, magnifierCaverna } from "@/assets/images";
 import { BottomNavbar } from "@/components/bottom-navbar/bottom-navbar";
@@ -11,11 +11,17 @@ import CardComponent from "@/components/complex/card-component";
 import { LoadingSpinner } from "@/components/customized/loading-spinner/loading-spinner";
 import { SearchInput } from "@/components/customized/search-input/search-input";
 import { ScreenLayout } from "@/components/screen-layout/screen-layout";
+import { getErrorMessage } from "@/constants/error-messages";
+import { Spacing } from "@/constants/theme";
+import { studentKeys } from "@/hooks/query-keys";
+import { useCaveAvailability } from "@/hooks/use-cave-availability";
 import { useReportQueryError } from "@/hooks/use-report-query-error";
 import { useAppStore } from "@/store/useAppStore";
 import { globalStyles } from "@/styles/global.styles";
 import { inicioStyles as styles } from "@/styles/private/inicio.styles";
 import { formatDistanceKm, haversineKm } from "@/utils/distance";
+import { normalizeApiError } from "@/utils/normalize-api-error";
+import type { CaveAvailability } from "@/utils/schedule";
 
 type CaveFilter = "nearest" | "openNow" | "classesToday";
 
@@ -25,14 +31,24 @@ const filters: { key: CaveFilter; label: string }[] = [
   { key: "classesToday", label: "Aulas hoje" },
 ];
 
+const localStyles = StyleSheet.create({
+  list: { gap: Spacing.three - Spacing.one, paddingVertical: Spacing.three },
+  feedback: { alignItems: "flex-start", gap: Spacing.two, paddingVertical: Spacing.three },
+});
+
+function activeUnits(cave: Cave) {
+  return (cave.units ?? []).filter((unit) => unit.active !== false);
+}
+
 function getCaveDistanceKm(
   cave: Cave,
   origin?: { latitude: number; longitude: number },
 ): number | undefined {
   if (cave.distanceKm !== undefined) return cave.distanceKm;
-  if (!origin || cave.units.length === 0) return undefined;
+  const units = activeUnits(cave);
+  if (!origin || units.length === 0) return undefined;
 
-  const distances = cave.units
+  const distances = units
     .map((unit) =>
       haversineKm(origin, {
         latitude: Number(unit.latitude),
@@ -43,13 +59,22 @@ function getCaveDistanceKm(
   return distances.length > 0 ? Math.min(...distances) : undefined;
 }
 
+/** Card tags come only from real data (distance and today's classes). */
+function caveTags(distanceTag: string, availability?: CaveAvailability): string[] {
+  return [
+    distanceTag,
+    ...(availability?.openNow ? ["Aberta agora"] : []),
+    ...(availability?.classesToday ? ["Aulas hoje"] : []),
+  ];
+}
+
 export default function Cavernas() {
   const [search, setSearch] = useState("");
   const [activeFilter, setActiveFilter] = useState<CaveFilter>("nearest");
   const location = useAppStore((state) => state.user.location);
   const practitionerId = useAppStore((state) => state.user.practitionerId);
   const profileQuery = useQuery({
-    queryKey: ["practitioner-location", practitionerId],
+    queryKey: studentKeys.practitioner(practitionerId),
     queryFn: () => getPractitioner(practitionerId!),
     enabled: !location && Boolean(practitionerId),
   });
@@ -67,29 +92,36 @@ export default function Cavernas() {
       : undefined);
   const hasCoordinates =
     Number.isFinite(latitude) && Number.isFinite(longitude);
+  // `listCaves` normalizes the coordinates (max. 8 decimal places).
   const query = useQuery({
-    queryKey: ["caves", search, activeFilter, latitude, longitude],
-    queryFn: async () => {
-      const caves = await listCaves(
+    queryKey: ["caves", search, hasCoordinates ? latitude : null, hasCoordinates ? longitude : null],
+    queryFn: () =>
+      listCaves(
         search,
         hasCoordinates ? latitude : undefined,
         hasCoordinates ? longitude : undefined,
-      );
-      if (activeFilter === "nearest") return caves;
-
-      const filtered = await Promise.all(
-        caves.map(async (cave) => {
-          const units = await listUnits(cave.id, {
-            openNow: activeFilter === "openNow",
-            classesToday: activeFilter === "classesToday",
-          });
-          return units.length > 0 ? { ...cave, units } : null;
-        }),
-      );
-      return filtered.filter((cave): cave is Cave => cave !== null);
-    },
+      ),
   });
   useReportQueryError(query.error);
+  const needsAvailability = activeFilter !== "nearest";
+  const availabilityQuery = useCaveAvailability(query.data, needsAvailability);
+  useReportQueryError(availabilityQuery.error);
+  const availability = needsAvailability ? availabilityQuery.data : undefined;
+
+  const caves = (query.data ?? []).filter((cave) => {
+    if (activeFilter === "openNow") return availability?.[cave.id]?.openNow === true;
+    if (activeFilter === "classesToday") return availability?.[cave.id]?.classesToday === true;
+    return true;
+  });
+  const isLoading =
+    query.isLoading || (needsAvailability && query.isSuccess && availabilityQuery.isLoading);
+  const failedQuery = query.isError ? query : needsAvailability && availabilityQuery.isError ? availabilityQuery : null;
+  const emptyMessage =
+    activeFilter === "openNow"
+      ? "Nenhuma caverna com aula acontecendo agora."
+      : activeFilter === "classesToday"
+        ? "Nenhuma caverna com aula hoje."
+        : "Nenhuma caverna encontrada.";
 
   return (
     <ScreenLayout bottomNav={<BottomNavbar />}>
@@ -145,17 +177,32 @@ export default function Cavernas() {
             })}
           </ScrollView>
         </View>
-        {query.isLoading ? (
+        {isLoading ? (
           <LoadingSpinner label="Buscando cavernas…" />
-        ) : query.isError ? (
-          <Text style={styles.emptyText}>
-            Não foi possível carregar as cavernas.
-          </Text>
+        ) : failedQuery ? (
+          <View style={localStyles.feedback}>
+            <Text style={styles.nearbyTitle} accessibilityRole="alert">
+              {query.isError
+                ? "Não foi possível carregar as cavernas"
+                : "Não foi possível consultar as aulas de hoje"}
+            </Text>
+            <Text style={styles.emptyText}>
+              {getErrorMessage(normalizeApiError(failedQuery.error))}
+            </Text>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Tentar carregar as cavernas novamente"
+              style={styles.retryButton}
+              onPress={() => void failedQuery.refetch()}
+            >
+              <Text style={styles.retryButtonText}>Tentar novamente</Text>
+            </Pressable>
+          </View>
         ) : (
           <FlatList
-            data={query.data ?? []}
+            data={caves}
             keyExtractor={(cave) => cave.id}
-            contentContainerStyle={{ gap: 12, paddingVertical: 16 }}
+            contentContainerStyle={localStyles.list}
             renderItem={({ item }: { item: Cave }) => {
               const distanceKm = getCaveDistanceKm(
                 item,
@@ -170,31 +217,28 @@ export default function Cavernas() {
                 distanceKm !== undefined
                   ? formatDistanceKm(distanceKm)
                   : "— km";
+              const firstUnit = activeUnits(item)[0];
               return (
                 <CardComponent
                   image={caveImage}
                   title={item.name}
-                  tags={[
-                    distanceTag,
-                    ...(activeFilter === "openNow" ? ["Aberta agora"] : []),
-                    ...(activeFilter === "classesToday" ? ["Aulas hoje"] : []),
-                  ]}
+                  tags={caveTags(distanceTag, availability?.[item.id])}
                   subtitle={
-                    item.units[0]?.neighborhood ??
-                    item.units[0]?.name ??
+                    firstUnit?.neighborhood ??
+                    firstUnit?.name ??
                     "Unidade sem endereço"
                   }
                   onPress={() =>
                     router.push({
                       pathname: "/cavernas/[cavernaId]/aulas",
                       params: { cavernaId: item.id, cavernaTitle: item.name },
-                    } as unknown as Href)
+                    })
                   }
                 />
               );
             }}
             ListEmptyComponent={
-              <Text style={styles.emptyText}>Nenhuma caverna encontrada.</Text>
+              <Text style={styles.emptyText}>{emptyMessage}</Text>
             }
           />
         )}

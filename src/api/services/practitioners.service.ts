@@ -1,6 +1,7 @@
 import { apiClient } from "@/api/bootstrap/axios-bootstrap";
 import { routes } from "@/api/endpoints/routes";
 import { unwrap, type ApiEnvelope } from "@/api/types/envelope";
+import type { PaginatedResponse } from "@/api/types/pagination";
 
 export type PractitionerUser = {
   id: string;
@@ -77,4 +78,15 @@ export async function updatePractitioner(
     payload,
   );
   return unwrap(data);
+}
+
+/** Search by name or e-mail (requires JWT). */
+export async function searchPractitioners(
+  search: string,
+  limit = 10,
+): Promise<Practitioner[]> {
+  const { data } = await apiClient.get<
+    ApiEnvelope<PaginatedResponse<Practitioner>>
+  >(routes.practitioners, { params: { page: 1, limit, search } });
+  return unwrap(data).data;
 }

@@ -8,13 +8,11 @@ import { normalizeApiError } from "@/utils/normalize-api-error";
 
 export type ErrorToastOptions = {
   durationMs?: number;
-  internalCode?: string;
 };
 
 interface ErrorState {
   visible: boolean;
   message: string | null;
-  internalCode: string;
   show: (message: string, options?: ErrorToastOptions) => void;
   hide: () => void;
 }
@@ -31,32 +29,25 @@ function clearDismissTimer() {
 export const useErrorStore = create<ErrorState>((set) => ({
   visible: false,
   message: null,
-  internalCode: "UNKNOWN",
 
   show: (message, options) => {
     clearDismissTimer();
     const duration = options?.durationMs ?? DEFAULT_ERROR_DURATION_MS;
-    set({
-      visible: true,
-      message,
-      internalCode: options?.internalCode ?? "UNKNOWN",
-    });
+    set({ visible: true, message });
     dismissTimer = setTimeout(() => {
       dismissTimer = null;
-      set({ visible: false, message: null, internalCode: "UNKNOWN" });
+      set({ visible: false, message: null });
     }, duration);
   },
 
   hide: () => {
     clearDismissTimer();
-    set({ visible: false, message: null, internalCode: "UNKNOWN" });
+    set({ visible: false, message: null });
   },
 }));
 
 export function reportError(error: unknown, durationMs?: number): void {
-  const normalized = normalizeApiError(error);
-  useErrorStore.getState().show(getErrorMessage(normalized), {
-    internalCode: normalized.internalCode,
-    durationMs,
-  });
+  useErrorStore
+    .getState()
+    .show(getErrorMessage(normalizeApiError(error)), { durationMs });
 }

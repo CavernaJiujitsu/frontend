@@ -27,7 +27,7 @@ Não-objetivos: mudar o conteúdo das 4 telas, mudar o fluxo de onboarding, mexe
 | Cavernas | `/cavernas` | `src/app/(private)/cavernas/index.tsx` |
 | Perfil   | `/perfil`   | `src/app/(private)/perfil/index.tsx`   |
 
-`(private)/index.tsx` é um `Redirect` para `/inicio` (compat com links antigos em `/(private)`).
+Não existe mais `(private)/index.tsx`: o `Redirect` de compatibilidade para `/inicio` foi removido. A área logada é aberta direto na rota da aba (`STUDENT_HOME = "/inicio"` em `src/utils/session.ts`), e nenhum código navega para `/(private)`.
 `(private)/_layout.tsx` é um `Stack` sem header — o menu é renderizado por tela,
 não pelo navigator.
 
@@ -85,7 +85,7 @@ não pelo navigator.
 
 - Criados: `components/screen-layout/*`, `components/bottom-navbar/*`,
   `app/(private)/{inicio,trilha,cavernas,perfil}/index.tsx`, `docs/bottom-menu/prd.md`.
-- Alterados: `app/(private)/_layout.tsx`, `app/(private)/index.tsx` (redirect),
+- Alterados: `app/(private)/_layout.tsx`, `app/(private)/index.tsx` (redirect, removido depois),
   `app/onboarding/(schedule)/schedule.tsx` (redirect pós-inscrição).
 - Removidos: `app/(private)/{index,trilha,cavernas,perfil}.tsx` planos (movidos).
 

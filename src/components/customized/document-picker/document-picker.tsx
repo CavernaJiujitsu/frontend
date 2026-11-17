@@ -1,9 +1,10 @@
 import * as DocumentPicker from "expo-document-picker";
-import { Alert, Text, TouchableOpacity, View } from "react-native";
+import { Text, TouchableOpacity, View } from "react-native";
 import { useCallback } from "react";
 
 import type { CertificateFile } from "@/api/services/certificates.service";
 import { documentPickerStyles as styles } from "@/components/customized/document-picker/styles/document-picker.styles";
+import { notify } from "@/utils/dialogs";
 
 const MAX_CERTIFICATE_SIZE_BYTES = 5 * 1024 * 1024;
 
@@ -37,7 +38,7 @@ export function CertificatePicker({
 
       const asset = result.assets[0];
       if (asset.size && asset.size > MAX_CERTIFICATE_SIZE_BYTES) {
-        Alert.alert(
+        notify(
           "Arquivo muito grande",
           "O tamanho máximo permitido para o certificado é de 5MB.",
         );
@@ -51,7 +52,7 @@ export function CertificatePicker({
         mimeType: asset.mimeType ?? undefined,
       });
     } catch {
-      Alert.alert("Erro", "Não foi possível selecionar o arquivo.");
+      notify("Erro", "Não foi possível selecionar o arquivo.");
     }
   }, [disabled, onChange]);
 

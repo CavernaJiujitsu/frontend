@@ -1,56 +1,60 @@
-# Welcome to your Expo app 👋
+# Caverna Jiu-Jitsu — app mobile
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+App Expo/React Native (Expo Router) do projeto acadêmico **Caverna Jiu-Jitsu**, o
+"wellhub do jiu-jiteiro". Um único login atende alunos e professores:
 
-## Get started
+- **Aluno** (`/inicio`, `/trilha`, `/cavernas`, `/perfil`): onboarding (conta →
+  localização → caverna próxima → faixa/certificado → primeira aula), trilha
+  técnica, busca de cavernas e reserva de aulas.
+- **Professor** (`/professor/...`): painel, aulas (criar, editar, excluir),
+  chamada (check-in, participação, inscrições) e validações de faixa
+  (agendar, aprovar, rejeitar).
+- Contas com os dois papéis escolhem o modo em `/escolher-perfil` e podem
+  trocar pela tela de perfil.
+- Recuperação de senha: o link do e-mail abre `/reset-password?token=...`.
 
-1. Install dependencies
+## Requisitos
 
-   ```bash
-   npm install
-   ```
+- [Bun](https://bun.sh) e a API do backend rodando (padrão `http://localhost:3000`).
 
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## Como rodar
 
 ```bash
-npm run reset-project
+cp .env.example .env      # ajuste EXPO_PUBLIC_API_URL se necessário
+bun install
+bunx expo start           # pressione "w" para web, ou abra no Expo Go
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Variáveis de ambiente:
 
-### Other setup steps
+| Variável | Descrição |
+| --- | --- |
+| `EXPO_PUBLIC_API_URL` | Origem da API Nest (sem `/api/v1`), ex.: `http://localhost:3000`. Em celular físico use o IP da máquina. |
+| `EXPO_PUBLIC_ENABLE_VCONSOLE` | `true` só no build web de testes publicado. |
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+Verificações:
 
-## Learn more
+```bash
+bunx tsc --noEmit
+bunx expo lint
+bunx expo export --platform web   # valida as rotas
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+## Contas de demonstração (seed do backend)
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+| Perfil | E-mail | Senha |
+| --- | --- | --- |
+| Aluno | `aluno.demo@caverna.com` | `seed-dev` |
+| Professor | `mestre.semente@caverna.com` | `seed-dev` |
+| Professora | `professora.semente@caverna.com` | `seed-dev` |
 
-## Join the community
+Também é possível criar um aluno pelo fluxo "Criar conta".
 
-Join our community of developers creating universal apps.
+## Estrutura
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+- `src/app/` — rotas (Expo Router): `onboarding/`, `(private)/` (aluno),
+  `professor/` (professor), `escolher-perfil.tsx`, `reset-password.tsx`.
+- `src/api/services/` — chamadas HTTP (axios) espelhando o contrato do backend.
+- `src/store/` — estado global (zustand, sessão persistida em AsyncStorage).
+- `src/components/`, `src/styles/`, `src/utils/` — UI e utilitários.
+- `docs/` e `.docs/` — documentação e artefatos de cada demanda.

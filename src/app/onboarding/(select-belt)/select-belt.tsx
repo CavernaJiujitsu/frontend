@@ -1,15 +1,15 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
-import { Alert, Text, TouchableOpacity, View } from "react-native";
+import { Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { DefaultButton } from "@/components/customized/default-button";
 import { BrandColors } from "@/constants/theme";
 import { declareBeltValidation } from "@/api/services/belt-validations.service";
-import { backendMessage } from "@/api/utils/backend-message";
 import { useAppStore } from "@/store/useAppStore";
 import { globalStyles } from "@/styles/global.styles";
 import { selectBeltStyles as styles } from "@/styles/onboarding/select-belt.styles";
+import { notify, notifyError } from "@/utils/dialogs";
 
 type OptionType = "none" | "graduated" | null;
 
@@ -50,7 +50,7 @@ export default function SelectBeltScreen() {
       return;
     }
     if (!practitionerId) {
-      Alert.alert(
+      notify(
         "Atenção",
         "Sua conta não foi criada. Volte e crie sua conta novamente.",
       );
@@ -62,10 +62,7 @@ export default function SelectBeltScreen() {
       setBeltValidationId(validation.id);
       goToSchedule();
     } catch (err: unknown) {
-      Alert.alert(
-        "Erro",
-        backendMessage(err, "Não foi possível salvar os dados. Tente novamente."),
-      );
+      notifyError("Não foi possível salvar os dados", err);
     } finally {
       setIsLoading(false);
     }

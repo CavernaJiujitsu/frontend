@@ -1,21 +1,29 @@
 import { useEffect, useRef, useState } from "react";
-import { Alert, FlatList, Text, View } from "react-native";
+import { FlatList, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 
 import { caveImage, magnifierCaverna } from "@/assets/images";
 import { listCaves, type Cave } from "@/api/services/caves.service";
-import { backendMessage } from "@/api/utils/backend-message";
 import CardComponent from "@/components/complex/card-component";
+import { DefaultButton } from "@/components/customized/default-button";
 import { LoadingSpinner } from "@/components/customized/loading-spinner/loading-spinner";
 import { SearchInput } from "@/components/customized/search-input/search-input";
+import { getErrorMessage } from "@/constants/error-messages";
+import { BrandColors, Colors, Spacing } from "@/constants/theme";
 import { useAppStore } from "@/store/useAppStore";
 import { isLoadingKey, useLoadingStore } from "@/store/useLoadingStore";
 import { globalStyles } from "@/styles/global.styles";
 import { nearbyGymStyles as styles } from "@/styles/onboarding/nearby-gym.styles";
 import { formatDistanceKm } from "@/utils/distance";
+import { normalizeApiError } from "@/utils/normalize-api-error";
 
 const SEARCH_DEBOUNCE_MS = 350;
+
+const localStyles = StyleSheet.create({
+  feedback: { alignItems: "center", gap: Spacing.three, marginTop: Spacing.five },
+  feedbackText: { color: Colors.light.textSecondary, fontSize: 16, textAlign: "center" },
+});
 
 type GymCard = {
   id: string;
@@ -46,6 +54,8 @@ export default function NearByGym() {
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [gyms, setGyms] = useState<GymCard[]>([]);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
   const isLoading = useLoadingStore(isLoadingKey("nearby-gyms"));
   const requestRef = useRef(0);
 
@@ -69,21 +79,21 @@ export default function NearByGym() {
       )
         .then((caves: Cave[]) => {
           if (requestRef.current === requestId) {
+            setLoadError(null);
             setGyms(caves.map((cave: Cave) => toGymCard(cave)));
           }
         })
         .catch((err: unknown) => {
+          // Inline error state: a failed search must not read as "no caves".
           if (requestRef.current === requestId) {
-            Alert.alert(
-              "Erro",
-              backendMessage(err, "Não foi possível buscar cavernas."),
-            );
+            setGyms([]);
+            setLoadError(getErrorMessage(normalizeApiError(err)));
           }
         })
         .finally(() => store.hide("nearby-gyms"));
     }, SEARCH_DEBOUNCE_MS);
     return () => clearTimeout(timer);
-  }, [search]);
+  }, [search, attempt]);
 
   return (
     <SafeAreaView style={globalStyles.screen}>
@@ -108,6 +118,17 @@ export default function NearByGym() {
           <View style={styles.loadingWrap}>
             <LoadingSpinner label="Buscando cavernas…" />
           </View>
+        ) : loadError ? (
+          <View style={localStyles.feedback}>
+            <Text style={localStyles.feedbackText} accessibilityRole="alert">
+              Não foi possível buscar cavernas. {loadError}
+            </Text>
+            <DefaultButton
+              label="Tentar novamente"
+              color={BrandColors.secondary}
+              action={() => setAttempt((value) => value + 1)}
+            />
+          </View>
         ) : (
           <FlatList
             data={gyms}
@@ -128,8 +149,8 @@ export default function NearByGym() {
               />
             )}
             ListEmptyComponent={
-              <View style={{ alignItems: 'center', marginTop: 40 }}>
-                <Text style={{ color: '#aaa', fontSize: 16 }}>
+              <View style={localStyles.feedback}>
+                <Text style={localStyles.feedbackText}>
                   Nenhuma caverna encontrada.
                 </Text>
               </View>

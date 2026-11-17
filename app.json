@@ -54,7 +54,8 @@
           "photosPermission": "Permita o acesso às fotos para atualizar seu perfil.",
           "microphonePermission": false
         }
-      ]
+      ],
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true,

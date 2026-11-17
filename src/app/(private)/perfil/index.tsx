@@ -1,23 +1,26 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { router } from "expo-router";
 import { useState } from "react";
-import { Alert, Pressable, Text, TextInput, View } from "react-native";
+import { Pressable, Text, TextInput, View } from "react-native";
 
 import {
   getMyProfile,
 } from "@/api/services/profile.service";
 import { getPractitioner, updatePractitioner } from "@/api/services/practitioners.service";
 import { backendMessage } from "@/api/utils/backend-message";
-import { queryClient } from "@/api/bootstrap/query-client";
 import { DefaultButton } from "@/components/customized/default-button";
 import { ProfilePhoto } from "@/components/profile-photo";
 import { StudentPage } from "@/components/student-preview/preview-kit";
 import { LoadingSpinner } from "@/components/customized/loading-spinner/loading-spinner";
+import { getErrorMessage } from "@/constants/error-messages";
 import { BrandColors } from "@/constants/theme";
+import { studentKeys } from "@/hooks/query-keys";
 import { useReportQueryError } from "@/hooks/use-report-query-error";
 import { useAppStore } from "@/store/useAppStore";
-import { useSessionStore } from "@/store/useSessionStore";
 import { studentStyles as s } from "@/styles/private/student-preview.styles";
+import { notify } from "@/utils/dialogs";
+import { normalizeApiError } from "@/utils/normalize-api-error";
+import { enterMode, logout } from "@/utils/session";
 
 function classTypeLabel(value: string | null | undefined): string | null {
   if (value === "SCHEDULED") return "Treino";
@@ -27,22 +30,23 @@ function classTypeLabel(value: string | null | undefined): string | null {
 }
 
 export default function Perfil() {
+  const queryClient = useQueryClient();
   const practitionerId = useAppStore((state) => state.user.practitionerId);
   const accessToken = useAppStore((state) => state.user.accessToken);
-  const resetUser = useAppStore((state) => state.resetUser);
+  const isTeacher = useAppStore((state) => state.user.roles.includes("TEACHER"));
   const [openSection, setOpenSection] = useState<string | null>(null);
   const [name, setName] = useState<string | null>(null);
   const [email, setEmail] = useState<string | null>(null);
   const [age, setAge] = useState<string | null>(null);
   const query = useQuery({
-    queryKey: ["profile-me"],
+    queryKey: studentKeys.profile(practitionerId),
     queryFn: getMyProfile,
     enabled: Boolean(accessToken),
   });
   useReportQueryError(query.error);
   const profile = query.data;
   const practitionerQuery = useQuery({
-    queryKey: ["practitioner-me", practitionerId],
+    queryKey: studentKeys.practitioner(practitionerId),
     queryFn: () => getPractitioner(practitionerId!),
     enabled: Boolean(practitionerId && accessToken),
   });
@@ -52,13 +56,6 @@ export default function Perfil() {
     { label: "Caverna", value: trainingRecord?.caveUnit ?? null },
     { label: "Data", value: trainingRecord ? new Intl.DateTimeFormat("pt-BR", { dateStyle: "short" }).format(new Date(trainingRecord.startsAt)) : null },
   ];
-
-  const handleLogout = () => {
-    resetUser();
-    useSessionStore.getState().clearSession();
-    queryClient.clear();
-    router.replace("/onboarding/login");
-  };
 
   const updateMutation = useMutation({
     mutationFn: async () => {
@@ -79,12 +76,12 @@ export default function Perfil() {
     },
     onSuccess: async () => {
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["profile-me"] }),
-        queryClient.invalidateQueries({ queryKey: ["practitioner-me", practitionerId] }),
+        queryClient.invalidateQueries({ queryKey: studentKeys.profile(practitionerId) }),
+        queryClient.invalidateQueries({ queryKey: studentKeys.practitioner(practitionerId) }),
       ]);
-      Alert.alert("Perfil atualizado", "Seus dados foram salvos.");
+      notify("Perfil atualizado", "Seus dados foram salvos.");
     },
-    onError: (error: unknown) => Alert.alert("Não foi possível salvar", backendMessage(error, "Confira os dados e tente novamente.")),
+    onError: (error: unknown) => notify("Não foi possível salvar", backendMessage(error, "Confira os dados e tente novamente.")),
   });
 
   return (
@@ -98,10 +95,19 @@ export default function Perfil() {
           </Pressable>
         </View>
       ) : query.isLoading ? <LoadingSpinner label="Carregando seu perfil…" /> : query.isError ? (
-        <View style={s.card}>
-          <Text style={s.title}>Não foi possível carregar seu perfil</Text>
-          <Text style={s.body}>Verifique sua conexão e tente novamente.</Text>
-        </View>
+        <>
+          <View style={s.card}>
+            <Text style={s.title} accessibilityRole="alert">Não foi possível carregar seu perfil</Text>
+            <Text style={s.body}>{getErrorMessage(normalizeApiError(query.error))}</Text>
+            <DefaultButton
+              label="Tentar novamente"
+              color={BrandColors.secondary}
+              action={() => void query.refetch()}
+            />
+          </View>
+          {/* Leaving the account must stay possible when the profile fails. */}
+          <DefaultButton label="Sair da conta" color={BrandColors.primary} action={logout} />
+        </>
       ) : profile ? (
         <>
           <View style={s.profile}>
@@ -140,10 +146,17 @@ export default function Perfil() {
               {openSection === section.id ? <Text style={s.body}>{section.content}</Text> : null}
             </View>
           ))}
+          {isTeacher ? (
+            <DefaultButton
+              label="Entrar como professor"
+              color={BrandColors.secondary}
+              action={() => enterMode("teacher")}
+            />
+          ) : null}
           <DefaultButton
             label="Sair da conta"
             color={BrandColors.primary}
-            action={handleLogout}
+            action={logout}
           />
         </>
       ) : null}
