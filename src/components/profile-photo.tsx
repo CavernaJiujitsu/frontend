@@ -10,14 +10,17 @@ import { backendMessage } from "@/api/utils/backend-message";
 import { DefaultButton } from "@/components/customized/default-button";
 import { BrandColors, Colors } from "@/constants/theme";
 import { API_URL } from "@/constants/api";
+import { studentKeys } from "@/hooks/query-keys";
+import { useAppStore } from "@/store/useAppStore";
 
 export function ProfilePhoto() {
   const [panel, setPanel] = useState<"menu" | "update" | "view" | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const locked = useRef(false);
+  const practitionerId = useAppStore((state) => state.user.practitionerId);
   const photoQuery = useQuery({
-    queryKey: ["profile-photo"],
+    queryKey: studentKeys.photo(practitionerId),
     queryFn: getMyProfilePhoto,
   });
   const photoUrl = photoQuery.data?.photoUrl;
@@ -57,7 +60,7 @@ export function ProfilePhoto() {
         if (file.mimeType && !["image/jpeg", "image/png"].includes(file.mimeType)) throw new Error("Escolha uma imagem JPG ou PNG.");
         updatedPhoto = (await replaceMyProfilePhoto(file)).photoUrl ?? null;
       }
-      queryClient.setQueryData<ProfilePhotoResponse>(["profile-photo"], {
+      queryClient.setQueryData<ProfilePhotoResponse>(studentKeys.photo(practitionerId), {
         photoUrl: updatedPhoto,
       });
       setPanel(null);

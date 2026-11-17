@@ -1,23 +1,27 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import Svg, { Path } from "react-native-svg";
 
-import { queryClient } from "@/api/bootstrap/query-client";
 import { cancelClassEnrollment } from "@/api/services/classes.service";
-import { getHomeSummary } from "@/api/services/home.service";
 import { getMyProfile } from "@/api/services/profile.service";
-import { backendMessage } from "@/api/utils/backend-message";
 import { BottomNavbar } from "@/components/bottom-navbar/bottom-navbar";
 import { LoadingSpinner } from "@/components/customized/loading-spinner/loading-spinner";
 import { ScreenLayout } from "@/components/screen-layout/screen-layout";
-import { BrandColors, Spacing } from "@/constants/theme";
+import { BeltColors, BrandColors, Spacing } from "@/constants/theme";
+import { studentKeys } from "@/hooks/query-keys";
+import { useHomeSummary } from "@/hooks/use-home-summary";
 import { useReportQueryError } from "@/hooks/use-report-query-error";
 import { useAppStore } from "@/store/useAppStore";
 import { globalStyles } from "@/styles/global.styles";
 import { inicioStyles as styles } from "@/styles/private/inicio.styles";
+import { confirmAction, notify, notifyError } from "@/utils/dialogs";
+import { enrollmentStatusLabel } from "@/utils/schedule";
 
-const AVATAR_COLORS = ["#2E7CF6", "#8A4DFF", "#00E5C9"];
+const AVATAR_COLORS = [BeltColors.blue, BeltColors.purple, BrandColors.borderSecondary];
+
+// The API only cancels enrollments that are still pending (or in progress).
+const CANCELLABLE_STATUSES = new Set(["PENDING", "IN_PROGRESS"]);
 
 const cardStyles = StyleSheet.create({
   card: { width: "100%" },
@@ -27,28 +31,17 @@ const cardStyles = StyleSheet.create({
 
 export default function Inicio() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const accessToken = useAppStore((state) => state.user.accessToken);
-  const location = useAppStore((state) => state.user.location);
+  const practitionerId = useAppStore((state) => state.user.practitionerId);
   const profileQuery = useQuery({
-    queryKey: ["profile-me"],
+    queryKey: studentKeys.profile(practitionerId),
     queryFn: getMyProfile,
-    enabled: Boolean(accessToken),
+    enabled: Boolean(accessToken && practitionerId),
   });
   useReportQueryError(profileQuery.error);
   const belt = profileQuery.data?.activeBelt;
-  const homeQuery = useQuery({
-    queryKey: [
-      "home-summary",
-      location?.coords.latitude,
-      location?.coords.longitude,
-    ],
-    queryFn: () =>
-      getHomeSummary({
-        latitude: location?.coords.latitude,
-        longitude: location?.coords.longitude,
-      }),
-    enabled: Boolean(accessToken),
-  });
+  const homeQuery = useHomeSummary();
   useReportQueryError(homeQuery.error);
 
   const home = homeQuery.data;
@@ -58,13 +51,22 @@ export default function Inicio() {
       cancelClassEnrollment(classId, enrollmentId),
     onSuccess: async () => {
       await Promise.all([
-        homeQuery.refetch(),
-        queryClient.invalidateQueries({ queryKey: ["profile-me"] }),
+        queryClient.invalidateQueries({ queryKey: studentKeys.homeAll(practitionerId) }),
+        queryClient.invalidateQueries({ queryKey: studentKeys.profile(practitionerId) }),
       ]);
-      Alert.alert("Inscrição cancelada", "A vaga foi liberada.");
+      notify("Inscrição cancelada", "A vaga foi liberada.");
     },
-    onError: (error: unknown) => Alert.alert("Não foi possível concluir", backendMessage(error, "A inscrição não está mais disponível.")),
+    onError: (error: unknown) => notifyError("Não foi possível cancelar", error),
   });
+  const handleCancel = (classId: string, enrollmentId: string) => {
+    if (enrollmentMutation.isPending) return;
+    confirmAction(
+      "Cancelar inscrição?",
+      "A vaga desta aula será liberada.",
+      () => enrollmentMutation.mutate({ classId, enrollmentId }),
+      "Cancelar inscrição",
+    );
+  };
   const userName =
     home?.practitioner.fullName.split(" ")[0] ?? profileQuery.data?.name ?? "Aluno";
   const nextClass = home?.nextClass
@@ -77,7 +79,9 @@ export default function Inicio() {
           minute: "2-digit",
         }).format(new Date(home.nextClass.startsAt)),
         tag: home.nextClass.caveUnit.caveName,
-        teacherName: home.nextClass.teacher.name,
+        teacherName: home.nextClass.teacher?.name,
+        statusLabel: enrollmentStatusLabel(home.nextClass.enrollmentStatus),
+        canCancel: CANCELLABLE_STATUSES.has(home.nextClass.enrollmentStatus),
       }
     : null;
   const nearby = home?.nearbyCaves.data.length
@@ -115,20 +119,41 @@ export default function Inicio() {
             </Text>
           </View>
 
-          <View
-            accessibilityLabel={belt ? belt.name : "Avaliação de faixa pendente"}
-            style={[globalStyles.card, cardStyles.card]}
-          >
-            <View style={cardStyles.contentGap}>
-              <View style={styles.beltRow}>
-                <View style={[styles.beltDot, { backgroundColor: belt?.color ?? BrandColors.border }]} />
-                <View>
-                  <Text style={styles.beltName}>{belt?.name ?? "Avaliação pendente"}</Text>
-                  <Text style={styles.beltProgressText}>Acompanhe sua evolução na trilha</Text>
+          {profileQuery.isLoading ? (
+            <View style={[globalStyles.card, cardStyles.card, styles.feedbackCard]}>
+              <LoadingSpinner label="Carregando sua faixa…" size={44} />
+            </View>
+          ) : profileQuery.isError ? (
+            // A failed load must not look like "no belt yet".
+            <View style={[globalStyles.card, cardStyles.card, styles.feedbackCard]}>
+              <Text style={styles.nearbyTitle} accessibilityRole="alert">
+                Não foi possível carregar sua faixa
+              </Text>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Tentar carregar sua faixa novamente"
+                style={({ pressed }) => [styles.retryButton, pressed && cardStyles.pressed]}
+                onPress={() => void profileQuery.refetch()}
+              >
+                <Text style={styles.retryButtonText}>Tentar novamente</Text>
+              </Pressable>
+            </View>
+          ) : (
+            <View
+              accessibilityLabel={belt ? belt.name : "Avaliação de faixa pendente"}
+              style={[globalStyles.card, cardStyles.card]}
+            >
+              <View style={cardStyles.contentGap}>
+                <View style={styles.beltRow}>
+                  <View style={[styles.beltDot, { backgroundColor: belt?.color ?? BrandColors.border }]} />
+                  <View>
+                    <Text style={styles.beltName}>{belt?.name ?? "Avaliação pendente"}</Text>
+                    <Text style={styles.beltProgressText}>Acompanhe sua evolução na trilha</Text>
+                  </View>
                 </View>
               </View>
             </View>
-          </View>
+          )}
 
           <Pressable
             accessibilityRole="button"
@@ -148,6 +173,21 @@ export default function Inicio() {
                   label="Carregando informações da sua próxima aula…"
                   size={44}
                 />
+              ) : homeQuery.isError ? (
+                // Error state of its own: a failed load is not "no class booked".
+                <>
+                  <Text style={styles.emptyText} accessibilityRole="alert">
+                    Não foi possível carregar sua próxima aula.
+                  </Text>
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel="Tentar carregar sua próxima aula novamente"
+                    style={({ pressed }) => [styles.retryButton, pressed && cardStyles.pressed]}
+                    onPress={() => void homeQuery.refetch()}
+                  >
+                    <Text style={styles.retryButtonText}>Tentar novamente</Text>
+                  </Pressable>
+                </>
               ) : nextClass && currentClass ? (
                 <>
                   <View style={styles.nextClassRow}>
@@ -158,19 +198,27 @@ export default function Inicio() {
                       <Text style={styles.tagText}>{nextClass.tag}</Text>
                     </View>
                   </View>
+                  {nextClass.statusLabel ? (
+                    <Text style={styles.beltProgressText}>{nextClass.statusLabel}</Text>
+                  ) : null}
                   <View style={styles.nextClassFooter}>
                     <Text style={styles.teacher}>
-                      Prof. {nextClass.teacherName}
+                      {nextClass.teacherName ? `Prof. ${nextClass.teacherName}` : "Professor não informado"}
                     </Text>
-                    <Pressable
-                      accessibilityRole="button"
-                      accessibilityLabel="Cancelar inscrição da próxima aula"
-                      disabled={enrollmentMutation.isPending}
-                      style={({ pressed }) => [styles.confirmBtn, pressed && styles.confirmBtnPressed]}
-                      onPress={() => enrollmentMutation.mutate({ classId: currentClass.classId, enrollmentId: currentClass.enrollmentId })}
-                    >
-                      <Text style={styles.confirmBtnText}>Cancelar</Text>
-                    </Pressable>
+                    {nextClass.canCancel ? (
+                      <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel="Cancelar inscrição da próxima aula"
+                        accessibilityState={{ disabled: enrollmentMutation.isPending }}
+                        disabled={enrollmentMutation.isPending}
+                        style={({ pressed }) => [styles.confirmBtn, pressed && styles.confirmBtnPressed]}
+                        onPress={() => handleCancel(currentClass.classId, currentClass.enrollmentId)}
+                      >
+                        <Text style={styles.confirmBtnText}>
+                          {enrollmentMutation.isPending ? "Cancelando…" : "Cancelar"}
+                        </Text>
+                      </Pressable>
+                    ) : null}
                   </View>
                 </>
               ) : (
@@ -192,15 +240,15 @@ export default function Inicio() {
             <View
               style={[globalStyles.card, cardStyles.card, styles.feedbackCard]}
             >
-              <Text style={styles.nearbyTitle}>
-                Não foi possível carregar o início
+              <Text style={styles.nearbyTitle} accessibilityRole="alert">
+                Não foi possível carregar as cavernas próximas
               </Text>
               <Text style={styles.emptyText}>
                 Verifique sua conexão e tente novamente.
               </Text>
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel="Tentar carregar informações novamente"
+                accessibilityLabel="Tentar carregar as cavernas próximas novamente"
                 style={({ pressed }) => [
                   styles.retryButton,
                   pressed && cardStyles.pressed,

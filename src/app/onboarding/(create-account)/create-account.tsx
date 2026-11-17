@@ -12,15 +12,16 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { createPractitioner } from "@/api/services/practitioners.service";
 import { login } from "@/api/services/auth.service";
-import { backendMessage } from "@/api/utils/backend-message";
 import { DefaultButton } from "@/components/customized/default-button";
 import { FormField } from "@/components/customized/form-field/form-field";
+import { getErrorMessage } from "@/constants/error-messages";
 import { BrandColors } from "@/constants/theme";
 import { useAppStore } from "@/store/useAppStore";
-import { useSessionStore } from "@/store/useSessionStore";
 import { globalStyles } from "@/styles/global.styles";
 import { styles } from "@/styles/onboarding/create-account.styles";
+import { notify } from "@/utils/dialogs";
 import { normalizeCoordinates } from "@/utils/location";
+import { normalizeApiError } from "@/utils/normalize-api-error";
 
 export type CriarContaPayload = {
   nome: string;
@@ -68,43 +69,68 @@ export default function CreateAccountScreen() {
   const [errors, setErrors] = useState<FieldErrors>({});
   const [loading, setLoading] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  // Set when the API reports the e-mail as taken (409), e.g. a retry after a
+  // signup whose automatic login failed: offer the login instead of looping.
+  const [existingEmail, setExistingEmail] = useState<string | null>(null);
+
+  const goToLogin = (prefilledEmail?: string) => {
+    router.replace(
+      prefilledEmail
+        ? { pathname: "/onboarding/login", params: { email: prefilledEmail } }
+        : "/onboarding/login",
+    );
+  };
 
   const handleSubmit = async () => {
+    if (loading) return;
     const fieldErrors = validate(nome, email, senha);
     setErrors(fieldErrors);
     setSubmitError(null);
+    setExistingEmail(null);
 
     if (Object.keys(fieldErrors).length > 0) return;
 
+    const trimmedEmail = email.trim();
     setLoading(true);
     try {
       const coordinates = normalizeCoordinates(
         location?.coords.latitude,
         location?.coords.longitude,
       );
-      const practitioner = await createPractitioner({
-        user: { name: nome.trim(), email: email.trim(), password: senha },
-        ...(coordinates ? { coordinates } : {}),
-      });
-      const session = await login({ email: email.trim(), password: senha });
-      setProfile({ nome: nome.trim(), email: email.trim() });
-      useSessionStore.getState().setSession(session);
-      setAuthIdentity({ ...session, practitionerId: practitioner.id });
-      router.replace("/onboarding/location-permission");
-    } catch (err) {
-      setSubmitError(
-        backendMessage(
-          err,
-          "Não foi possível criar sua conta. Tente novamente.",
-        ),
-      );
+      let practitionerId: string;
+      try {
+        const practitioner = await createPractitioner({
+          user: { name: nome.trim(), email: trimmedEmail, password: senha },
+          ...(coordinates ? { coordinates } : {}),
+        });
+        practitionerId = practitioner.id;
+      } catch (err) {
+        const error = normalizeApiError(err);
+        setSubmitError(getErrorMessage(error, "Não foi possível criar sua conta. Tente novamente."));
+        if (error.status === 409) setExistingEmail(trimmedEmail);
+        return;
+      }
+
+      try {
+        const session = await login({ email: trimmedEmail, password: senha });
+        setProfile({ nome: nome.trim(), email: trimmedEmail });
+        setAuthIdentity({ ...session, practitionerId });
+        router.replace("/onboarding/location-permission");
+      } catch {
+        // The account exists now: creating it again would only answer 409.
+        notify(
+          "Conta criada",
+          "Não foi possível entrar automaticamente. Entre com seu e-mail e senha para continuar.",
+        );
+        goToLogin(trimmedEmail);
+      }
     } finally {
       setLoading(false);
     }
   };
 
   const handleGoToLogin = () => {
-    router.replace("/onboarding/login");
+    goToLogin(existingEmail ?? undefined);
   };
 
   return (
@@ -175,7 +201,18 @@ export default function CreateAccountScreen() {
             </Text>
           )}
 
-          {submitError && <Text style={styles.submitError}>{submitError}</Text>}
+          {submitError && (
+            <Text style={styles.submitError} accessibilityRole="alert">
+              {submitError}
+            </Text>
+          )}
+          {existingEmail ? (
+            <DefaultButton
+              label="Entrar com este e-mail"
+              color={BrandColors.primary}
+              action={() => goToLogin(existingEmail)}
+            />
+          ) : null}
 
           <View style={styles.actions}>
             <DefaultButton

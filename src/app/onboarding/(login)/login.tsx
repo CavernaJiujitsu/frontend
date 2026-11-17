@@ -1,4 +1,4 @@
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import {
@@ -20,9 +20,10 @@ import { FormField } from "@/components/customized/form-field/form-field";
 import { BrandColors, Colors } from "@/constants/theme";
 import { reportError } from "@/store/useErrorStore";
 import { useAppStore } from "@/store/useAppStore";
-import { useSessionStore } from "@/store/useSessionStore";
 import { globalStyles } from "@/styles/global.styles";
 import { styles } from "@/styles/onboarding/login.styles";
+import { notify } from "@/utils/dialogs";
+import { homeRouteFor } from "@/utils/session";
 
 type LoginForm = {
   email: string;
@@ -31,15 +32,23 @@ type LoginForm = {
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+function firstParam(value: string | string[] | undefined): string | undefined {
+  return Array.isArray(value) ? value[0] : value;
+}
+
 export default function LoginScreen() {
   const router = useRouter();
+  // Set by the signup screen when the account was created but the automatic
+  // login failed.
+  const params = useLocalSearchParams<{ email?: string | string[] }>();
+  const prefilledEmail = firstParam(params.email) ?? "";
   const [showSenha, setShowSenha] = useState(false);
   const {
     control,
     formState: { isSubmitting },
     handleSubmit,
   } = useForm<LoginForm>({
-    defaultValues: { email: "", senha: "" },
+    defaultValues: { email: prefilledEmail, senha: "" },
     reValidateMode: "onChange",
   });
 
@@ -50,10 +59,17 @@ export default function LoginScreen() {
         password: senha,
       });
 
-      useSessionStore.getState().setSession(session);
+      const home = homeRouteFor(session.roles, null);
+      if (!home) {
+        notify(
+          "Acesso indisponível",
+          "Esta conta não possui perfil de aluno ou professor. Use o aplicativo desktop.",
+        );
+        return;
+      }
       useAppStore.getState().setAuthIdentity(session);
       useAppStore.getState().setProfile({ nome: email.trim(), email: email.trim() });
-      router.replace("/inicio");
+      router.replace(home);
     } catch (error) {
       reportError(error);
     }

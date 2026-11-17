@@ -2,7 +2,7 @@ This is an Expo/React Native mobile application. Prioritize mobile-first pattern
 
 ## SDD workflow (skills + `.docs/`)
 
-- Skills live in `.agents/skills/` (canonical) and are mirrored in `.codex/skills/` and `.claude/skills/`. Flow: `feature-plan` → `feature-implementation` → `feature-teste`; `feature-review` and `pr-create` on demand; `trello-ticket` runs the whole flow for a board card; `ui-style` defines the visual language. Keep the mirrors in sync when editing a skill.
+- Skills live in `.agents/skills/` (single source; no mirrors). Flow: `feature-plan` → `feature-implementation` → `feature-teste`; `feature-review` and `pr-create` on demand; `trello-ticket` runs the whole flow for a board card; `ui-style` defines the visual language.
 - Every demand stores its artifacts in `.docs/<slug>/` (`plan.md`, `blueprint.md`, `implement.md`, `test.md`, `review.md`) — conventions in [`.docs/README.md`](./.docs/README.md).
 - Rules: never start coding without an approved `plan.md`; never call something done without `test.md`.
 
@@ -38,6 +38,11 @@ Run lint and typecheck before declaring any task done.
   `ScreenLayout` (`src/components/screen-layout/`), one real route per tab
   (`/inicio`, `/trilha`, `/cavernas`, `/perfil`). Tab switch: always
   `router.replace`, never `push`. Full standard: `docs/bottom-menu/prd.md`.
+- Teacher area lives under the real segment `src/app/professor/` (`/professor`,
+  `/professor/aulas`, `/professor/validacoes`, `/professor/perfil`) with
+  `TeacherNavbar` + `TeacherPage`. Both areas are protected by `RoleGuard`
+  (waits for store hydration, checks token + role). Dual-role accounts pick a
+  mode in `/escolher-perfil` and switch from each profile screen.
 
 ## Building with EAS
 

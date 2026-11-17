@@ -7,6 +7,7 @@ import { DefaultButton } from "@/components/customized/default-button";
 import { LoadingSpinner } from "@/components/customized/loading-spinner/loading-spinner";
 import { Progress, StudentPage } from "@/components/student-preview/preview-kit";
 import { BrandColors } from "@/constants/theme";
+import { studentKeys } from "@/hooks/query-keys";
 import { useReportQueryError } from "@/hooks/use-report-query-error";
 import { useAppStore } from "@/store/useAppStore";
 import { studentStyles as s } from "@/styles/private/student-preview.styles";
@@ -85,8 +86,9 @@ function TrailContent({ trail }: { trail: ActiveTrail }) {
 
 export default function Trilha() {
   const accessToken = useAppStore((state) => state.user.accessToken);
+  const practitionerId = useAppStore((state) => state.user.practitionerId);
   const query = useQuery({
-    queryKey: ["practitioner-trail"],
+    queryKey: studentKeys.trail(practitionerId),
     queryFn: getMyTrail,
     enabled: Boolean(accessToken),
   });

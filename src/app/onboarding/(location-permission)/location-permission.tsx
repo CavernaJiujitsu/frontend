@@ -1,13 +1,14 @@
 import { updatePractitionerLocation } from "@/api/services/practitioners.service";
-import { backendMessage } from "@/api/utils/backend-message";
+import { getErrorMessage } from "@/constants/error-messages";
 import { useLocationPermission } from "@/hooks/use-location-permission";
 import { useAppStore } from "@/store/useAppStore";
 import { globalStyles } from "@/styles/global.styles";
+import { confirmAction, notify } from "@/utils/dialogs";
 import { normalizeCoordinates } from "@/utils/location";
-import * as Location from "expo-location";
+import { normalizeApiError } from "@/utils/normalize-api-error";
+import type * as Location from "expo-location";
 import { useRouter } from "expo-router";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { Alert } from "react-native";
+import { useCallback, useRef, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { LocationPermissionActions } from "@/components/onboarding/location-permission/location-permission-actions";
@@ -23,9 +24,6 @@ export default function LocationPermissionScreen() {
   );
   const [isSavingLocation, setIsSavingLocation] = useState(false);
   const hasNavigated = useRef(false);
-  const saveLocationRef = useRef<
-    ((location: Location.LocationObject) => void) | null
-  >(null);
 
   const continueToNearbyGym = useCallback(() => {
     if (hasNavigated.current) return;
@@ -43,21 +41,23 @@ export default function LocationPermissionScreen() {
       setUserLocation(location);
       setLocationPermissionGranted(true);
 
+      // Alert.alert is a no-op on the web: use the cross-platform dialogs and
+      // never depend on a dialog button to leave the screen.
       if (!coordinates) {
-        Alert.alert(
+        notify(
           "Localização indisponível",
-          "Não foi possível obter coordenadas válidas. Você pode continuar sem sincronizar sua localização.",
-          [{ text: "Continuar", onPress: continueToNearbyGym }],
+          "Não foi possível obter coordenadas válidas. Você vai continuar sem sincronizar sua localização.",
         );
+        continueToNearbyGym();
         return;
       }
 
       if (!practitionerId) {
-        Alert.alert(
+        notify(
           "Cadastro não encontrado",
-          "Sua localização foi obtida, mas não encontramos o praticante para sincronizá-la. Você pode continuar sem sincronizar.",
-          [{ text: "Continuar", onPress: continueToNearbyGym }],
+          "Sua localização foi obtida, mas não encontramos o praticante para sincronizá-la. Você vai continuar sem sincronizar.",
         );
+        continueToNearbyGym();
         return;
       }
 
@@ -66,19 +66,16 @@ export default function LocationPermissionScreen() {
         await updatePractitionerLocation(practitionerId, coordinates);
         continueToNearbyGym();
       } catch (error) {
-        Alert.alert(
+        const appError = normalizeApiError(error);
+        // The session handler already warns and redirects to the login.
+        if (appError.kind === "session-expired") return;
+        // Declining keeps the user here, where "Permitir localização" retries
+        // and "Agora não" skips.
+        confirmAction(
           "Não foi possível salvar a localização",
-          backendMessage(
-            error,
-            "Tente novamente ou continue sem sincronizar sua localização.",
-          ),
-          [
-            {
-              text: "Tentar novamente",
-              onPress: () => saveLocationRef.current?.(location),
-            },
-            { text: "Continuar sem sincronizar", onPress: continueToNearbyGym },
-          ],
+          `${getErrorMessage(appError)} Deseja continuar sem sincronizar sua localização?`,
+          continueToNearbyGym,
+          "Continuar",
         );
       } finally {
         setIsSavingLocation(false);
@@ -92,19 +89,13 @@ export default function LocationPermissionScreen() {
     ],
   );
 
-  useEffect(() => {
-    saveLocationRef.current = (location) => {
-      void saveLocation(location);
-    };
-  }, [saveLocation]);
-
   const handlePermissionGranted = useCallback(
     (location: Location.LocationObject) => saveLocation(location),
     [saveLocation],
   );
 
   const handlePermissionDenied = useCallback(() => {
-    Alert.alert(
+    notify(
       "Localização indisponível",
       "Não foi possível acessar sua localização. Você pode tentar novamente ou continuar sem ela.",
     );
