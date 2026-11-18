@@ -30,6 +30,10 @@ jest.mock("@/api/services/classes.service", () => ({
   listAllClasses: (...args: unknown[]) => mockListAllClasses(...args),
   enrollClass: (...args: unknown[]) => mockEnrollClass(...args),
 }));
+const mockScheduleBeltValidation = jest.fn();
+jest.mock("@/api/services/belt-validations.service", () => ({
+  scheduleBeltValidation: (...args: unknown[]) => mockScheduleBeltValidation(...args),
+}));
 const mockGetHomeSummary = jest.fn();
 jest.mock("@/api/services/home.service", () => ({
   getHomeSummary: (...args: unknown[]) => mockGetHomeSummary(...args),
@@ -133,7 +137,7 @@ describe("ScheduleScreen", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     useAppStore.setState((state) => ({
-      user: { ...state.user, practitionerId: "practitioner-1", accessToken: "token", location: null },
+      user: { ...state.user, practitionerId: "practitioner-1", beltValidationId: null, accessToken: "token", location: null },
     }));
     mockGetCave.mockResolvedValue(CAVE);
     mockGetHomeSummary.mockResolvedValue(homeWith(null));
@@ -260,6 +264,22 @@ describe("ScheduleScreen", () => {
     expect(await screen.findByText("Prof. Mestre Semente")).toBeOnTheScreen();
     expect(mockEnrollClass).toHaveBeenCalledTimes(1);
     expect(mockEnrollClass).toHaveBeenCalledWith(CLASS_TONIGHT.id, { practitionerId: "practitioner-1" });
+    expect(mockRouter.replace).toHaveBeenCalledWith("/inicio");
+  });
+
+  it("schedules the pending belt validation into the selected class", async () => {
+    mockListAllClasses.mockResolvedValue([CLASS_TONIGHT]);
+    mockScheduleBeltValidation.mockResolvedValue({ id: "validation-1", status: "SCHEDULED" });
+    useAppStore.setState((state) => ({
+      user: { ...state.user, beltValidationId: "validation-1" },
+    }));
+
+    await renderSchedule();
+    await screen.findByText("Prof. Mestre Semente");
+    await userEvent.setup().press(enrollButton());
+
+    expect(mockScheduleBeltValidation).toHaveBeenCalledWith("validation-1", CLASS_TONIGHT.id);
+    expect(mockEnrollClass).not.toHaveBeenCalled();
     expect(mockRouter.replace).toHaveBeenCalledWith("/inicio");
   });
 

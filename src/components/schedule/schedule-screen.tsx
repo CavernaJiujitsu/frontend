@@ -7,6 +7,7 @@ import { enrollmentStatusLabel, formatScheduleDate, getMonthDays, getScheduleMon
 import { endOfDay, startOfDay } from "@/utils/date-time";
 import { getCave } from "@/api/services/caves.service";
 import { enrollClass, listAllClasses, type BackendClass } from "@/api/services/classes.service";
+import { scheduleBeltValidation } from "@/api/services/belt-validations.service";
 import { BottomNavbar } from "@/components/bottom-navbar/bottom-navbar";
 import { ClassSkeleton } from "@/components/customized/class-skeleton/class-skeleton";
 import { DefaultButton } from "@/components/customized/default-button";
@@ -110,6 +111,7 @@ export function ScheduleScreen({ cavernaId, cavernaTitle = "Sua caverna", mode }
   });
   const queryClient = useQueryClient();
   const practitionerId = useAppStore((state) => state.user.practitionerId);
+  const beltValidationId = useAppStore((state) => state.user.beltValidationId);
   // The only enrollment status the API exposes to the student today is the
   // one of the next class (home summary): use it to mark that class.
   const homeQuery = useHomeSummary();
@@ -170,7 +172,13 @@ export function ScheduleScreen({ cavernaId, cavernaTitle = "Sua caverna", mode }
     setEnrollmentFailure(null);
     setEnrollingId(classItem.id);
     try {
-      await enrollClass(classItem.id, { practitionerId });
+      if (beltValidationId) {
+        // Scheduling the validation also books the seat and links the
+        // confirmed attendance to the pending belt decision.
+        await scheduleBeltValidation(beltValidationId, classItem.id);
+      } else {
+        await enrollClass(classItem.id, { practitionerId });
+      }
       // The home tab must not show the cached "no class booked" answer.
       void queryClient.invalidateQueries({ queryKey: studentKeys.homeAll(practitionerId) });
       if (context.active) router.replace("/inicio");
