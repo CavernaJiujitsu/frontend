@@ -70,6 +70,10 @@ export function usePendingValidations() {
       pages.forEach((page) => page.data.forEach((item) => byId.set(item.id, item)));
       return [...byId.values()];
     },
+    // New declarations are created from the student's device. Refresh the
+    // teacher's queue so an already-open screen sees them after enrollment.
+    refetchInterval: 15_000,
+    refetchOnWindowFocus: true,
     enabled: teacherQuery.isSuccess,
   });
   return {
