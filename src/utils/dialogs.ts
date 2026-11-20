@@ -1,17 +1,11 @@
 import { Alert, Platform } from "react-native";
 
 import { getErrorMessage } from "@/constants/error-messages";
+import { useNoticeStore, type NoticeTone } from "@/store/useNoticeStore";
 import { normalizeApiError } from "@/utils/normalize-api-error";
 
-// react-native-web ships Alert.alert as a no-op, so the web build falls back
-// to the browser dialogs.
-
-export function notify(title: string, message?: string): void {
-  if (Platform.OS === "web") {
-    window.alert(message ? `${title}\n\n${message}` : title);
-    return;
-  }
-  Alert.alert(title, message);
+export function notify(title: string, message?: string, tone: NoticeTone = "info"): void {
+  useNoticeStore.getState().show({ title, message, tone });
 }
 
 /**
@@ -21,7 +15,7 @@ export function notify(title: string, message?: string): void {
 export function notifyError(title: string, error: unknown, fallback?: string): void {
   const appError = normalizeApiError(error);
   if (appError.kind === "session-expired") return;
-  notify(title, getErrorMessage(appError, fallback));
+  notify(title, getErrorMessage(appError, fallback), "error");
 }
 
 export function confirmAction(

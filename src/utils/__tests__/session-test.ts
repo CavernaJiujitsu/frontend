@@ -11,6 +11,7 @@ import {
   expireSession,
   homeRouteFor,
   logout,
+  logoutToRecovery,
   STUDENT_HOME,
   TEACHER_HOME,
 } from "@/utils/session";
@@ -101,6 +102,17 @@ describe("logout", () => {
     expect(router.replace).toHaveBeenCalledTimes(1);
     expect(router.replace).toHaveBeenCalledWith("/onboarding/login");
     expect(useErrorStore.getState().visible).toBe(false);
+  });
+});
+
+describe("logoutToRecovery", () => {
+  it("drops credentials and cache and opens the public email confirmation", () => {
+    signIn();
+    logoutToRecovery();
+
+    expect(useAppStore.getState().user).toEqual(signedOutUser);
+    expect(queryClient.getQueryData(["profile", "p1"])).toBeUndefined();
+    expect(router.replace).toHaveBeenCalledWith("/onboarding/check-email");
   });
 });
 

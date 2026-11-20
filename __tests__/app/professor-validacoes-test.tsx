@@ -110,7 +110,7 @@ describe("Teacher validations screen", () => {
     await renderScreen();
 
     expect(await screen.findByText("Não foi possível carregar as validações.")).toBeOnTheScreen();
-    expect(screen.queryByText("Nenhuma validação pendente nas suas cavernas.")).not.toBeOnTheScreen();
+    expect(screen.queryByText("Nenhuma validação em aberto nas suas cavernas.")).not.toBeOnTheScreen();
   });
 
   it("shows the empty pending and scheduled states only for successful empty answers", async () => {
@@ -118,12 +118,30 @@ describe("Teacher validations screen", () => {
 
     await renderScreen();
 
-    expect(await screen.findByText("Nenhuma validação pendente nas suas cavernas.")).toBeOnTheScreen();
+    expect(await screen.findByText("Nenhuma validação em aberto nas suas cavernas.")).toBeOnTheScreen();
     expect(screen.queryByText("Não foi possível carregar as validações.")).not.toBeOnTheScreen();
 
     await userEvent.setup().press(screen.getByRole("button", { name: "Agendadas (0)" }));
 
     expect(await screen.findByText("Nenhuma validação agendada nas suas aulas.")).toBeOnTheScreen();
+  });
+
+  it("shows scheduled students in the open queue with a link to attendance", async () => {
+    mockUsePendingValidations.mockReturnValue(queryResult({
+      data: [{ ...PENDING, status: "SCHEDULED", class: {
+        id: "class-1", startsAt: "2026-11-20T10:00:00.000Z", endsAt: "2026-11-20T11:00:00.000Z",
+      } }],
+    }));
+
+    await renderScreen();
+
+    expect(await screen.findByText("Aluno Teste")).toBeOnTheScreen();
+    expect(screen.getByRole("button", { name: "Em aberto (1)" })).toBeOnTheScreen();
+    await userEvent.setup().press(screen.getByRole("button", { name: "Abrir chamada" }));
+    expect(mockRouter.push).toHaveBeenCalledWith({
+      pathname: "/professor/aulas/[classId]/chamada",
+      params: { classId: "class-1" },
+    });
   });
 
   it("shows the class-picker loading state while the classes are pending", async () => {

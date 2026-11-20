@@ -23,12 +23,13 @@ jest.mock("expo-router", () => ({
 
 const mockGetClass = jest.fn();
 const mockListEnrollments = jest.fn();
+const mockEnrollClass = jest.fn();
 jest.mock("@/api/services/classes.service", () => ({
   getClass: (...args: unknown[]) => mockGetClass(...args),
   listEnrollments: (...args: unknown[]) => mockListEnrollments(...args),
   checkInClass: jest.fn(),
   cancelClassEnrollment: jest.fn(),
-  enrollClass: jest.fn(),
+  enrollClass: (...args: unknown[]) => mockEnrollClass(...args),
   setClassParticipation: jest.fn(),
 }));
 
@@ -164,5 +165,22 @@ describe("Attendance screen", () => {
 
     expect(await screen.findByText("Nenhum aluno encontrado.")).toBeOnTheScreen();
     expect(screen.queryByText(/Não foi possível buscar alunos\./)).not.toBeOnTheScreen();
+  });
+
+  it("shows a styled success dialog after enrolling instead of a browser alert", async () => {
+    mockSearchPractitioners.mockResolvedValue([
+      { id: "student-1", user: { name: "Aluno Novo", email: "aluno@teste.com" } },
+    ]);
+    mockEnrollClass.mockResolvedValue({});
+    await renderScreen();
+    await screen.findByText("Nenhum aluno inscrito nesta aula.");
+
+    await userEvent.setup().type(screen.getByLabelText("Digite pelo menos 2 letras"), "Al");
+    await userEvent.setup().press(await screen.findByRole("button", { name: "Inscrever" }));
+
+    expect(await screen.findByText("Aluno inscrito com sucesso!")).toBeOnTheScreen();
+    expect(mockEnrollClass).toHaveBeenCalledWith("class-1", { practitionerId: "student-1" });
+    await userEvent.setup().press(screen.getByRole("button", { name: "Fechar" }));
+    expect(screen.queryByText("Aluno inscrito com sucesso!")).not.toBeOnTheScreen();
   });
 });

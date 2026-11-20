@@ -46,7 +46,9 @@ export type ListBeltValidationsParams = {
   practitionerId?: string;
   caveId?: string;
   teacherId?: string;
-  status?: BeltValidationStatus;
+  status?: BeltValidationStatus | "OPEN";
+  limit?: number;
+  page?: number;
 };
 
 const validationUrl = (id: string) => `${routes.beltValidations}/${id}`;

@@ -19,6 +19,7 @@ export type ClassEnrollment = {
 
 export type EnrollClassPayload = {
   practitionerId: string;
+  requestInitialValidation?: boolean;
 };
 
 export type CreateClassPayload = {

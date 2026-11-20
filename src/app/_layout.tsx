@@ -7,6 +7,7 @@ import { queryClient } from "@/api/bootstrap/query-client";
 
 import { AnimatedSplashOverlay } from "@/components/animated-icon";
 import { ErrorToast } from "@/components/customized/error-toast/error-toast";
+import { NoticeToast } from "@/components/customized/notice-toast/notice-toast";
 import { DebugConsole } from "@/components/debug-console";
 import { BrandColors } from "@/constants/theme";
 
@@ -30,6 +31,7 @@ export default function RootLayout() {
         <AnimatedSplashOverlay />
         <Stack screenOptions={{ headerShown: false }} />
         <ErrorToast />
+        <NoticeToast />
         <DebugConsole />
       </QueryClientProvider>
     </ThemeProvider>

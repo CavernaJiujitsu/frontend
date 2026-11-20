@@ -6,7 +6,8 @@ import { Pressable, Text, TextInput, View } from "react-native";
 import {
   getMyProfile,
 } from "@/api/services/profile.service";
-import { getPractitioner, updatePractitioner } from "@/api/services/practitioners.service";
+import { getPractitioner, searchAddresses, updatePractitioner, type AddressResult } from "@/api/services/practitioners.service";
+import { requestPasswordRecovery } from "@/api/services/password-recovery.service";
 import { backendMessage } from "@/api/utils/backend-message";
 import { DefaultButton } from "@/components/customized/default-button";
 import { ProfilePhoto } from "@/components/profile-photo";
@@ -17,10 +18,12 @@ import { BrandColors } from "@/constants/theme";
 import { studentKeys } from "@/hooks/query-keys";
 import { useReportQueryError } from "@/hooks/use-report-query-error";
 import { useAppStore } from "@/store/useAppStore";
+import { usePasswordRecoveryStore } from "@/store/usePasswordRecoveryStore";
+import { profileAddressStyles as addressStyles } from "@/styles/private/profile-address.styles";
 import { studentStyles as s } from "@/styles/private/student-preview.styles";
 import { notify } from "@/utils/dialogs";
 import { normalizeApiError } from "@/utils/normalize-api-error";
-import { enterMode, logout } from "@/utils/session";
+import { enterMode, logout, logoutToRecovery } from "@/utils/session";
 
 function classTypeLabel(value: string | null | undefined): string | null {
   if (value === "SCHEDULED") return "Treino";
@@ -38,6 +41,9 @@ export default function Perfil() {
   const [name, setName] = useState<string | null>(null);
   const [email, setEmail] = useState<string | null>(null);
   const [age, setAge] = useState<string | null>(null);
+  const [addressQuery, setAddressQuery] = useState("");
+  const [selectedAddress, setSelectedAddress] = useState<AddressResult | null>(null);
+  const [recoveryEmail, setRecoveryEmail] = useState("");
   const query = useQuery({
     queryKey: studentKeys.profile(practitionerId),
     queryFn: getMyProfile,
@@ -79,9 +85,39 @@ export default function Perfil() {
         queryClient.invalidateQueries({ queryKey: studentKeys.profile(practitionerId) }),
         queryClient.invalidateQueries({ queryKey: studentKeys.practitioner(practitionerId) }),
       ]);
-      notify("Perfil atualizado", "Seus dados foram salvos.");
+      notify("Perfil atualizado", "Seus dados foram salvos.", "success");
     },
-    onError: (error: unknown) => notify("Não foi possível salvar", backendMessage(error, "Confira os dados e tente novamente.")),
+    onError: (error: unknown) => notify("Não foi possível salvar", backendMessage(error, "Confira os dados e tente novamente."), "error"),
+  });
+  const addressSearch = useMutation({
+    mutationFn: () => searchAddresses(addressQuery.trim()),
+    onSuccess: () => setSelectedAddress(null),
+    onError: (error: unknown) => notify("Busca indisponível", backendMessage(error, "Tente novamente mais tarde."), "error"),
+  });
+  const saveAddress = useMutation({
+    mutationFn: () => updatePractitioner(practitionerId!, selectedAddress!),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: studentKeys.practitioner(practitionerId) });
+      notify("Endereço atualizado", "Sua localização foi salva.", "success");
+    },
+    onError: (error: unknown) => notify("Não foi possível salvar", backendMessage(error, "Tente novamente."), "error"),
+  });
+  const passwordRequest = useMutation({
+    mutationFn: async () => {
+      const typed = recoveryEmail.trim().toLowerCase();
+      if (!typed || !profile?.email || typed !== profile.email.trim().toLowerCase()) {
+        // Preserve the generic response without issuing a link for another account.
+        return;
+      }
+      await requestPasswordRecovery({ email: typed });
+    },
+    onSuccess: () => {
+      usePasswordRecoveryStore.getState().setConfirmationMessage(
+        "Se houver uma conta com este e-mail, enviaremos um link de recuperação.",
+      );
+      logoutToRecovery();
+    },
+    onError: (error: unknown) => notify("Não foi possível solicitar", backendMessage(error, "Tente novamente."), "error"),
   });
 
   return (
@@ -137,7 +173,6 @@ export default function Perfil() {
           </View>
           {[
             { id: "certificates", title: "Certificados", content: "O certificado é enviado durante a declaração de faixa. A API atual não vincula a listagem de certificados ao aluno, então nenhum arquivo global será exibido como se fosse seu." },
-            { id: "settings", title: "Configurações", content: "Ainda não há operações de configuração de conta disponíveis no contrato da API." },
           ].map((section) => (
             <View key={section.id} style={s.card}>
               <Pressable accessibilityRole="button" accessibilityState={{ expanded: openSection === section.id }} style={({ pressed }) => [s.action, pressed && s.pressed]} onPress={() => setOpenSection(openSection === section.id ? null : section.id)}>
@@ -146,6 +181,57 @@ export default function Perfil() {
               {openSection === section.id ? <Text style={s.body}>{section.content}</Text> : null}
             </View>
           ))}
+          <View style={s.card}>
+            <Pressable accessibilityRole="button" accessibilityState={{ expanded: openSection === "settings" }} style={s.action} onPress={() => setOpenSection(openSection === "settings" ? null : "settings")}>
+              <Text style={s.title}>Configurações {openSection === "settings" ? "−" : "+"}</Text>
+            </Pressable>
+            {openSection === "settings" ? <View style={{ gap: 12 }}>
+              <Text style={s.body}>Endereço salvo: {practitionerQuery.data?.address ?? "Não informado"}</Text>
+              <TextInput accessibilityLabel="Buscar endereço" value={addressQuery} onChangeText={(value) => { setAddressQuery(value); setSelectedAddress(null); addressSearch.reset(); }} placeholder="Rua, número, cidade e estado" style={s.input} />
+              <DefaultButton label={addressSearch.isPending ? "Buscando…" : "Buscar endereço"} color={BrandColors.primary} disabled={addressSearch.isPending || addressQuery.trim().length < 5} action={() => addressSearch.mutate()} />
+              {addressSearch.isSuccess && addressSearch.data.length === 0 ? <Text style={s.body}>Nenhum endereço encontrado. Confira os dados e tente novamente.</Text> : null}
+              {addressSearch.data?.length ? (
+                <View style={addressStyles.list}>
+                  <Text style={addressStyles.heading}>Escolha um endereço</Text>
+                  <Text style={addressStyles.hint}>Toque em uma opção para confirmar a localização correta.</Text>
+                  {addressSearch.data.map((result, index) => {
+                    const selected = selectedAddress === result;
+                    return (
+                      <Pressable
+                        key={`${result.address}-${index}`}
+                        accessibilityRole="button"
+                        accessibilityLabel={result.address}
+                        accessibilityState={{ selected }}
+                        onPress={() => setSelectedAddress(result)}
+                        style={({ pressed }) => [addressStyles.option, selected && addressStyles.optionSelected, pressed && s.pressed]}
+                      >
+                        <View style={[addressStyles.radio, selected && addressStyles.radioSelected]}>
+                          {selected ? <View style={addressStyles.radioDot} /> : null}
+                        </View>
+                        <View style={addressStyles.optionCopy}>
+                          <Text style={addressStyles.optionText}>{result.address}</Text>
+                          {selected ? <Text style={addressStyles.selectedTag}>✓ Selecionado</Text> : null}
+                        </View>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              ) : null}
+              {selectedAddress ? (
+                <>
+                  <View style={addressStyles.selection}>
+                    <Text style={addressStyles.selectedTag}>ENDEREÇO SELECIONADO</Text>
+                    <Text style={addressStyles.optionText}>{selectedAddress.address}</Text>
+                  </View>
+                  <DefaultButton label={saveAddress.isPending ? "Salvando…" : "Salvar endereço selecionado"} color={BrandColors.secondary} disabled={saveAddress.isPending} action={() => saveAddress.mutate()} />
+                </>
+              ) : null}
+              <Text style={s.title}>Trocar senha</Text>
+              <Text style={s.body}>Confirme seu e-mail para receber o link. Você sairá da conta ao solicitar.</Text>
+              <TextInput accessibilityLabel="Confirmar e-mail para trocar senha" value={recoveryEmail} onChangeText={setRecoveryEmail} placeholder="Seu e-mail cadastrado" autoCapitalize="none" keyboardType="email-address" style={s.input} />
+              <DefaultButton label={passwordRequest.isPending ? "Enviando…" : "Enviar link e sair"} color={BrandColors.primary} disabled={passwordRequest.isPending || !recoveryEmail.trim()} action={() => passwordRequest.mutate()} />
+            </View> : null}
+          </View>
           {isTeacher ? (
             <DefaultButton
               label="Entrar como professor"

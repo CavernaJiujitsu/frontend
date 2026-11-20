@@ -125,7 +125,7 @@ describe("ReservarEncontro screen", () => {
 
     await userEvent.setup().press(await screen.findByRole("button", { name: "Confirmar reserva" }));
 
-    expect(mockEnrollClass).toHaveBeenCalledWith(CLASS_ID, { practitionerId: "practitioner-1" });
+    expect(mockEnrollClass).toHaveBeenCalledWith(CLASS_ID, { practitionerId: "practitioner-1", requestInitialValidation: true });
     expect(mockNotify).toHaveBeenCalledWith("Aula reservada", expect.stringContaining("inscrição pendente"));
     expect(mockRouter.replace).toHaveBeenCalledWith("/inicio");
   });

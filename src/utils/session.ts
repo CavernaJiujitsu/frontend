@@ -55,6 +55,13 @@ export function logout(): void {
   clearSession();
 }
 
+/** Clear local credentials while keeping the public recovery confirmation. */
+export function logoutToRecovery(): void {
+  useAppStore.getState().resetUser();
+  router.replace("/onboarding/check-email");
+  queryClient.clear();
+}
+
 /**
  * Called by the API client when an authenticated request gets a 401. The
  * client guarantees a single call per session (see `axios-bootstrap.ts`).

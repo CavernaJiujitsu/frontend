@@ -152,6 +152,33 @@ describe("Inicio screen", () => {
     expect(screen.queryByText("Não foi possível carregar sua próxima aula.")).not.toBeOnTheScreen();
   });
 
+  it("explains missing location instead of claiming there are no nearby caves", async () => {
+    mockGetHomeSummary.mockResolvedValue(homeSummary());
+
+    await renderScreen();
+
+    expect(await screen.findByText(/Sua localização não está disponível/)).toBeOnTheScreen();
+    expect(screen.queryByText(/Nenhuma caverna ativa encontrada/)).not.toBeOnTheScreen();
+    await userEvent.setup().press(screen.getByRole("button", { name: "Ver todas as cavernas" }));
+    expect(mockRouter.push).toHaveBeenCalledWith("/cavernas");
+  });
+
+  it("explains the search radius when location exists but no cave is nearby", async () => {
+    mockGetHomeSummary.mockResolvedValue(
+      homeSummary({
+        nearbyCaves: {
+          data: [],
+          _meta: { total: 0, limit: 5, radiusKm: 5, locationSource: "profile" },
+        },
+      }),
+    );
+
+    await renderScreen();
+
+    expect(await screen.findByText("Nenhuma caverna ativa encontrada em até 5 km da sua localização.")).toBeOnTheScreen();
+    expect(screen.queryByText(/Sua localização não está disponível/)).not.toBeOnTheScreen();
+  });
+
   it("shows an error state (not 'no class') when the home summary fails, with retry", async () => {
     mockGetHomeSummary.mockRejectedValueOnce(apiError(500, "Erro interno", "/api/v1/profile-readonly/home"));
 

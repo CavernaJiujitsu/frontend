@@ -16,6 +16,7 @@ import { useAppStore } from "@/store/useAppStore";
 import { globalStyles } from "@/styles/global.styles";
 import { inicioStyles as styles } from "@/styles/private/inicio.styles";
 import { confirmAction, notify, notifyError } from "@/utils/dialogs";
+import { nearbyCavesEmptyMessage } from "@/utils/nearby-caves";
 import { enrollmentStatusLabel } from "@/utils/schedule";
 
 const AVATAR_COLORS = [BeltColors.blue, BeltColors.purple, BrandColors.borderSecondary];
@@ -201,6 +202,17 @@ export default function Inicio() {
                   {nextClass.statusLabel ? (
                     <Text style={styles.beltProgressText}>{nextClass.statusLabel}</Text>
                   ) : null}
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel="Ver código de entrada da próxima aula"
+                    style={styles.linkWrap}
+                    onPress={() => router.push({
+                      pathname: "/entrada/[classId]",
+                      params: { classId: currentClass.classId, enrollmentId: currentClass.enrollmentId },
+                    })}
+                  >
+                    <Text style={styles.link}>Ver código de entrada →</Text>
+                  </Pressable>
                   <View style={styles.nextClassFooter}>
                     <Text style={styles.teacher}>
                       {nextClass.teacherName ? `Prof. ${nextClass.teacherName}` : "Professor não informado"}
@@ -332,8 +344,18 @@ export default function Inicio() {
             <View style={[globalStyles.card, cardStyles.card]}>
               <Text style={styles.nearbyTitle}>Cavernas mais próximas</Text>
               <Text style={styles.emptyText}>
-                Não encontramos cavernas próximas da sua localização.
+                {home
+                  ? nearbyCavesEmptyMessage(home.nearbyCaves._meta)
+                  : "Não foi possível consultar as cavernas próximas."}
               </Text>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Ver todas as cavernas"
+                onPress={() => router.push("/cavernas")}
+                style={styles.linkWrap}
+              >
+                <Text style={styles.link}>Ver todas as cavernas →</Text>
+              </Pressable>
             </View>
           )}
         </ScrollView>

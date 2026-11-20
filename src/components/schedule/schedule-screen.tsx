@@ -177,7 +177,7 @@ export function ScheduleScreen({ cavernaId, cavernaTitle = "Sua caverna", mode }
         // confirmed attendance to the pending belt decision.
         await scheduleBeltValidation(beltValidationId, classItem.id);
       } else {
-        await enrollClass(classItem.id, { practitionerId });
+         await enrollClass(classItem.id, { practitionerId, requestInitialValidation: true });
       }
       // The home tab must not show the cached "no class booked" answer.
       void queryClient.invalidateQueries({ queryKey: studentKeys.homeAll(practitionerId) });

@@ -48,7 +48,7 @@ export default function ReservarEncontro() {
   const currentEnrollment = nextEnrollment?.classId === classId ? nextEnrollment : null;
 
   const enrollMutation = useMutation({
-    mutationFn: () => enrollClass(classId, { practitionerId: practitionerId! }),
+    mutationFn: () => enrollClass(classId, { practitionerId: practitionerId!, requestInitialValidation: true }),
     onSuccess: (enrollment) => {
       void queryClient.invalidateQueries({ queryKey: studentKeys.homeAll(practitionerId) });
       if (!isMounted.current) return;

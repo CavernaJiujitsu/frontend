@@ -1,10 +1,11 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, userEvent, within } from "@testing-library/react-native";
+import { render, screen, userEvent, waitFor, within } from "@testing-library/react-native";
 import { AxiosError, AxiosHeaders } from "axios";
 
 import type { Cave } from "@/api/services/caves.service";
 import type { BackendClass } from "@/api/services/classes.service";
 import Cavernas from "@/app/(private)/cavernas/index";
+import { studentKeys } from "@/hooks/query-keys";
 import { useAppStore } from "@/store/useAppStore";
 import { useErrorStore } from "@/store/useErrorStore";
 
@@ -108,6 +109,7 @@ async function renderScreen() {
       <Cavernas />
     </QueryClientProvider>,
   );
+  return client;
 }
 
 describe("Cavernas screen", () => {
@@ -130,7 +132,7 @@ describe("Cavernas screen", () => {
         ...state.user,
         practitionerId: "practitioner-1",
         accessToken: "token",
-        // A device location skips the profile-location request.
+        // Device coordinates are used when no saved address is available.
         location: {
           coords: { latitude: -23.55, longitude: -46.63, altitude: null, accuracy: 10, altitudeAccuracy: null, heading: null, speed: null },
           timestamp: 0,
@@ -160,6 +162,47 @@ describe("Cavernas screen", () => {
     expect(within(card).queryByText("Aberta agora")).not.toBeOnTheScreen();
     expect(within(card).queryByText("Aulas hoje")).not.toBeOnTheScreen();
     expect(mockListAllClasses).not.toHaveBeenCalled();
+  });
+
+  it("uses the saved address by default, allows GPS, and reacts to profile changes", async () => {
+    mockGetPractitioner.mockResolvedValue({
+      id: "practitioner-1",
+      address: "Franco da Rocha, SP",
+      latitude: "-23.32192070",
+      longitude: "-46.72204140",
+    });
+    mockListCaves.mockImplementation(async (_search: string, latitude: number) => [
+      { ...OPEN_CAVE, distanceKm: latitude === -23.55 ? 0 : 27 },
+    ]);
+
+    const client = await renderScreen();
+    await screen.findByRole("button", { name: "Caverna Aberta" });
+    expect(screen.getByText("Distâncias a partir de seu endereço salvo")).toBeOnTheScreen();
+    expect(mockListCaves).toHaveBeenCalledWith("", -23.3219207, -46.7220414);
+    expect(screen.getByText("27,0 km")).toBeOnTheScreen();
+
+    await userEvent.setup().press(screen.getByRole("button", { name: "Usar localização do dispositivo" }));
+    await waitFor(() => expect(mockListCaves).toHaveBeenCalledWith("", -23.55, -46.63));
+    expect(screen.getByText("Distâncias a partir de sua localização do dispositivo")).toBeOnTheScreen();
+    expect(await screen.findByText("0,0 km")).toBeOnTheScreen();
+
+    await userEvent.setup().press(screen.getByRole("button", { name: "Usar endereço salvo" }));
+    client.setQueryData(studentKeys.practitioner("practitioner-1"), {
+      id: "practitioner-1",
+      address: "Outro endereço",
+      latitude: "-23.40000000",
+      longitude: "-46.80000000",
+    });
+    await waitFor(() => expect(mockListCaves).toHaveBeenCalledWith("", -23.4, -46.8));
+  });
+
+  it("still uses device location without a saved address", async () => {
+    mockListCaves.mockResolvedValue([OPEN_CAVE]);
+    await renderScreen();
+    await screen.findByRole("button", { name: "Caverna Aberta" });
+    expect(mockListCaves).toHaveBeenCalledWith("", -23.55, -46.63);
+    expect(screen.getByText("Distâncias a partir de sua localização do dispositivo")).toBeOnTheScreen();
+    expect(screen.queryByRole("button", { name: "Usar endereço salvo" })).not.toBeOnTheScreen();
   });
 
   it("shows the empty state only for a successful empty answer", async () => {

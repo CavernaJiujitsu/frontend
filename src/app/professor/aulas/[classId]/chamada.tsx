@@ -1,7 +1,7 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useState } from "react";
-import { Text, View } from "react-native";
+import { useEffect, useState } from "react";
+import { Animated, Modal, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { queryClient } from "@/api/bootstrap/query-client";
 import {
@@ -21,6 +21,7 @@ import { FormField } from "@/components/customized/form-field/form-field";
 import { LoadingSpinner } from "@/components/customized/loading-spinner/loading-spinner";
 import { SmallButton, StatusBadge, TeacherPage, ui } from "@/components/teacher/teacher-ui";
 import { getErrorMessage } from "@/constants/error-messages";
+import { BrandColors } from "@/constants/theme";
 import { teacherKeys, useScheduledValidations } from "@/hooks/use-teacher-data";
 import { useAppStore } from "@/store/useAppStore";
 import { studentStyles as s } from "@/styles/private/student-preview.styles";
@@ -35,6 +36,43 @@ const STATUS: Record<EnrollmentStatus, { label: string; tone: "neutral" | "succe
   EXPIRED: { label: "Expirado", tone: "neutral" },
   CANCELLED: { label: "Cancelado", tone: "danger" },
 };
+
+const successStyles = StyleSheet.create({
+  backdrop: { flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#000000bb", padding: 24 },
+  card: { width: "100%", maxWidth: 360, alignItems: "center", gap: 16, padding: 28, borderRadius: 20, backgroundColor: BrandColors.background, borderWidth: 1, borderColor: BrandColors.secondary },
+  check: { width: 64, height: 64, borderRadius: 32, alignItems: "center", justifyContent: "center", backgroundColor: BrandColors.secondary },
+  checkText: { color: BrandColors.background, fontSize: 36, fontWeight: "700" },
+  title: { color: "#ffffff", fontSize: 20, fontWeight: "700", textAlign: "center" },
+  close: { backgroundColor: BrandColors.secondary, borderRadius: 10, paddingVertical: 12, paddingHorizontal: 32 },
+  closeText: { color: BrandColors.background, fontWeight: "700" },
+});
+
+function EnrollmentSuccessDialog({ visible, onClose }: { visible: boolean; onClose: () => void }) {
+  const [progress] = useState(() => new Animated.Value(Platform.OS === "web" ? 0 : 1));
+  useEffect(() => {
+    if (!visible || Platform.OS !== "web") return;
+    progress.setValue(0);
+    const animation = Animated.spring(progress, { toValue: 1, useNativeDriver: true, friction: 6 });
+    animation.start();
+    return () => animation.stop();
+  }, [progress, visible]);
+
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      <View style={successStyles.backdrop}>
+        <View style={successStyles.card} accessibilityRole="alert">
+          <Animated.View style={[successStyles.check, { opacity: progress, transform: [{ scale: progress }] }]}>
+            <Text style={successStyles.checkText}>✓</Text>
+          </Animated.View>
+          <Text style={successStyles.title}>Aluno inscrito com sucesso!</Text>
+          <Pressable accessibilityRole="button" onPress={onClose} style={successStyles.close}>
+            <Text style={successStyles.closeText}>Fechar</Text>
+          </Pressable>
+        </View>
+      </View>
+    </Modal>
+  );
+}
 
 export default function AttendanceScreen() {
   const router = useRouter();
@@ -234,6 +272,7 @@ function EnrollmentRow({ classItem, enrollment }: { classItem: BackendClass; enr
 function EnrollStudent({ classId }: { classId: string }) {
   const teacherId = useAppStore((state) => state.user.teacherId);
   const [search, setSearch] = useState("");
+  const [showSuccess, setShowSuccess] = useState(false);
   const term = search.trim();
   const searchQuery = useQuery({
     queryKey: teacherKeys.practitionerSearch(teacherId, term),
@@ -245,13 +284,16 @@ function EnrollStudent({ classId }: { classId: string }) {
     onSuccess: async () => {
       setSearch("");
       await refreshAttendance(classId);
-      notify("Aluno inscrito");
+      setShowSuccess(true);
     },
     onError: (error) => notify("Não foi possível inscrever", backendMessage(error, "Tente novamente.")),
   });
 
   return (
     <View style={s.card}>
+      {showSuccess ? (
+        <EnrollmentSuccessDialog visible onClose={() => setShowSuccess(false)} />
+      ) : null}
       <Text style={s.title}>Inscrever aluno</Text>
       <FormField
         label="BUSCAR POR NOME OU E-MAIL"

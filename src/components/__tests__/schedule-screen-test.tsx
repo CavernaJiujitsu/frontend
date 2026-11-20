@@ -263,7 +263,7 @@ describe("ScheduleScreen", () => {
 
     expect(await screen.findByText("Prof. Mestre Semente")).toBeOnTheScreen();
     expect(mockEnrollClass).toHaveBeenCalledTimes(1);
-    expect(mockEnrollClass).toHaveBeenCalledWith(CLASS_TONIGHT.id, { practitionerId: "practitioner-1" });
+    expect(mockEnrollClass).toHaveBeenCalledWith(CLASS_TONIGHT.id, { practitionerId: "practitioner-1", requestInitialValidation: true });
     expect(mockRouter.replace).toHaveBeenCalledWith("/inicio");
   });
 

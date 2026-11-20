@@ -15,6 +15,7 @@ export type Practitioner = {
   latitude: string | null;
   longitude: string | null;
   age: number | null;
+  address?: string | null;
 };
 
 export type PractitionerCoordinates = {
@@ -39,7 +40,22 @@ export type UpdatePractitionerPayload = {
   age?: number;
   latitude?: number;
   longitude?: number;
+  address?: string;
 };
+
+export type AddressResult = {
+  address: string;
+  latitude: number;
+  longitude: number;
+};
+
+export async function searchAddresses(q: string): Promise<AddressResult[]> {
+  const { data } = await apiClient.get<ApiEnvelope<AddressResult[]>>(
+    `${routes.practitioners}/me/addresses`,
+    { params: { q } },
+  );
+  return unwrap(data);
+}
 
 export async function createPractitioner(
   payload: CreatePractitionerPayload,

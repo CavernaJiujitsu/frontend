@@ -51,7 +51,7 @@ export function useUpcomingTeacherClasses(limit = 20) {
 }
 
 /**
- * PENDING validations of students linked to any cave where the teacher has a
+ * Open validations of students linked to any cave where the teacher has a
  * unit. The API filters by cave, so one request per distinct cave is merged.
  */
 export function usePendingValidations() {
@@ -61,13 +61,31 @@ export function usePendingValidations() {
     ...new Set((teacherQuery.data?.caveUnits ?? []).map((unit) => unit.caveId)),
   ].sort();
   const query = useQuery({
-    queryKey: [...teacherKeys.validations, "PENDING", teacherId, caveIds],
+    queryKey: [...teacherKeys.validations, "OPEN", teacherId, caveIds],
     queryFn: async () => {
       const pages = await Promise.all(
-        caveIds.map((caveId) => listBeltValidations({ status: "PENDING", caveId })),
+        caveIds.map(async (caveId) => {
+          const first = await listBeltValidations({
+            status: "OPEN",
+            caveId,
+            limit: 100,
+            page: 1,
+          });
+          const all = [...first.data];
+          for (let page = 2; page <= first._meta.totalPage; page += 1) {
+            const next = await listBeltValidations({
+              status: "OPEN",
+              caveId,
+              limit: 100,
+              page,
+            });
+            all.push(...next.data);
+          }
+          return all;
+        }),
       );
       const byId = new Map<string, BeltValidation>();
-      pages.forEach((page) => page.data.forEach((item) => byId.set(item.id, item)));
+      pages.forEach((items) => items.forEach((item) => byId.set(item.id, item)));
       return [...byId.values()];
     },
     // New declarations are created from the student's device. Refresh the

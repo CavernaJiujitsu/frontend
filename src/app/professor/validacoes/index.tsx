@@ -42,7 +42,7 @@ export default function TeacherValidations() {
     <TeacherPage title="Validações de faixa" subtitle="Agende e avalie as faixas dos alunos">
       <View style={ui.row}>
         <Chip
-          label={`Pendentes (${pendingQuery.data?.length ?? "…"})`}
+          label={`Em aberto (${pendingQuery.data?.length ?? "…"})`}
           selected={tab === "pending"}
           onPress={() => setTab("pending")}
         />
@@ -58,6 +58,7 @@ export default function TeacherValidations() {
 }
 
 function PendingList() {
+  const router = useRouter();
   const query = usePendingValidations();
   const [openId, setOpenId] = useState<string | null>(null);
 
@@ -70,12 +71,12 @@ function PendingList() {
   return (
     <>
       <Text style={s.body}>
-        Alunos das suas cavernas aguardando uma aula de validação. Agende em uma das suas
-        próximas aulas de treino ou validação — o aluno é inscrito automaticamente.
+        Alunos das suas cavernas aguardando agendamento ou avaliação de faixa.
+        Validações já agendadas podem ser avaliadas após o check-in na aula.
       </Text>
       {items.length === 0 ? (
         <View style={s.card}>
-          <Text style={s.body}>Nenhuma validação pendente nas suas cavernas.</Text>
+          <Text style={s.body}>Nenhuma validação em aberto nas suas cavernas.</Text>
         </View>
       ) : (
         items.map((validation) => (
@@ -84,7 +85,7 @@ function PendingList() {
               <Text style={[s.title, { flex: 1 }]}>
                 {validation.practitioner?.user?.name ?? "Aluno"}
               </Text>
-              <StatusBadge label="Pendente" tone="warning" />
+              <StatusBadge label={validation.status === "SCHEDULED" ? "Agendada" : "Pendente"} tone="warning" />
             </View>
             <Text style={s.body}>{beltChange(validation)}</Text>
             <View style={ui.row}>
@@ -97,11 +98,22 @@ function PendingList() {
               ) : (
                 <Text style={s.accent}>Sem certificado</Text>
               )}
-              <SmallButton
-                label={openId === validation.id ? "Fechar" : "Agendar"}
-                variant="primary"
-                onPress={() => setOpenId(openId === validation.id ? null : validation.id)}
-              />
+              {validation.status === "PENDING" ? (
+                <SmallButton
+                  label={openId === validation.id ? "Fechar" : "Agendar"}
+                  variant="primary"
+                  onPress={() => setOpenId(openId === validation.id ? null : validation.id)}
+                />
+              ) : validation.class ? (
+                <SmallButton
+                  label="Abrir chamada"
+                  variant="primary"
+                  onPress={() => router.push({
+                    pathname: "/professor/aulas/[classId]/chamada",
+                    params: { classId: validation.class!.id },
+                  })}
+                />
+              ) : null}
             </View>
             {openId === validation.id ? (
               <ClassPicker validationId={validation.id} onDone={() => setOpenId(null)} />

@@ -1,16 +1,11 @@
-import { Stack, useRouter } from "expo-router";
+import { Stack } from "expo-router";
 import { StyleSheet, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { RoleGuard } from "@/components/auth/role-guard";
-import { BOTTOM_NAVBAR_BASE_HEIGHT } from "@/components/bottom-navbar/bottom-navbar";
-import { CheckinFab } from "@/components/customized/checkin-fab/checkin-fab";
+import { CheckinShortcut } from "@/components/entry-code/checkin-shortcut";
 import { BrandColors } from "@/constants/theme";
 
 export default function PrivateLayout() {
-  const insets = useSafeAreaInsets();
-  const router = useRouter();
-
   return (
     <RoleGuard role="STUDENT">
       <View style={styles.host}>
@@ -20,12 +15,7 @@ export default function PrivateLayout() {
             contentStyle: { backgroundColor: BrandColors.background },
           }}
         />
-        <CheckinFab
-          onPress={() => router.replace("/inicio")}
-          label="Próxima aula"
-          accessibilityLabel="Abrir próxima aula"
-          style={{ bottom: insets.bottom + BOTTOM_NAVBAR_BASE_HEIGHT + 16 }}
-        />
+        <CheckinShortcut />
       </View>
     </RoleGuard>
   );
