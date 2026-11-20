@@ -17,5 +17,7 @@ export const routes = {
   beltValidations: `${API_PREFIX}/belt-validations`,
   caves: `${API_PREFIX}/caves`,
   classes: `${API_PREFIX}/classes`,
+  entryCode: (classId: string, enrollmentId: string) =>
+    `${API_PREFIX}/entries/classes/${classId}/enrollments/${enrollmentId}/code`,
   teachers: `${API_PREFIX}/teachers`,
 } as const;

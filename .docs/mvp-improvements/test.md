@@ -10,3 +10,10 @@
 - Cavernas: teste de origem padrão com endereço salvo, troca explícita para coordenadas do dispositivo e recálculo quando as coordenadas do perfil mudam. Sem endereço salvo, mantém origem do dispositivo. Verificação no banco local do usuário informado: endereço em `practitioners.address`; Franco da Rocha até Centro-SP e Matriz ≈ 27,0 km, diferente dos ≈ 11,8 km exibidos antes porque o app priorizava as coordenadas do dispositivo.
 
 Pendente: reteste visual em dispositivo e navegador com backend e credenciais reais de homologação/produção.
+
+## Correção da rota de entrada em dev (20/11/2026)
+
+- O `404 Cannot GET /entries/classes/.../code` foi causado pela ausência de `/api/v1` na URL montada pelo app. `getEntryCode` agora usa a rota versionada compartilhada; teste de serviço confirma o caminho completo e a leitura do envelope.
+- `bun run typecheck`: passou; `bun run lint`: passou com o aviso preexistente em `schedule-screen-test.tsx`.
+- `bunx jest --runInBand --silent --forceExit`: 33 suítes / 233 testes passaram; `--forceExit` continua necessário por handle aberto não diagnosticado nesta correção.
+- `bunx expo export --platform web`: passou. Enviar a `dev` não publica automaticamente o frontend nem aplica migrations no banco; reteste no ambiente publicado segue pendente.

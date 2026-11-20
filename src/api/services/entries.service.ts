@@ -1,4 +1,5 @@
 import { apiClient } from "@/api/bootstrap/axios-bootstrap";
+import { routes } from "@/api/endpoints/routes";
 import { unwrap, type ApiEnvelope } from "@/api/types/envelope";
 
 export type EntryCode = {
@@ -10,7 +11,7 @@ export type EntryCode = {
 
 export async function getEntryCode(classId: string, enrollmentId: string): Promise<EntryCode> {
   const { data } = await apiClient.get<ApiEnvelope<EntryCode>>(
-    `/entries/classes/${classId}/enrollments/${enrollmentId}/code`,
+    routes.entryCode(classId, enrollmentId),
   );
   return unwrap(data);
 }
