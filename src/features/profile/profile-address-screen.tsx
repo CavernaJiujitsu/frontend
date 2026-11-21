@@ -1,14 +1,17 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as Location from "expo-location";
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Platform, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 
 import { searchAddresses, updatePractitioner, type AddressResult } from "@/api/services/practitioners.service";
+import { listCaves } from "@/api/services/caves.service";
 import { backendMessage } from "@/api/utils/backend-message";
 import { DefaultButton } from "@/components/customized/default-button";
 import { ScreenLayout } from "@/components/screen-layout/screen-layout";
 import { BrandColors } from "@/constants/theme";
+import { CaveMap } from "@/features/maps/cave-map";
+import { caveUnitMarkers } from "@/features/maps/map-data";
 import { studentKeys } from "@/hooks/query-keys";
 import { useAppStore } from "@/store/useAppStore";
 import { profileAddressStyles as a } from "@/styles/private/profile-address.styles";
@@ -22,6 +25,13 @@ export function ProfileAddressScreen() {
   const [selected, setSelected] = useState<AddressResult | null>(null);
   const [locating, setLocating] = useState(false);
   const [locationError, setLocationError] = useState("");
+  const [focusedUnit, setFocusedUnit] = useState<string | null>(null);
+  const nearby = useQuery({
+    queryKey: ["address-map-caves", selected?.latitude, selected?.longitude],
+    queryFn: () => listCaves("", selected!.latitude, selected!.longitude),
+    enabled: Boolean(selected),
+  });
+  const units = useMemo(() => caveUnitMarkers(nearby.data ?? []), [nearby.data]);
 
   const search = useMutation({
     mutationFn: (term: string) => searchAddresses(term),
@@ -84,13 +94,16 @@ export function ProfileAddressScreen() {
             <Text accessibilityRole="header" style={a.title}>Endereço</Text>
             <Text style={a.subtitle}>Usamos para encontrar as cavernas mais próximas</Text>
           </View>
-          <View style={a.map} accessible accessibilityLabel="Ilustração de mapa com marcador de localização">
-            {[0, 1, 2].map((row) => <View key={row} style={a.mapRow}>
-              {[0, 1, 2, 3, 4].map((column) => <View key={column} style={a.mapBlock} />)}
-            </View>)}
-            <View style={a.mapRoad} />
-            <View style={a.mapHalo}><View style={a.pin}><View style={a.pinCenter} /></View></View>
-          </View>
+          <CaveMap center={selected} units={units} selectedId={focusedUnit}
+            onUnitPress={(unit) => setFocusedUnit(unit.id)} height={180} />
+          {focusedUnit && units.find((unit) => unit.id === focusedUnit) ? (
+            <Pressable accessibilityRole="button" onPress={() => {
+              const unit = units.find((item) => item.id === focusedUnit);
+              if (unit) navigation.push({ pathname: "/cavernas/[cavernaId]/aulas", params: { cavernaId: unit.caveId, cavernaTitle: unit.caveName } });
+            }} style={a.locationButton}>
+              <Text style={a.locationText}>Ver aulas em {units.find((unit) => unit.id === focusedUnit)?.caveName} ›</Text>
+            </Pressable>
+          ) : null}
           <View style={a.searchBox}>
             <Pressable accessibilityRole="button" accessibilityLabel="Buscar endereço" disabled={!canSearch} onPress={() => { setSelected(null); search.mutate(query.trim()); }} style={a.searchIcon}>
               <Text style={a.searchIconText}>⌕</Text>

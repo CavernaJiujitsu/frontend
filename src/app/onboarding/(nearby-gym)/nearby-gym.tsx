@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { FlatList, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
@@ -9,6 +9,8 @@ import CardComponent from "@/components/complex/card-component";
 import { DefaultButton } from "@/components/customized/default-button";
 import { LoadingSpinner } from "@/components/customized/loading-spinner/loading-spinner";
 import { SearchInput } from "@/components/customized/search-input/search-input";
+import { CaveMap } from "@/features/maps/cave-map";
+import { caveUnitMarkers } from "@/features/maps/map-data";
 import { getErrorMessage } from "@/constants/error-messages";
 import { BrandColors, Colors, Spacing } from "@/constants/theme";
 import { useAppStore } from "@/store/useAppStore";
@@ -54,6 +56,8 @@ export default function NearByGym() {
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [gyms, setGyms] = useState<GymCard[]>([]);
+  const [caves, setCaves] = useState<Cave[]>([]);
+  const units = useMemo(() => caveUnitMarkers(caves), [caves]);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
   const isLoading = useLoadingStore(isLoadingKey("nearby-gyms"));
@@ -80,6 +84,7 @@ export default function NearByGym() {
         .then((caves: Cave[]) => {
           if (requestRef.current === requestId) {
             setLoadError(null);
+            setCaves(caves);
             setGyms(caves.map((cave: Cave) => toGymCard(cave)));
           }
         })
@@ -87,6 +92,7 @@ export default function NearByGym() {
           // Inline error state: a failed search must not read as "no caves".
           if (requestRef.current === requestId) {
             setGyms([]);
+            setCaves([]);
             setLoadError(getErrorMessage(normalizeApiError(err)));
           }
         })
@@ -134,6 +140,15 @@ export default function NearByGym() {
             data={gyms}
             keyExtractor={(gym) => gym.id}
             contentContainerStyle={styles.listContent}
+            ListHeaderComponent={<CaveMap
+              center={useAppStore.getState().user.location?.coords}
+              units={units}
+              height={180}
+              onUnitPress={(unit) => router.push({
+                pathname: "/onboarding/select-belt",
+                params: { cavernaId: unit.caveId, cavernaTitle: unit.caveName },
+              })}
+            />}
             renderItem={({ item }) => (
               <CardComponent
                 image={item.image}

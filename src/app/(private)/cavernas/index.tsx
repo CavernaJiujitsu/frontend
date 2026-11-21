@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { router } from "expo-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { FlatList, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { listCaves, type Cave } from "@/api/services/caves.service";
@@ -11,6 +11,8 @@ import CardComponent from "@/components/complex/card-component";
 import { LoadingSpinner } from "@/components/customized/loading-spinner/loading-spinner";
 import { SearchInput } from "@/components/customized/search-input/search-input";
 import { ScreenLayout } from "@/components/screen-layout/screen-layout";
+import { CaveMap } from "@/features/maps/cave-map";
+import { caveUnitMarkers } from "@/features/maps/map-data";
 import { getErrorMessage } from "@/constants/error-messages";
 import { BrandColors, Colors, Spacing } from "@/constants/theme";
 import { studentKeys } from "@/hooks/query-keys";
@@ -126,11 +128,12 @@ export default function Cavernas() {
   useReportQueryError(availabilityQuery.error);
   const availability = needsAvailability ? availabilityQuery.data : undefined;
 
-  const caves = (query.data ?? []).filter((cave) => {
+  const caves = useMemo(() => (query.data ?? []).filter((cave) => {
     if (activeFilter === "openNow") return availability?.[cave.id]?.openNow === true;
     if (activeFilter === "classesToday") return availability?.[cave.id]?.classesToday === true;
     return true;
-  });
+  }), [query.data, activeFilter, availability]);
+  const units = useMemo(() => caveUnitMarkers(caves), [caves]);
   const isLoading =
     ((profileQuery.isPending || profileQuery.isFetching) && Boolean(practitionerId && accessToken)) ||
     query.isLoading ||
@@ -225,6 +228,15 @@ export default function Cavernas() {
             })}
           </ScrollView>
         </View>
+        {!isLoading && !failedQuery ? <CaveMap
+          center={hasCoordinates ? { latitude: latitude as number, longitude: longitude as number } : undefined}
+          units={units}
+          height={185}
+          onUnitPress={(unit) => router.push({
+            pathname: "/cavernas/[cavernaId]/aulas",
+            params: { cavernaId: unit.caveId, cavernaTitle: unit.caveName },
+          })}
+        /> : null}
         {isLoading ? (
           <LoadingSpinner label="Buscando cavernas…" />
         ) : failedQuery ? (

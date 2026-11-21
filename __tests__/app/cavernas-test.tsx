@@ -10,6 +10,16 @@ import { useAppStore } from "@/store/useAppStore";
 import { useErrorStore } from "@/store/useErrorStore";
 
 jest.mock("react-native-safe-area-context", () => require("react-native-safe-area-context/jest/mock").default);
+jest.mock("@/features/maps/cave-map", () => {
+  const { Pressable, Text, View } = jest.requireActual<typeof import("react-native")>("react-native");
+  return {
+    CaveMap: ({ units, onUnitPress }: { units: import("@/features/maps/map-data").UnitMarker[]; onUnitPress: (unit: import("@/features/maps/map-data").UnitMarker) => void }) => (
+      <View>{units.map((unit) => <Pressable key={unit.id} accessibilityRole="button" accessibilityLabel={`Pino ${unit.unitName}`} onPress={() => onUnitPress(unit)}>
+        <Text>{unit.unitName}</Text>
+      </Pressable>)}</View>
+    ),
+  };
+});
 // The real spinner runs an endless animation; its label is what matters here.
 jest.mock("@/components/customized/loading-spinner/loading-spinner", () => {
   const { Text: MockText } = jest.requireActual<typeof import("react-native")>("react-native");
@@ -162,6 +172,22 @@ describe("Cavernas screen", () => {
     expect(within(card).queryByText("Aberta agora")).not.toBeOnTheScreen();
     expect(within(card).queryByText("Aulas hoje")).not.toBeOnTheScreen();
     expect(mockListAllClasses).not.toHaveBeenCalled();
+  });
+
+  it("keeps map pins in sync with the list and opens the selected cave", async () => {
+    mockListCaves.mockResolvedValue([OPEN_CAVE, ARCHIVED_CAVE]);
+    mockListAllClasses.mockImplementation(classesByCave);
+    await renderScreen();
+    const pin = await screen.findByRole("button", { name: "Pino Unidade u-open" });
+    expect(screen.queryByRole("button", { name: "Pino Unidade u-archived" })).not.toBeOnTheScreen();
+    await userEvent.setup().press(pin);
+    expect(mockRouter.push).toHaveBeenCalledWith({
+      pathname: "/cavernas/[cavernaId]/aulas",
+      params: { cavernaId: "cave-open", cavernaTitle: "Caverna Aberta" },
+    });
+    await userEvent.setup().press(screen.getByRole("button", { name: "Filtrar por Abertas agora" }));
+    await waitFor(() => expect(screen.queryByRole("button", { name: "Pino Unidade u-live" })).not.toBeOnTheScreen());
+    expect(screen.getByRole("button", { name: "Pino Unidade u-open" })).toBeOnTheScreen();
   });
 
   it("uses the saved address by default, allows GPS, and reacts to profile changes", async () => {

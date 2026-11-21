@@ -12,6 +12,9 @@ import { useErrorStore } from "@/store/useErrorStore";
 import { useNoticeStore } from "@/store/useNoticeStore";
 
 jest.mock("react-native-safe-area-context", () => require("react-native-safe-area-context/jest/mock").default);
+jest.mock("@/features/maps/cave-map", () => ({ CaveMap: () => null }));
+const mockListCaves = jest.fn().mockResolvedValue([]);
+jest.mock("@/api/services/caves.service", () => ({ listCaves: (...args: unknown[]) => mockListCaves(...args) }));
 jest.mock("@/components/customized/loading-spinner/loading-spinner", () => {
   const { Text: MockText } = jest.requireActual<typeof import("react-native")>("react-native");
   return { LoadingSpinner: ({ label }: { label?: string }) => <MockText>{label}</MockText> };
