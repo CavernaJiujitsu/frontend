@@ -33,6 +33,13 @@ export async function getMyProfile(): Promise<MyProfile> {
   return unwrap(data);
 }
 
+export async function getMyTrainingHours(): Promise<number> {
+  const { data } = await apiClient.get<ApiEnvelope<{ statistics: { hoursTrained: number } }>>(
+    routes.profileMe,
+  );
+  return unwrap(data).statistics.hoursTrained;
+}
+
 export type ProfilePhotoFile = {
   uri: string;
   name: string;

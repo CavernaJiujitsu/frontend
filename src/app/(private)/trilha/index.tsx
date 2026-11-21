@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { router } from "expo-router";
 import { Text, View } from "react-native";
 
-import { getMyTrail, type ActiveTrail, type TrailStage } from "@/api/services/trail.service";
+import { getBeltIndex, getGraduationRequirements, getMyTrail, type ActiveTrail, type GraduationRequirements, type TrailStage } from "@/api/services/trail.service";
 import { DefaultButton } from "@/components/customized/default-button";
 import { LoadingSpinner } from "@/components/customized/loading-spinner/loading-spinner";
 import { Progress, StudentPage } from "@/components/student-preview/preview-kit";
@@ -38,13 +38,20 @@ function PendingEvaluation() {
   );
 }
 
-function TrailContent({ trail }: { trail: ActiveTrail }) {
+function TrailContent({ trail, requirements, belts }: { trail: ActiveTrail; requirements?: GraduationRequirements; belts: { id: string; name: string; level: number }[] }) {
   const stages = [...trail.stages].sort((a, b) => a.position - b.position);
   const beltColor = trail.belt?.color ?? BrandColors.border;
   const title = trail.belt?.name ?? trail.trail?.name ?? "Trilha de progressão";
   const subtitle = trail.belt && trail.trail ? trail.trail.name : null;
   return (
     <>
+      <Text style={s.title} accessibilityRole="header">Faixas da sua jornada</Text>
+      {belts.map((belt) => (
+        <View key={belt.id} style={s.card}>
+          <Text style={s.title}>{belt.name}</Text>
+          <Text style={s.accent}>{belt.level < (trail.belt?.level ?? 0) ? "Anterior ou dispensada por equivalência" : belt.id === trail.belt?.id ? "Atual" : "Futura"}</Text>
+        </View>
+      ))}
       <View style={s.card}>
         <View style={s.beltRow}>
           <View style={[s.beltDot, { backgroundColor: beltColor }]} />
@@ -56,6 +63,18 @@ function TrailContent({ trail }: { trail: ActiveTrail }) {
         <Progress percentage={trail.percent} label={`${trail.requiredCompleted} / ${trail.requiredTotal} movimentos obrigatórios`} />
         {trail.trail?.description ? <Text style={s.body}>{trail.trail.description}</Text> : null}
       </View>
+      {requirements ? (
+        <View style={s.card}>
+          <Text style={s.title} accessibilityRole="header">Como graduar</Text>
+          <Text style={s.body}>Os requisitos abaixo contam desde o início da faixa atual; o total histórico de horas aparece no perfil.</Text>
+          <Text style={s.body}>Aulas regulares: {requirements.classes} / {requirements.belt.minimumTrainingClasses}</Text>
+          <Text style={s.body}>Horas medidas: {(requirements.minutes / 60).toLocaleString("pt-BR")} / {(requirements.belt.minimumTrainingMinutes / 60).toLocaleString("pt-BR")} h</Text>
+          <Text style={s.body}>Movimentos obrigatórios: {requirements.completedMovements} / {requirements.requiredMovements}</Text>
+          <Text style={s.body}>Presenças confirmadas em aulas regulares: {requirements.classes}</Text>
+          {requirements.retryClasses !== null ? <Text style={s.body}>Após reprovação: {requirements.retryClasses} / 5 novas aulas</Text> : null}
+          <Text style={s.accent}>{!requirements.nextBelt ? "Última faixa: não há exame de progressão." : requirements.eligible ? "Apto para se inscrever no exame" : "Continue treinando para liberar o exame"}</Text>
+        </View>
+      ) : null}
       <Text style={s.title} accessibilityRole="header">Etapas da trilha</Text>
       {stages.map((stage, index) => (
         <View key={stage.id} style={s.row}>
@@ -92,6 +111,16 @@ export default function Trilha() {
     queryFn: getMyTrail,
     enabled: Boolean(accessToken),
   });
+  const requirementsQuery = useQuery({
+    queryKey: ["graduation", practitionerId, "requirements"],
+    queryFn: getGraduationRequirements,
+    enabled: Boolean(accessToken && query.data && !query.data.noActiveBelt),
+  });
+  const beltsQuery = useQuery({
+    queryKey: ["graduation", "belt-index"],
+    queryFn: getBeltIndex,
+    enabled: Boolean(accessToken),
+  });
   useReportQueryError(query.error);
 
   return (
@@ -108,7 +137,7 @@ export default function Trilha() {
           <Text style={s.body}>Verifique sua conexão e tente novamente.</Text>
           <DefaultButton label="Tentar novamente" color={BrandColors.primary} action={() => query.refetch()} />
         </View>
-      ) : query.data && !isActiveTrail(query.data) ? <PendingEvaluation /> : query.data ? <TrailContent trail={query.data} /> : null}
+      ) : query.data && !isActiveTrail(query.data) ? <PendingEvaluation /> : query.data ? <TrailContent trail={query.data} requirements={requirementsQuery.data} belts={beltsQuery.data ?? []} /> : null}
     </StudentPage>
   );
 }

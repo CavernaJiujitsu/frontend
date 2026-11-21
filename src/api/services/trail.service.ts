@@ -87,3 +87,28 @@ export async function getMyTrail(): Promise<MyTrail> {
   );
   return unwrap(data);
 }
+
+export type GraduationRequirements = {
+  belt: { id: string; name: string; level: number; minimumTrainingMinutes: number; minimumTrainingClasses: number };
+  nextBelt: { id: string; name: string } | null;
+  classes: number;
+  minutes: number;
+  minimumPracticeClasses: number;
+  practiceCounts: Record<string, number>;
+  requiredMovements: number;
+  completedMovements: number;
+  retryClasses: number | null;
+  eligible: boolean;
+};
+
+export async function getGraduationRequirements(): Promise<GraduationRequirements> {
+  const { data } = await apiClient.get<ApiEnvelope<GraduationRequirements>>("/api/v1/graduations/me/requirements");
+  return unwrap(data);
+}
+
+export async function getBeltIndex(): Promise<{ id: string; name: string; level: number; color: string }[]> {
+  const { data } = await apiClient.get<ApiEnvelope<{ data: { id: string; name: string; level: number; color: string }[] }>>(
+    "/api/v1/graduations",
+  );
+  return unwrap(data).data;
+}

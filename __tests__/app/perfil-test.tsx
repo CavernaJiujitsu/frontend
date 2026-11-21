@@ -5,6 +5,8 @@ import { AxiosError, AxiosHeaders } from "axios";
 import type { MyProfile } from "@/api/services/profile.service";
 import type { Practitioner } from "@/api/services/practitioners.service";
 import Perfil from "@/app/(private)/perfil/index";
+import { ProfileAddressScreen } from "@/features/profile/profile-address-screen";
+import { ProfileScreen } from "@/features/profile/profile-screen";
 import { useAppStore } from "@/store/useAppStore";
 import { useErrorStore } from "@/store/useErrorStore";
 import { useNoticeStore } from "@/store/useNoticeStore";
@@ -16,6 +18,14 @@ jest.mock("@/components/customized/loading-spinner/loading-spinner", () => {
 });
 // The photo pickers pull native modules; the profile states do not need them.
 jest.mock("@/components/profile-photo", () => ({ ProfilePhoto: () => null }));
+const mockRequestLocationPermission = jest.fn();
+const mockGetCurrentPosition = jest.fn();
+jest.mock("expo-location", () => ({
+  requestForegroundPermissionsAsync: (...args: unknown[]) => mockRequestLocationPermission(...args),
+  getCurrentPositionAsync: (...args: unknown[]) => mockGetCurrentPosition(...args),
+  reverseGeocodeAsync: jest.fn().mockResolvedValue([]),
+  Accuracy: { Balanced: 3 },
+}));
 
 const mockRouter = { push: jest.fn(), replace: jest.fn(), back: jest.fn(), canGoBack: jest.fn(() => false) };
 jest.mock("expo-router", () => ({
@@ -27,6 +37,7 @@ jest.mock("expo-router", () => ({
 const mockGetMyProfile = jest.fn();
 jest.mock("@/api/services/profile.service", () => ({
   getMyProfile: (...args: unknown[]) => mockGetMyProfile(...args),
+  getMyTrainingHours: jest.fn().mockResolvedValue(0),
 }));
 const mockGetPractitioner = jest.fn();
 const mockUpdatePractitioner = jest.fn();
@@ -82,13 +93,13 @@ function apiError(status: number, message: string, path: string) {
   });
 }
 
-async function renderScreen() {
+async function renderScreen(section?: "dados" | "certificados" | "configuracoes" | "endereco") {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false, gcTime: Infinity } },
   });
   await render(
     <QueryClientProvider client={client}>
-      <Perfil />
+      {section === "endereco" ? <ProfileAddressScreen /> : section ? <ProfileScreen section={section} /> : <Perfil />}
     </QueryClientProvider>,
   );
 }
@@ -160,6 +171,19 @@ describe("Perfil screen", () => {
     expect(screen.getByText("Faixa Azul")).toBeOnTheScreen();
     expect(screen.getByText("Seu registro de treino ainda não está disponível.")).toBeOnTheScreen();
     expect(screen.queryByText("Não foi possível carregar seu perfil")).not.toBeOnTheScreen();
+    expect(screen.getByRole("button", { name: "Dados do perfil" })).toBeOnTheScreen();
+    expect(screen.getByRole("button", { name: "Certificados" })).toBeOnTheScreen();
+    expect(screen.getByRole("button", { name: "Configurações" })).toBeOnTheScreen();
+    await userEvent.setup().press(screen.getByRole("button", { name: "Dados do perfil" }));
+    expect(mockRouter.push).toHaveBeenCalledWith("/perfil/dados");
+  });
+
+  it("shows certificates without claiming unlinked files belong to the student", async () => {
+    mockGetMyProfile.mockResolvedValue(PROFILE);
+    await renderScreen("certificados");
+    expect(await screen.findByText("Nenhum certificado disponível")).toBeOnTheScreen();
+    await userEvent.setup().press(screen.getByRole("button", { name: "Voltar ao perfil" }));
+    expect(mockRouter.replace).toHaveBeenCalledWith("/perfil");
   });
 
   it("requires choosing a geocoded address before saving coordinates", async () => {
@@ -169,19 +193,16 @@ describe("Perfil screen", () => {
       { address: "Rua B, São Paulo", latitude: -23.56, longitude: -46.64 },
     ]);
     mockUpdatePractitioner.mockResolvedValue(PRACTITIONER);
-    await renderScreen();
-    await screen.findByText("Aluno Teste");
+    await renderScreen("endereco");
     const user = userEvent.setup();
-    await user.press(screen.getByRole("button", { name: "Configurações +" }));
-    await user.type(screen.getByLabelText("Buscar endereço"), "Rua A, São Paulo");
+    await user.type(screen.getByLabelText("Endereço para busca"), "Rua A, São Paulo");
     await user.press(screen.getByRole("button", { name: "Buscar endereço" }));
-    expect(await screen.findByText("Escolha um endereço")).toBeOnTheScreen();
-    expect(screen.queryByRole("button", { name: "Salvar endereço selecionado" })).not.toBeOnTheScreen();
+    expect(await screen.findByText("ESCOLHA UM ENDEREÇO")).toBeOnTheScreen();
+    expect(screen.getByRole("button", { name: "Confirmar endereço" }).props.accessibilityState).toMatchObject({ disabled: true });
     const option = screen.getByRole("button", { name: "Rua B, São Paulo" });
     await user.press(option);
     expect(option.props.accessibilityState).toMatchObject({ selected: true });
-    expect(screen.getByText("ENDEREÇO SELECIONADO")).toBeOnTheScreen();
-    await user.press(screen.getByRole("button", { name: "Salvar endereço selecionado" }));
+    await user.press(screen.getByRole("button", { name: "Confirmar endereço" }));
 
     expect(mockSearchAddresses).toHaveBeenCalledWith("Rua A, São Paulo");
     expect(mockUpdatePractitioner).toHaveBeenCalledWith("practitioner-1", {
@@ -195,13 +216,44 @@ describe("Perfil screen", () => {
     }));
   });
 
+  it("opens the dedicated address page from settings", async () => {
+    mockGetMyProfile.mockResolvedValue(PROFILE);
+    await renderScreen("configuracoes");
+    await screen.findByText("Trocar senha");
+    await userEvent.setup().press(screen.getByRole("button", { name: "Alterar endereço" }));
+    expect(mockRouter.push).toHaveBeenCalledWith("/perfil/endereco");
+  });
+
+  it("uses the current coordinates when the user grants location permission", async () => {
+    mockRequestLocationPermission.mockResolvedValue({ granted: true });
+    mockGetCurrentPosition.mockResolvedValue({ coords: { latitude: -23.55, longitude: -46.63 } });
+    mockUpdatePractitioner.mockResolvedValue(PRACTITIONER);
+    await renderScreen("endereco");
+    const user = userEvent.setup();
+    await user.press(screen.getByRole("button", { name: "Usar minha localização atual" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Confirmar endereço" }).props.accessibilityState).toMatchObject({ disabled: false }));
+    await user.press(screen.getByRole("button", { name: "Confirmar endereço" }));
+    await waitFor(() => expect(mockUpdatePractitioner).toHaveBeenCalledWith("practitioner-1", expect.objectContaining({
+      latitude: -23.55,
+      longitude: -46.63,
+    })));
+  });
+
+  it("does not enable confirmation when location permission is denied", async () => {
+    mockRequestLocationPermission.mockResolvedValue({ granted: false });
+    await renderScreen("endereco");
+    await userEvent.setup().press(screen.getByRole("button", { name: "Usar minha localização atual" }));
+    expect(await screen.findByText("Permita o acesso à localização para usar sua posição atual.")).toBeOnTheScreen();
+    expect(screen.getByRole("button", { name: "Confirmar endereço" }).props.accessibilityState).toMatchObject({ disabled: true });
+    expect(mockUpdatePractitioner).not.toHaveBeenCalled();
+  });
+
   it("confirms profile updates with a branded success notice", async () => {
     mockGetMyProfile.mockResolvedValue(PROFILE);
     mockUpdatePractitioner.mockResolvedValue(PRACTITIONER);
-    await renderScreen();
-    await screen.findByText("Aluno Teste");
+    await renderScreen("dados");
+    await screen.findByText("Informações pessoais");
     const user = userEvent.setup();
-    await user.press(screen.getByRole("button", { name: "Dados do perfil +" }));
     await user.press(screen.getByRole("button", { name: "Salvar dados" }));
     await waitFor(() => expect(useNoticeStore.getState().notice).toMatchObject({
       title: "Perfil atualizado",
@@ -213,10 +265,9 @@ describe("Perfil screen", () => {
   it("requests a reset link and clears the local session before confirmation", async () => {
     mockGetMyProfile.mockResolvedValue(PROFILE);
     mockRequestPasswordRecovery.mockResolvedValue(undefined);
-    await renderScreen();
-    await screen.findByText("Aluno Teste");
+    await renderScreen("configuracoes");
+    await screen.findByText("Trocar senha");
     const user = userEvent.setup();
-    await user.press(screen.getByRole("button", { name: "Configurações +" }));
     await user.type(screen.getByLabelText("Confirmar e-mail para trocar senha"), "aluno@teste.caverna");
     await user.press(screen.getByRole("button", { name: "Enviar link e sair" }));
 

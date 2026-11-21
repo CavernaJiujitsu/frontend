@@ -23,8 +23,12 @@ jest.mock("expo-router", () => ({
 }));
 
 const mockGetMyTrail = jest.fn();
+const mockGetGraduationRequirements = jest.fn();
+const mockGetBeltIndex = jest.fn();
 jest.mock("@/api/services/trail.service", () => ({
   getMyTrail: (...args: unknown[]) => mockGetMyTrail(...args),
+  getGraduationRequirements: (...args: unknown[]) => mockGetGraduationRequirements(...args),
+  getBeltIndex: (...args: unknown[]) => mockGetBeltIndex(...args),
 }));
 
 // Shape mirrors `GET /profile-readonly/trail` (curl, 17/11/2026).
@@ -93,6 +97,19 @@ async function renderScreen() {
 describe("Trilha screen", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockGetBeltIndex.mockResolvedValue([]);
+    mockGetGraduationRequirements.mockResolvedValue({
+      belt: { id: "belt-blue", name: "Faixa Azul", level: 3, minimumTrainingMinutes: 60, minimumTrainingClasses: 2 },
+      nextBelt: { id: "belt-purple", name: "Faixa Roxa" },
+      classes: 1,
+      minutes: 0,
+      minimumPracticeClasses: 2,
+      practiceCounts: {},
+      requiredMovements: 5,
+      completedMovements: 2,
+      retryClasses: 1,
+      eligible: false,
+    });
     useAppStore.setState((state) => ({
       user: {
         ...state.user,
@@ -145,5 +162,15 @@ describe("Trilha screen", () => {
     expect(screen.getByText("2 / 5 movimentos obrigatórios · 40%")).toBeOnTheScreen();
     expect(screen.getByText("Etapas da trilha")).toBeOnTheScreen();
     expect(screen.queryByText("Avaliação pendente")).not.toBeOnTheScreen();
+  });
+
+  it("separates confirmed classes from measured hours and explains the belt window", async () => {
+    mockGetMyTrail.mockResolvedValue(ACTIVE_TRAIL);
+    await renderScreen();
+
+    expect(await screen.findByText("Aulas regulares: 1 / 2")).toBeOnTheScreen();
+    expect(screen.getByText("Horas medidas: 0 / 1 h")).toBeOnTheScreen();
+    expect(screen.getByText("Após reprovação: 1 / 5 novas aulas")).toBeOnTheScreen();
+    expect(screen.getByText(/Os requisitos abaixo contam desde o início da faixa atual/)).toBeOnTheScreen();
   });
 });
