@@ -10,7 +10,7 @@
     "ios": {
       "icon": "./assets/expo.icon",
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "Usamos sua localização para encontrar as cavernas (academias) mais próximas de você."
+        "NSLocationWhenInUseUsageDescription": "Usamos sua localização para encontrar as cavernas mais próximas de você."
       }
     },
     "android": {
@@ -21,10 +21,11 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "permissions": [
-        "ACCESS_COARSE_LOCATION",
-        "ACCESS_FINE_LOCATION"
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
       ],
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.gabriel.godoi.frontend"
     },
     "web": {
       "output": "static",
