@@ -10,7 +10,7 @@ Status: **decisão aprovada no card #88 em 22/10/2026**. A proposta de popup aba
 - Caverna sem unidades usa o mesmo vazio após a consulta. Identificador ausente/inválido mostra orientação e Escolher outra caverna, sem request inválido.
 - Inscrição bloqueia todos os cartões durante envio; navega a /inicio após sucesso e preserva lista após falha. Sem conta, orientar Criar conta. Resposta após sair da tela/trocar caverna não redireciona.
 - Outro mês começa no dia 1; o seletor inicia no dia selecionado.
-- Sem ocupação na API, mostrar Capacidade: N pessoas, sem inventar zero inscritos ou vagas livres. Mocks continuam isolados em api/mocks.
+- Sem ocupação na API, mostrar Capacidade: N pessoas, sem inventar zero inscritos ou vagas livres. Não há mocks no fluxo: `src/api/mocks/` foi removido e a agenda usa só a API.
 - Reutilizar ScreenLayout e TanStack Query existentes. Filtro semanal/paginação completa ficam no #89.
 
 Evidências em `.docs/88-class-selection/test.md`. Figma não fornecido no card; visual segue componentes/tokens existentes, conforme aprovação.
@@ -30,7 +30,7 @@ Implementação atual em `src/app/onboarding/(schedule)/schedule.tsx`:
 - A lista do dia mostra o empty state padrão ("Nenhuma aula encontrada").
 
 Caverna de teste sem horários: `cavernaId = "caverna-sem-horarios"`
-(ver `EMPTY_SCHEDULE_CAVERNA_ID` em `src/api/mocks/schedule.ts`).
+(era `EMPTY_SCHEDULE_CAVERNA_ID` em `src/api/mocks/schedule.ts`, arquivo já removido).
 
 ## Pontos a validar com o time
 

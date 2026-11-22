@@ -1,6 +1,7 @@
 import { apiClient } from "@/api/bootstrap/axios-bootstrap";
 import { routes } from "@/api/endpoints/routes";
 import { unwrap, type ApiEnvelope } from "@/api/types/envelope";
+import { normalizeCoordinates } from "@/utils/location";
 
 export type HomeSummaryParams = {
   latitude?: number;
@@ -50,16 +51,15 @@ export type HomeSummary = {
 };
 
 export async function getHomeSummary(
-  practitionerId: string,
   params: HomeSummaryParams = {},
 ): Promise<HomeSummary> {
+  // The API accepts at most 8 decimal places; raw GPS readings carry more.
+  const coordinates = normalizeCoordinates(params.latitude, params.longitude);
   const { data } = await apiClient.get<ApiEnvelope<HomeSummary>>(
-    routes.practitionerHome(practitionerId),
+    routes.profileReadonlyHome,
     {
       params: {
-        ...(params.latitude !== undefined && params.longitude !== undefined
-          ? { latitude: params.latitude, longitude: params.longitude }
-          : {}),
+        ...(coordinates ?? {}),
         ...(params.radiusKm !== undefined ? { radiusKm: params.radiusKm } : {}),
         ...(params.cavesLimit !== undefined
           ? { cavesLimit: params.cavesLimit }

@@ -1,24 +1,41 @@
-import { useEffect, useRef, useState } from "react";
-import { Alert, FlatList, Text, View } from "react-native";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { FlatList, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 
-import { magnifierCaverna } from "@/assets/images";
-import type { NearbyGymMock } from "@/api/mocks/nearby-gym";
+import { caveImage, magnifierCaverna } from "@/assets/images";
 import { listCaves, type Cave } from "@/api/services/caves.service";
-import { backendMessage } from "@/api/utils/backend-message";
 import CardComponent from "@/components/complex/card-component";
+import { DefaultButton } from "@/components/customized/default-button";
 import { LoadingSpinner } from "@/components/customized/loading-spinner/loading-spinner";
 import { SearchInput } from "@/components/customized/search-input/search-input";
+import { CaveMap } from "@/features/maps/cave-map";
+import { caveUnitMarkers } from "@/features/maps/map-data";
+import { getErrorMessage } from "@/constants/error-messages";
+import { BrandColors, Colors, Spacing } from "@/constants/theme";
 import { useAppStore } from "@/store/useAppStore";
 import { isLoadingKey, useLoadingStore } from "@/store/useLoadingStore";
 import { globalStyles } from "@/styles/global.styles";
 import { nearbyGymStyles as styles } from "@/styles/onboarding/nearby-gym.styles";
 import { formatDistanceKm } from "@/utils/distance";
+import { normalizeApiError } from "@/utils/normalize-api-error";
 
 const SEARCH_DEBOUNCE_MS = 350;
 
-function toGymCard(cave: Cave): NearbyGymMock {
+const localStyles = StyleSheet.create({
+  feedback: { alignItems: "center", gap: Spacing.three, marginTop: Spacing.five },
+  feedbackText: { color: Colors.light.textSecondary, fontSize: 16, textAlign: "center" },
+});
+
+type GymCard = {
+  id: string;
+  image: typeof caveImage;
+  title: string;
+  tags: string[];
+  subtitle: string;
+};
+
+function toGymCard(cave: Cave): GymCard {
   const units = cave.units ?? [];
   const nearest = units[0];
   const where = nearest?.neighborhood ?? nearest?.name ?? "";
@@ -28,7 +45,7 @@ function toGymCard(cave: Cave): NearbyGymMock {
       : (where ?? cave.name);
   return {
     id: cave.id,
-    image: `https://picsum.photos/seed/${cave.id}/200/200`,
+    image: caveImage,
     title: cave.name,
     tags: units.length > 1 ? [`${units.length} unidades`] : [],
     subtitle,
@@ -38,7 +55,11 @@ function toGymCard(cave: Cave): NearbyGymMock {
 export default function NearByGym() {
   const router = useRouter();
   const [search, setSearch] = useState("");
-  const [gyms, setGyms] = useState<NearbyGymMock[]>([]);
+  const [gyms, setGyms] = useState<GymCard[]>([]);
+  const [caves, setCaves] = useState<Cave[]>([]);
+  const units = useMemo(() => caveUnitMarkers(caves), [caves]);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
   const isLoading = useLoadingStore(isLoadingKey("nearby-gyms"));
   const requestRef = useRef(0);
 
@@ -62,21 +83,23 @@ export default function NearByGym() {
       )
         .then((caves: Cave[]) => {
           if (requestRef.current === requestId) {
+            setLoadError(null);
+            setCaves(caves);
             setGyms(caves.map((cave: Cave) => toGymCard(cave)));
           }
         })
         .catch((err: unknown) => {
+          // Inline error state: a failed search must not read as "no caves".
           if (requestRef.current === requestId) {
-            Alert.alert(
-              "Erro",
-              backendMessage(err, "Não foi possível buscar cavernas."),
-            );
+            setGyms([]);
+            setCaves([]);
+            setLoadError(getErrorMessage(normalizeApiError(err)));
           }
         })
         .finally(() => store.hide("nearby-gyms"));
     }, SEARCH_DEBOUNCE_MS);
     return () => clearTimeout(timer);
-  }, [search]);
+  }, [search, attempt]);
 
   return (
     <SafeAreaView style={globalStyles.screen}>
@@ -101,11 +124,31 @@ export default function NearByGym() {
           <View style={styles.loadingWrap}>
             <LoadingSpinner label="Buscando cavernas…" />
           </View>
+        ) : loadError ? (
+          <View style={localStyles.feedback}>
+            <Text style={localStyles.feedbackText} accessibilityRole="alert">
+              Não foi possível buscar cavernas. {loadError}
+            </Text>
+            <DefaultButton
+              label="Tentar novamente"
+              color={BrandColors.secondary}
+              action={() => setAttempt((value) => value + 1)}
+            />
+          </View>
         ) : (
           <FlatList
             data={gyms}
             keyExtractor={(gym) => gym.id}
             contentContainerStyle={styles.listContent}
+            ListHeaderComponent={<CaveMap
+              center={useAppStore.getState().user.location?.coords}
+              units={units}
+              height={180}
+              onUnitPress={(unit) => router.push({
+                pathname: "/onboarding/select-belt",
+                params: { cavernaId: unit.caveId, cavernaTitle: unit.caveName },
+              })}
+            />}
             renderItem={({ item }) => (
               <CardComponent
                 image={item.image}
@@ -121,8 +164,8 @@ export default function NearByGym() {
               />
             )}
             ListEmptyComponent={
-              <View style={{ alignItems: 'center', marginTop: 40 }}>
-                <Text style={{ color: '#aaa', fontSize: 16 }}>
+              <View style={localStyles.feedback}>
+                <Text style={localStyles.feedbackText}>
                   Nenhuma caverna encontrada.
                 </Text>
               </View>

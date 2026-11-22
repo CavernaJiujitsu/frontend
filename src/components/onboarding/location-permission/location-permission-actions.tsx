@@ -21,17 +21,15 @@ export function LocationPermissionActions({
   return (
     <View style={styles.actions}>
       <DefaultButton
-        label={isSavingLocation ? "Salvando localização..." : "Permitir localização"}
+        label={
+          isSavingLocation ? "Salvando localização..." : "Permitir localização"
+        }
         color={BrandColors.secondary}
         action={handleRequestLocation}
         disabled={isBusy}
       />
 
-      <Pressable
-        style={styles.skipButton}
-        onPress={onSkip}
-        disabled={isBusy}
-      >
+      <Pressable style={styles.skipButton} onPress={onSkip} disabled={isBusy}>
         <Text style={styles.skipButtonText}>
           Agora não, prefiro buscar manualmente
         </Text>

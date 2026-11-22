@@ -1,86 +1,41 @@
 import { z } from "zod";
 
-export const ErrorTypeSchema = z.enum([
-  "VALIDATION",
-  "DUPLICATE_RESOURCE",
-  "CONFLICT",
-  "NOT_FOUND",
-  "AUTH",
-  "FORBIDDEN",
-  "RATE_LIMIT",
-  "SERVER_ERROR",
-]);
-
-export type ErrorType = z.infer<typeof ErrorTypeSchema>;
-
-export const ErrorDomainSchema = z.enum([
-  "auth",
-  "profile",
-  "gym",
-  "schedule",
-  "client",
-  "server",
-]);
-
-export type ErrorDomain = z.infer<typeof ErrorDomainSchema>;
-
-export const ErrorDetailSchema = z.object({
-  field: z.string().optional(),
-  code: z.string(),
-  message: z.string().optional(),
+/**
+ * Error body sent by the backend global filter
+ * (`backend/src/modules/shared/filters/http-exception.filter.ts`):
+ * `{ message, timestamp, path }`. The filter already joins ValidationPipe
+ * arrays with "; ", but an array is still accepted defensively.
+ */
+export const BackendErrorBodySchema = z.object({
+  message: z.union([z.string(), z.array(z.string())]),
+  timestamp: z.string().optional(),
+  path: z.string().optional(),
 });
 
-export type ErrorDetail = z.infer<typeof ErrorDetailSchema>;
+export type BackendErrorBody = z.infer<typeof BackendErrorBodySchema>;
 
-export const BackendErrorDescriptionSchema = z.object({
-  internalCode: z.string().min(1),
-  message: z.string(),
-  domain: z.string(),
-  field: z.string().nullable().optional(),
-  params: z.record(z.string(), z.unknown()).optional(),
-  details: z.array(ErrorDetailSchema).optional(),
-  traceId: z.string().optional(),
-});
-
-export type BackendErrorDescription = z.infer<
-  typeof BackendErrorDescriptionSchema
->;
-
-export const BackendErrorSchema = z.object({
-  errorType: z.string().min(1),
-  errorDescription: BackendErrorDescriptionSchema,
-});
-
-export type BackendError = z.infer<typeof BackendErrorSchema>;
+/**
+ * - `http`: the backend answered with an error status.
+ * - `session-expired`: 401 for a request that carried a bearer token.
+ * - `offline` / `timeout`: the request got no response.
+ * - `unknown`: anything else (cancelled request, non-HTTP error).
+ */
+export type AppErrorKind =
+  | "http"
+  | "session-expired"
+  | "offline"
+  | "timeout"
+  | "unknown";
 
 export type AppError = {
+  kind: AppErrorKind;
+  /** HTTP status; undefined when the request got no response. */
   status?: number;
-  errorType: string;
-  internalCode: string;
-  domain: string;
-  field?: string | null;
-  params?: Record<string, unknown>;
-  details?: ErrorDetail[];
-  traceId?: string;
-  fallbackMessage?: string;
+  /**
+   * Raw backend `message`. It can be technical English (class-validator),
+   * so screens must show `getErrorMessage(appError)`, never this field.
+   */
+  message?: string;
+  /** Request path echoed by the backend, useful for logs. */
+  path?: string;
 };
-
-export const KNOWN_INTERNAL_CODES = [
-  "VALIDATION_FAILED",
-  "RESOURCE_NOT_FOUND",
-  "CAVERNA_ALREADY_EXISTS",
-  "SCHEDULE_CONFLICT",
-  "CLASS_FULL",
-  "DUPLICATE_SUBSCRIPTION",
-  "INVALID_CREDENTIALS",
-  "TOKEN_EXPIRED",
-  "FORBIDDEN",
-  "RATE_LIMITED",
-  "SERVER_ERROR",
-  "SERVICE_UNAVAILABLE",
-  "OFFLINE",
-  "TIMEOUT",
-  "UNKNOWN",
-] as const;
-
-export type KnownInternalCode = (typeof KNOWN_INTERNAL_CODES)[number];

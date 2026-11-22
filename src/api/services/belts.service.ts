@@ -11,9 +11,11 @@ export type Belt = {
 };
 
 export async function listBelts(): Promise<Belt[]> {
-  const { data } = await apiClient.get<ApiEnvelope<PaginatedResponse<Belt>>>(
-    routes.belts,
-    { params: { page: 1, limit: 20 } },
-  );
-  return unwrap(data).data;
+  const { data } = await apiClient.get<
+    ApiEnvelope<PaginatedResponse<Belt> | Belt[]>
+  >(routes.belts, { params: { page: 1, limit: 20 } });
+  const result = unwrap(data);
+  // The contract documents a plain array; the current API returns a page.
+  const belts = Array.isArray(result) ? result : result.data;
+  return [...belts].sort((a, b) => a.level - b.level);
 }

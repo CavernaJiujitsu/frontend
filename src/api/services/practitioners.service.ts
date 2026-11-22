@@ -1,6 +1,7 @@
 import { apiClient } from "@/api/bootstrap/axios-bootstrap";
 import { routes } from "@/api/endpoints/routes";
 import { unwrap, type ApiEnvelope } from "@/api/types/envelope";
+import type { PaginatedResponse } from "@/api/types/pagination";
 
 export type PractitionerUser = {
   id: string;
@@ -13,6 +14,8 @@ export type Practitioner = {
   user: PractitionerUser;
   latitude: string | null;
   longitude: string | null;
+  age: number | null;
+  address?: string | null;
 };
 
 export type PractitionerCoordinates = {
@@ -30,6 +33,29 @@ export type CreatePractitionerPayload = {
 };
 
 export type UpdatePractitionerLocationPayload = PractitionerCoordinates;
+
+export type UpdatePractitionerPayload = {
+  name?: string;
+  email?: string;
+  age?: number;
+  latitude?: number;
+  longitude?: number;
+  address?: string;
+};
+
+export type AddressResult = {
+  address: string;
+  latitude: number;
+  longitude: number;
+};
+
+export async function searchAddresses(q: string): Promise<AddressResult[]> {
+  const { data } = await apiClient.get<ApiEnvelope<AddressResult[]>>(
+    `${routes.practitioners}/me/addresses`,
+    { params: { q } },
+  );
+  return unwrap(data);
+}
 
 export async function createPractitioner(
   payload: CreatePractitionerPayload,
@@ -57,4 +83,26 @@ export async function updatePractitionerLocation(
     payload,
   );
   return unwrap(data);
+}
+
+export async function updatePractitioner(
+  practitionerId: string,
+  payload: UpdatePractitionerPayload,
+): Promise<Practitioner> {
+  const { data } = await apiClient.patch<ApiEnvelope<Practitioner>>(
+    routes.practitioner(practitionerId),
+    payload,
+  );
+  return unwrap(data);
+}
+
+/** Search by name or e-mail (requires JWT). */
+export async function searchPractitioners(
+  search: string,
+  limit = 10,
+): Promise<Practitioner[]> {
+  const { data } = await apiClient.get<
+    ApiEnvelope<PaginatedResponse<Practitioner>>
+  >(routes.practitioners, { params: { page: 1, limit, search } });
+  return unwrap(data).data;
 }

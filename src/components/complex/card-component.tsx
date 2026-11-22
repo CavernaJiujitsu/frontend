@@ -1,5 +1,5 @@
-import { Image, Pressable, Text, View } from "react-native";
 import type { ViewStyle } from "react-native";
+import { Image, Pressable, Text, View } from "react-native";
 
 import { globalStyles } from "@/styles/global.styles";
 import { cardComponentStyles as styles } from "./styles/card-component.styles";

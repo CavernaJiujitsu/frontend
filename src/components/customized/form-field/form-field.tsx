@@ -1,5 +1,5 @@
 import { Text, TextInput, View } from "react-native";
-import type { KeyboardTypeOptions } from "react-native";
+import type { KeyboardTypeOptions, TextInputProps } from "react-native";
 
 import { Colors } from "@/constants/theme";
 import { formFieldStyles as styles } from "./styles/form-field.styles";
@@ -15,6 +15,8 @@ export type FormFieldProps = {
   secureTextEntry?: boolean;
   keyboardType?: KeyboardTypeOptions;
   autoCapitalize?: "none" | "sentences" | "words" | "characters";
+  autoComplete?: TextInputProps["autoComplete"];
+  autoCorrect?: boolean;
   rightAction?: React.ReactNode;
   width?: FormFieldWidth;
   editable?: boolean;
@@ -38,6 +40,8 @@ export function FormField({
   secureTextEntry,
   keyboardType = "default",
   autoCapitalize = "sentences",
+  autoComplete,
+  autoCorrect,
   rightAction,
   width = "full",
   editable = true,
@@ -58,6 +62,8 @@ export function FormField({
           secureTextEntry={secureTextEntry}
           keyboardType={keyboardType}
           autoCapitalize={autoCapitalize}
+          autoComplete={autoComplete}
+          autoCorrect={autoCorrect}
           editable={editable}
         />
         {rightAction}

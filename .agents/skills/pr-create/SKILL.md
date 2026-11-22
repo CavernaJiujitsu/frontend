@@ -24,5 +24,5 @@ metadata:
    - **Evidências de teste** — checks do `test.md` (lint/tsc) e validações feitas;
    - **Riscos/limitações e pendências** — do `review.md`/`implement.md`;
    - **Checklist**: lint, tsc, expo-doctor (se aplicável), contrato do backend conferido, PRD atualizado (se o padrão mudou), nenhum segredo em env pública.
-5. **Crie o PR**: `gh pr create --base main` (padrão atual do repo — as branches nascem de `main` e é o que dispara o preview da Azure SWA; se a branch vier de outra linha, confirme a base com o usuário). Título/commits no padrão do repo (`feat:`, `fix:`, `chore:`...). Mostre o corpo antes para aprovação se o usuário preferir. Nunca force-push; se a branch não estiver pushada, avise e peça para subir.
+5. **Crie o PR**: `gh pr create --base dev` (padrão deste repo — a base obrigatória é `dev`; nunca use `main` para PRs do app). Título/commits no padrão do repo (`feat:`, `fix:`, `chore:`...). Mostre o corpo antes para aprovação se o usuário preferir. Nunca force-push; se a branch não estiver pushada, avise e peça para subir.
 6. Retorne o link do PR e, se ficaram perguntas pendentes, repita-as de forma objetiva.

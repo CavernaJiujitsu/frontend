@@ -52,6 +52,12 @@ export const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "700",
   },
+  submitError: {
+    color: BrandColors.secondary,
+    fontSize: 13,
+    marginBottom: Spacing.two,
+    textAlign: "center",
+  },
   divider: {
     flexDirection: "row",
     alignItems: "center",

@@ -1,4 +1,4 @@
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import {
@@ -13,13 +13,17 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import Svg, { Path } from "react-native-svg";
 
+import { login } from "@/api/services/auth.service";
 import { localeIcon } from "@/assets/images";
 import { DefaultButton } from "@/components/customized/default-button";
 import { FormField } from "@/components/customized/form-field/form-field";
 import { BrandColors, Colors } from "@/constants/theme";
-import { useErrorStore } from "@/store/useErrorStore";
+import { reportError } from "@/store/useErrorStore";
+import { useAppStore } from "@/store/useAppStore";
 import { globalStyles } from "@/styles/global.styles";
 import { styles } from "@/styles/onboarding/login.styles";
+import { notify } from "@/utils/dialogs";
+import { homeRouteFor } from "@/utils/session";
 
 type LoginForm = {
   email: string;
@@ -27,33 +31,52 @@ type LoginForm = {
 };
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const SUBMISSION_FEEDBACK_DELAY_MS = 350;
+
+function firstParam(value: string | string[] | undefined): string | undefined {
+  return Array.isArray(value) ? value[0] : value;
+}
 
 export default function LoginScreen() {
   const router = useRouter();
+  // Set by the signup screen when the account was created but the automatic
+  // login failed.
+  const params = useLocalSearchParams<{ email?: string | string[] }>();
+  const prefilledEmail = firstParam(params.email) ?? "";
   const [showSenha, setShowSenha] = useState(false);
   const {
     control,
     formState: { isSubmitting },
     handleSubmit,
   } = useForm<LoginForm>({
-    defaultValues: { email: "", senha: "" },
+    defaultValues: { email: prefilledEmail, senha: "" },
     reValidateMode: "onChange",
   });
 
-  const handleLogin = async () => {
-    await new Promise<void>((resolve) => {
-      setTimeout(resolve, SUBMISSION_FEEDBACK_DELAY_MS);
-    });
-    useErrorStore.getState().show(
-      "A autenticação será conectada em uma tarefa separada.",
-    );
+  const handleLogin = async ({ email, senha }: LoginForm) => {
+    try {
+      const session = await login({
+        email: email.trim(),
+        password: senha,
+      });
+
+      const home = homeRouteFor(session.roles, null);
+      if (!home) {
+        notify(
+          "Acesso indisponível",
+          "Esta conta não possui perfil de aluno ou professor. Use o aplicativo desktop.",
+        );
+        return;
+      }
+      useAppStore.getState().setAuthIdentity(session);
+      useAppStore.getState().setProfile({ nome: email.trim(), email: email.trim() });
+      router.replace(home);
+    } catch (error) {
+      reportError(error);
+    }
   };
 
   const handleForgotPassword = () => {
-    useErrorStore
-      .getState()
-      .show("A recuperação de senha será disponibilizada em breve.");
+    router.push("/onboarding/forgot-password");
   };
 
   const handleCreateAccount = () => {
@@ -97,6 +120,7 @@ export default function LoginScreen() {
                 <FormField
                   accessibilityLabel="E-mail"
                   autoCapitalize="none"
+                  editable={!isSubmitting}
                   error={error?.message}
                   keyboardType="email-address"
                   label="E-MAIL"
@@ -110,11 +134,14 @@ export default function LoginScreen() {
             <Controller
               control={control}
               name="senha"
-              rules={{ validate: (value) => value || "Informe sua senha." }}
+              rules={{
+                validate: (value) => (value ? true : "Informe sua senha."),
+              }}
               render={({ field: { onChange, value }, fieldState: { error } }) => (
                 <FormField
                   accessibilityLabel="Senha"
                   autoCapitalize="none"
+                  editable={!isSubmitting}
                   error={error?.message}
                   label="SENHA"
                   onChangeText={onChange}

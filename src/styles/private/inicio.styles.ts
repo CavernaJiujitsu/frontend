@@ -17,13 +17,17 @@ export const inicioStyles = StyleSheet.create({
   },
   filterRow: {
     gap: Spacing.two,
-    height: 36,
+    height: 48,
     alignItems: "center",
     paddingRight: Spacing.four,
   },
   filterScroll: {
     flexGrow: 0,
-    height: 36,
+    height: 56,
+  },
+  filterContainer: {
+    height: 56,
+    overflow: "visible",
   },
   filterChip: {
     paddingHorizontal: 16,

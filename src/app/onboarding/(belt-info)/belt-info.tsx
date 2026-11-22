@@ -1,22 +1,25 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useState } from "react";
-import { Alert, Text, TouchableOpacity, View } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import { Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import type { CertificateMock } from "@/api/mocks/belts";
 import {
   declareBeltValidation,
 } from "@/api/services/belt-validations.service";
 import { listBelts, type Belt } from "@/api/services/belts.service";
-import { uploadCertificate } from "@/api/services/certificates.service";
-import { backendMessage } from "@/api/utils/backend-message";
+import { uploadCertificate, type CertificateFile } from "@/api/services/certificates.service";
 import { DefaultButton } from "@/components/customized/default-button";
 import { CertificatePicker } from "@/components/customized/document-picker/document-picker";
-import { toAbsoluteUrl } from "@/constants/api";
+import { getErrorMessage } from "@/constants/error-messages";
 import { BrandColors } from "@/constants/theme";
 import { useAppStore } from "@/store/useAppStore";
 import { globalStyles } from "@/styles/global.styles";
 import { beltInfoStyles as styles } from "@/styles/onboarding/belt-info.styles";
+import { notify, notifyError } from "@/utils/dialogs";
+import { normalizeApiError } from "@/utils/normalize-api-error";
+
+/** Time the success banner stays visible before moving on to the schedule. */
+const SUCCESS_REDIRECT_DELAY_MS = 1500;
 
 function firstParam(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
@@ -38,12 +41,26 @@ export default function BeltInfoScreen() {
   );
   const [belts, setBelts] = useState<Belt[]>([]);
   const [selectedBelt, setSelectedBelt] = useState<string>("");
-  const [selectedFile, setSelectedFile] = useState<CertificateMock | null>(
+  const [selectedFile, setSelectedFile] = useState<CertificateFile | null>(
     null,
   );
   const [isLoadingBelts, setIsLoadingBelts] = useState<boolean>(true);
+  const [beltsError, setBeltsError] = useState<string | null>(null);
+  const [beltsAttempt, setBeltsAttempt] = useState(0);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isSuccess, setIsSuccess] = useState<boolean>(false);
+  const redirectTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isMounted = useRef(true);
+
+  // A pending redirect must not fire after the screen is gone.
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+      if (redirectTimer.current) clearTimeout(redirectTimer.current);
+      redirectTimer.current = null;
+    };
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -56,10 +73,7 @@ export default function BeltInfoScreen() {
         );
       })
       .catch((err: unknown) => {
-        Alert.alert(
-          "Erro",
-          backendMessage(err, "Não foi possível carregar as faixas."),
-        );
+        if (active) setBeltsError(getErrorMessage(normalizeApiError(err)));
       })
       .finally(() => {
         if (active) setIsLoadingBelts(false);
@@ -67,15 +81,21 @@ export default function BeltInfoScreen() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [beltsAttempt]);
+
+  const retryBelts = () => {
+    setBeltsError(null);
+    setIsLoadingBelts(true);
+    setBeltsAttempt((attempt) => attempt + 1);
+  };
 
   const handleContinue = async () => {
     if (!selectedBelt) {
-      Alert.alert("Atenção", "Selecione uma faixa para continuar.");
+      notify("Atenção", "Selecione uma faixa para continuar.");
       return;
     }
     if (!practitionerId) {
-      Alert.alert(
+      notify(
         "Atenção",
         "Sua conta não foi criada. Volte e crie sua conta novamente.",
       );
@@ -87,26 +107,27 @@ export default function BeltInfoScreen() {
       const uploaded = selectedFile
         ? await uploadCertificate(selectedFile)
         : undefined;
+      // The API checks the certificate owner by id (another user's → 403).
       const validation = await declareBeltValidation({
         practitionerId,
         targetBeltId: selectedBelt,
-        ...(uploaded ? { certificateUrl: toAbsoluteUrl(uploaded.url) } : {}),
+        ...(uploaded ? { certificateId: uploaded.id } : {}),
       });
       setBeltValidationId(validation.id);
+      if (!isMounted.current) return;
       setIsLoading(false);
       setIsSuccess(true);
-      setTimeout(() => {
+      redirectTimer.current = setTimeout(() => {
+        redirectTimer.current = null;
         router.push({
           pathname: "/onboarding/schedule",
           params: cavernaParams,
         });
-      }, 1500);
+      }, SUCCESS_REDIRECT_DELAY_MS);
     } catch (err: unknown) {
+      if (!isMounted.current) return;
       setIsLoading(false);
-      Alert.alert(
-        "Erro",
-        backendMessage(err, "Não foi possível salvar os dados. Tente novamente."),
-      );
+      notifyError("Não foi possível salvar os dados", err);
     }
   };
 
@@ -132,6 +153,20 @@ export default function BeltInfoScreen() {
               Um professor homologado vai validar na sua primeira aula.
             </Text>
           </View>
+
+          {beltsError ? (
+            // Without belts there is nothing to pick: offer a way out.
+            <View style={styles.header}>
+              <Text style={styles.subtitle} accessibilityRole="alert">
+                Não foi possível carregar as faixas. {beltsError}
+              </Text>
+              <DefaultButton
+                label="Tentar novamente"
+                color={BrandColors.primary}
+                action={retryBelts}
+              />
+            </View>
+          ) : null}
 
           <View style={styles.beltsGrid}>
             {belts.map((belt) => {
