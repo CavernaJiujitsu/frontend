@@ -1,5 +1,9 @@
 This is an Expo/React Native mobile application. Prioritize mobile-first patterns, performance, and cross-platform compatibility.
 
+## Team collaboration
+
+Read [`CONTRIBUTING.md`](./CONTRIBUTING.md) before starting a card or preparing a PR/deploy. It records the shared sprint workflow; verify current GitHub state.
+
 ## SDD workflow (skills + `.docs/`)
 
 - Skills live in `.agents/skills/` (single source; no mirrors). Flow: `feature-plan` → `feature-implementation` → `feature-teste`; `feature-review` and `pr-create` on demand; `trello-ticket` runs the whole flow for a board card; `ui-style` defines the visual language.
