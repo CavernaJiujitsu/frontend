@@ -78,6 +78,7 @@ export default function StageDetail() {
               <Text style={s.accent}>{movementLabels[movement.status]}</Text>
               <Text style={s.body}>{movement.required ? "Obrigatório" : "Opcional"}</Text>
               <Text style={s.body}>Prática: {practiceQuery.data?.practiceCounts[movement.trailStageMovementId] ?? 0} / {practiceQuery.data?.minimumPracticeClasses ?? "—"} aulas{movement.status === "VALIDATED" ? " (validado pelo professor)" : ""}</Text>
+              {practiceQuery.data ? <Progress percentage={movement.status === "VALIDATED" || movement.status === "COMPLETED" ? 100 : Math.min(100, Math.round(((practiceQuery.data.practiceCounts[movement.trailStageMovementId] ?? 0) / Math.max(1, practiceQuery.data.minimumPracticeClasses)) * 100))} label="Progresso do movimento" /> : null}
               {movement.validatedAt ? <Text style={s.body}>Validado em {new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short", timeZone: "America/Sao_Paulo" }).format(new Date(movement.validatedAt))} (Brasília)</Text> : null}
             </View>
           ))}
