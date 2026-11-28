@@ -4,6 +4,8 @@ import { useState } from "react";
 import { Text, View } from "react-native";
 
 import { queryClient } from "@/api/bootstrap/query-client";
+import { apiClient } from "@/api/bootstrap/axios-bootstrap";
+import { unwrap, type ApiEnvelope } from "@/api/types/envelope";
 import { listBelts } from "@/api/services/belts.service";
 import {
   createClass,
@@ -50,6 +52,17 @@ export function ClassForm({ existing }: { existing?: BackendClass }) {
   const teacherId = useAppStore((state) => state.user.teacherId);
   const teacherQuery = useCurrentTeacher();
   const beltsQuery = useQuery({ queryKey: ["belts"], queryFn: listBelts, staleTime: Infinity });
+  const catalog = useQuery({ queryKey: ["graduation-catalog"], queryFn: async () => {
+    const { data } = await apiClient.get<ApiEnvelope<{ belts: { id: string; name: string }[]; trails: { belt: { id: string }; stages?: { movements?: { id: string; movement: { name: string } }[] }[] }[] }>>("/api/v1/graduation-catalog");
+    return unwrap(data);
+  } });
+  const content = useQuery({ queryKey: ["class-content", existing?.id], enabled: Boolean(existing), queryFn: async () => {
+    const { data } = await apiClient.get<ApiEnvelope<{ trailStageMovement: { id: string } }[]>>(`/api/v1/classes/${existing!.id}/content`);
+    return unwrap(data).map((item) => item.trailStageMovement.id);
+  } });
+  const [selectedMovements, setSelectedMovements] = useState<string[] | null>(null);
+  const selected = selectedMovements ?? content.data ?? [];
+  const [createdId, setCreatedId] = useState<string | null>(null);
 
   const defaults = initialDates(existing);
   const initialBeltIds = (existing?.belts ?? [])
@@ -76,8 +89,9 @@ export function ClassForm({ existing }: { existing?: BackendClass }) {
         throw new Error("Informe uma capacidade de pelo menos 1 aluno.");
       }
 
-      if (!existing) {
-        return createClass({
+      if (type === "SCHEDULED" && (catalog.isLoading || catalog.isError || (existing && (content.isLoading || content.isError)))) throw new Error("Não foi possível carregar os movimentos. Tente novamente.");
+      if (!existing && !createdId) {
+        const created = await createClass({
           caveUnitId,
           teacherId: teacherId!,
           type,
@@ -86,8 +100,12 @@ export function ClassForm({ existing }: { existing?: BackendClass }) {
           capacity: capacityValue,
           ...(beltIds.length ? { beltIds } : {}),
         });
+        setCreatedId(created.id);
+        if (type === "SCHEDULED") await apiClient.put(`/api/v1/classes/${created.id}/content`, { trailStageMovementIds: selected });
+        return created;
       }
-      const updated = await updateClass(existing.id, {
+      const id = existing?.id ?? createdId!;
+      const updated = await updateClass(id, {
         type,
         startsAt: startsAt.toISOString(),
         endsAt: endsAt.toISOString(),
@@ -95,7 +113,8 @@ export function ClassForm({ existing }: { existing?: BackendClass }) {
       });
       const beltsChanged =
         [...beltIds].sort().join() !== [...initialBeltIds].sort().join();
-      if (beltsChanged) await replaceClassBelts(existing.id, beltIds);
+      if (beltsChanged) await replaceClassBelts(id, beltIds);
+      if (type === "SCHEDULED" && (!existing || [...selected].sort().join() !== [...(content.data ?? [])].sort().join())) await apiClient.put(`/api/v1/classes/${id}/content`, { trailStageMovementIds: selected });
       return updated;
     },
     onSuccess: async () => {
@@ -183,6 +202,17 @@ export function ClassForm({ existing }: { existing?: BackendClass }) {
           ))}
         </View>
       </View>
+
+      {type === "SCHEDULED" ? <View style={s.card}>
+        <Text style={ui.label}>MOVIMENTOS ENSINADOS POR FAIXA</Text>
+        <Text style={s.body}>Selecione os movimentos ensinados antes de confirmar presenças.</Text>
+        {catalog.isLoading || content.isLoading && existing ? <Text style={s.body}>Carregando movimentos…</Text> : null}
+        {catalog.isError || content.isError ? <Text style={s.body}>Não foi possível carregar os movimentos.</Text> : null}
+        {(catalog.data?.belts ?? []).map((belt) => <View key={belt.id}>
+          <Text style={s.title}>{belt.name}</Text>
+          <View style={ui.row}>{(catalog.data?.trails.find((trail) => trail.belt.id === belt.id)?.stages ?? []).flatMap((stage) => stage.movements ?? []).map((movement) => <Chip key={movement.id} label={movement.movement.name} selected={selected.includes(movement.id)} onPress={() => setSelectedMovements(selected.includes(movement.id) ? selected.filter((id) => id !== movement.id) : [...selected, movement.id])} />)}</View>
+        </View>)}
+      </View> : null}
 
       {formError ? (
         <Text style={[s.body, { color: BrandColors.danger }]} accessibilityRole="alert">

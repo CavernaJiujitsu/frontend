@@ -51,6 +51,7 @@ export type EnrollmentItem = {
 
 export type BackendClass = {
   id: string;
+  attendanceClosedAt?: string | null;
   startsAt: string;
   endsAt: string;
   capacity: number;

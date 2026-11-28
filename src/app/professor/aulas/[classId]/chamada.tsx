@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Animated, Modal, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { queryClient } from "@/api/bootstrap/query-client";
+import { apiClient } from "@/api/bootstrap/axios-bootstrap";
 import {
   cancelClassEnrollment,
   checkInClass,
@@ -90,6 +91,7 @@ export default function AttendanceScreen() {
     enabled: Boolean(classId),
   });
   const scheduledQuery = useScheduledValidations();
+  const closeAttendance = useMutation({ mutationFn: () => apiClient.post(`/api/v1/classes/${classId}/attendance/close`), onSuccess: async () => { await queryClient.invalidateQueries({ queryKey: ["class", classId] }); notify("Chamada finalizada"); }, onError: (error) => notify(backendMessage(error, "Não foi possível finalizar a chamada.")) });
   const validations = (scheduledQuery.data ?? []).filter((v) => v.class?.id === classId);
   const classItem = classQuery.data;
   const enrollments = enrollmentsQuery.data ?? [];
@@ -112,6 +114,7 @@ export default function AttendanceScreen() {
               {confirmed} presentes
             </Text>
           </View>
+          <SmallButton label={classItem.attendanceClosedAt ? "Chamada finalizada" : "Finalizar chamada"} variant="primary" disabled={Boolean(classItem.attendanceClosedAt) || closeAttendance.isPending} onPress={() => closeAttendance.mutate()} />
 
           {validations.length > 0 ? (
             <View style={s.card}>
@@ -157,7 +160,7 @@ export default function AttendanceScreen() {
             ))
           )}
 
-          <EnrollStudent classId={classItem.id} />
+          {!classItem.attendanceClosedAt ? <EnrollStudent classId={classItem.id} /> : null}
         </>
       )}
     </TeacherPage>
@@ -226,7 +229,7 @@ function EnrollmentRow({ classItem, enrollment }: { classItem: BackendClass; enr
         <StatusBadge label={status.label} tone={status.tone} />
       </View>
       <View style={ui.row}>
-        {canCheckIn ? (
+        {canCheckIn && !classItem.attendanceClosedAt ? (
           <SmallButton label="Confirmar presença" variant="primary" disabled={busy} onPress={() => checkIn.mutate()} />
         ) : null}
         {enrollment.status === "CONFIRMED" ? (
@@ -257,7 +260,7 @@ function EnrollmentRow({ classItem, enrollment }: { classItem: BackendClass; enr
             <FormField label="TÉRMINO" value={endTime} onChangeText={setEndTime} width={48} keyboardType="numbers-and-punctuation" />
           </View>
           <FormField
-            label="MOTIVO (OBRIGATÓRIO AO CORRIGIR UM REGISTRO)"
+            label="MOTIVO (OPCIONAL)"
             value={reason}
             onChangeText={setReason}
             placeholder="Ex.: chegou atrasado"
